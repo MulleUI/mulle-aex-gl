@@ -575,6 +575,16 @@ int sl_expr_validate_vec_mat_scalar_constructor(struct diags *dx, struct sl_type
         }
       }
       if (components_remaining > 0) {
+        /* 5.4.2: a lone scalar fills every component of a vector, or a matrix
+         * diagonal. */
+        if (x->num_children_ == 1) {
+          struct sl_type *at = sl_type_unqualified(sl_expr_type(tb, x->children_[0]));
+          if (at && (at->kind_ == sltk_float ||
+                     at->kind_ == sltk_int ||
+                     at->kind_ == sltk_bool)) {
+            return r;
+          }
+        }
         /* Not all components filled */
         dx_error_loc(dx, &x->op_loc_, "Constructor with too few parameters");
         return r | SLXV_INVALID;
