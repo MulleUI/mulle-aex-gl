@@ -24,7 +24,7 @@
 #endif
 
 void sl_compilation_unit_init(struct sl_compilation_unit *cu) {
-  st_init(&cu->global_scope_, NULL);
+  aex_st_init(&cu->global_scope_, NULL);
   sl_frame_init(&cu->global_frame_);
   sl_exec_call_graph_results_init(&cu->register_counts_);
 }
@@ -32,19 +32,19 @@ void sl_compilation_unit_init(struct sl_compilation_unit *cu) {
 void sl_compilation_unit_cleanup(struct sl_compilation_unit *cu) {
   sl_exec_call_graph_results_cleanup(&cu->register_counts_);
   sl_frame_cleanup(&cu->global_frame_);
-  st_cleanup(&cu->global_scope_);
+  aex_st_cleanup(&cu->global_scope_);
 }
 
 struct sl_function *sl_compilation_unit_find_function(struct sl_compilation_unit *cu, const char *name) {
   struct sym *s;
-  s = st_find(&cu->global_scope_, name, strlen(name));
+  s = aex_st_find(&cu->global_scope_, name, strlen(name));
   if (s && (s->kind_ == SK_FUNCTION)) return s->v_.function_;
   return NULL;
 }
 
 struct sl_variable *sl_compilation_unit_find_variable(struct sl_compilation_unit *cu, const char *name) {
   struct sym *s;
-  s = st_find(&cu->global_scope_, name, strlen(name));
+  s = aex_st_find(&cu->global_scope_, name, strlen(name));
   if (s && (s->kind_ == SK_VARIABLE)) return s->v_.variable_;
   return NULL;
 }

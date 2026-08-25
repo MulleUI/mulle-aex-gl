@@ -368,7 +368,7 @@ const struct macro *mt_find_c(const struct macro_table *obj, const char *name, s
   }
 }
 
-void macro_free(struct macro *m) {
+void aex_macro_free(struct macro *m) {
   if (!m) return;
   if (--m->refcount_) return; /* still have references, keep alive.. */
   pptk_free(m->args_);

@@ -86,17 +86,17 @@ struct sym {
 void sym_init(struct sym *s);
 void sym_cleanup(struct sym *s);
 
-void st_init(struct sym_table *st, struct sym_table *parent);
+void aex_st_init(struct sym_table *st, struct sym_table *parent);
 
-/* important: st_cleanup() will call sym_cleanup() and free any remaining symbols in the table(!!!)
+/* important: aex_st_cleanup() will call sym_cleanup() and free any remaining symbols in the table(!!!)
  *            this may very likely not be what you want! If your embracing symbol structure is larger
- *            and requires its own deconstruction, be sure to st_remove(sym_table::seq_) until seq_
+ *            and requires its own deconstruction, be sure to aex_st_remove(sym_table::seq_) until seq_
  *            is NULL. */
-void st_cleanup(struct sym_table *st);
+void aex_st_cleanup(struct sym_table *st);
 
-struct sym *st_find(struct sym_table *st, const char *name, size_t name_len);
-sym_table_result_t st_find_or_insert(struct sym_table *st, sym_kind_t kind, const char *name, size_t name_len, const struct situs *loc, size_t full_sym_size, struct sym **new_sym);
-void st_remove(struct sym_table *st, struct sym *s);
+struct sym *aex_st_find(struct sym_table *st, const char *name, size_t name_len);
+sym_table_result_t aex_st_find_or_insert(struct sym_table *st, sym_kind_t kind, const char *name, size_t name_len, const struct situs *loc, size_t full_sym_size, struct sym **new_sym);
+void aex_st_remove(struct sym_table *st, struct sym *s);
 
 /* Tests internals, returns 0 upon success.
  * Will write to stdout and stderr. */

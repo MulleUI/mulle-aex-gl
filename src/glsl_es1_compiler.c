@@ -147,7 +147,7 @@ c_parser_input:
               struct sym_table *st = cc->current_scope_;
               struct sl_type *named_type = NULL;
               while (st) {
-                struct sym *s = st_find(st, tk->text_, tk->text_len_);
+                struct sym *s = aex_st_find(st, tk->text_, tk->text_len_);
                 if (s) {
                   if (s->kind_ == SK_STRUCT) {
                     named_type = s->v_.type_;

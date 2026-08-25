@@ -402,7 +402,7 @@ pp-line: hash undef identifier ws-opt newline-opt {
     }
     else {
       mt_remove_macro(&pp->macro_table_, m);
-      macro_free(m); /* drops reference count; there might be an active expansion on it.. */
+      aex_macro_free(m); /* drops reference count; there might be an active expansion on it.. */
     }
   }
 }

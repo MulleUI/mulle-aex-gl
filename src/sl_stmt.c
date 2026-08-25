@@ -56,7 +56,7 @@ void sl_stmt_cleanup(struct sl_stmt *s) {
   while (s->true_branch_) sl_stmt_cleanup(s->true_branch_);
   while (s->false_branch_) sl_stmt_cleanup(s->false_branch_);
   if (s->scope_) {
-    st_cleanup(s->scope_);
+    aex_st_cleanup(s->scope_);
     free(s->scope_);
   }
 }

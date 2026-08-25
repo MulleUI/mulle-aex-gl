@@ -257,7 +257,7 @@ int sl_program_link(struct sl_program *prog) {
       do {
         if (ab->bound_index_ != -1) {
           /* Have a bound index, lock that range and set it as the active index */
-          struct sym *s = st_find(&prog->vertex_shader_->cu_.global_scope_, ab->name_, ab->name_len_);
+          struct sym *s = aex_st_find(&prog->vertex_shader_->cu_.global_scope_, ab->name_, ab->name_len_);
           if (s && s->kind_ == SK_VARIABLE) {
             struct sl_variable *v;
             v = s->v_.variable_;

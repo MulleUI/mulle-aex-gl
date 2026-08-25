@@ -74,7 +74,7 @@
 %type OBJECT FUNCTION: struct { struct pptk *tk_; struct macro *m_; }
 %constructor $$.tk_ = NULL; $$.m_ = NULL;
 %move $$.tk_ = $0.tk_; $$.m_ = $0.m_;
-%destructor pptk_free($$.tk_); macro_free($$.m_); /* Reduction of OBJECT drops a reference and might free the macro */
+%destructor pptk_free($$.tk_); aex_macro_free($$.m_); /* Reduction of OBJECT drops a reference and might free the macro */
 %token_action \
   $$.tk_ = pptk_pop_front(pp_input_chain); \
   struct macro *m = mt_find(&pp->macro_table_, $$.tk_->text_, $$.tk_->text_len_); \

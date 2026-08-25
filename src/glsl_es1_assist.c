@@ -803,7 +803,7 @@ struct sl_expr *glsl_es1_function_call_realize(struct diags *dx, struct sym_tabl
 
 int glsl_es1_declare_variable(struct glsl_es1_compiler *cc, const char *name, const struct situs *loc, struct sl_type *typ, struct sl_variable **ppvar) {
   struct sym *s = NULL;
-  sym_table_result_t str = st_find_or_insert(cc->current_scope_, SK_VARIABLE, name, strlen(name), loc, sizeof(struct sym), &s);
+  sym_table_result_t str = aex_st_find_or_insert(cc->current_scope_, SK_VARIABLE, name, strlen(name), loc, sizeof(struct sym), &s);
   if (str == STR_NOMEM) {
     dx_no_memory(cc->dx_);
     return _GLSL_ES1_NO_MEMORY;
@@ -815,7 +815,7 @@ int glsl_es1_declare_variable(struct glsl_es1_compiler *cc, const char *name, co
   struct sl_variable *var = sl_frame_alloc_variable(cc->current_frame_, name, loc, typ);
   if (!var) {
     if (str == STR_OK) {
-      st_remove(cc->current_scope_, s);
+      aex_st_remove(cc->current_scope_, s);
       sym_cleanup(s);
       free(s);
     }
@@ -973,7 +973,7 @@ static int glsl_es1_start_function_definition(struct glsl_es1_compiler *cc, stru
     sl_stmt_free_list(body);
     return _GLSL_ES1_NO_MEMORY;
   }
-  st_init(st, cc->current_scope_);
+  aex_st_init(st, cc->current_scope_);
   body->scope_ = st;
   f->body_ = sl_stmt_append(f->body_, body);
   size_t n;
@@ -988,7 +988,7 @@ static int glsl_es1_start_function_definition(struct glsl_es1_compiler *cc, stru
     var->parameter_index_ = n;
     param->variable_ = var;
     struct sym *s = NULL;
-    sym_table_result_t strt = st_find_or_insert(st, SK_VARIABLE, param->name_, strlen(param->name_), &param->location_, sizeof(struct sym), &s);
+    sym_table_result_t strt = aex_st_find_or_insert(st, SK_VARIABLE, param->name_, strlen(param->name_), &param->location_, sizeof(struct sym), &s);
     if (strt == STR_NOMEM) {
       /* note that everything thus far will be owned by the sl_function (via sl_frame, via body_, etc.), so no cleanup needed. */
       dx_no_memory(cc->dx_);
@@ -1077,7 +1077,7 @@ int glsl_es1_process_function_prototype(struct glsl_es1_compiler *cc, struct sl_
   else {
     /* No existing function or symbol, add to symbol table */
     struct sym *s = NULL;
-    sym_table_result_t str = st_find_or_insert(cc->current_scope_, SK_FUNCTION, f->name_, strlen(f->name_), &f->location_, sizeof(struct sym), &s);
+    sym_table_result_t str = aex_st_find_or_insert(cc->current_scope_, SK_FUNCTION, f->name_, strlen(f->name_), &f->location_, sizeof(struct sym), &s);
     if (str == STR_NOMEM) {
       dx_no_memory(cc->dx_);
       return _GLSL_ES1_NO_MEMORY;

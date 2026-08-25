@@ -218,7 +218,7 @@ static struct sym *st_fixup(struct sym_table *st, struct sym *z) {
   return NULL;
 }
 
-void st_remove(struct sym_table *st, struct sym *s) {
+void aex_st_remove(struct sym_table *st, struct sym *s) {
   /* Remove from chain first (easy bit) */
   if (s->next_ != s) {
     s->next_->prev_ = s->prev_;
@@ -554,7 +554,7 @@ static int st_cmp(const char *name_a, size_t name_a_len, const char *name_b, siz
   return 0;
 }
 
-struct sym *st_find(struct sym_table *st, const char *name, size_t name_len) {
+struct sym *aex_st_find(struct sym_table *st, const char *name, size_t name_len) {
   struct sym *s;
   s = st->root_;
   while (s) {
@@ -589,7 +589,7 @@ struct sym *st_alloc_sym(const char *name, size_t name_len, const struct situs *
   return s;
 }
 
-sym_table_result_t st_find_or_insert(struct sym_table *st, sym_kind_t kind, const char *name, size_t name_len, const struct situs *loc, size_t full_sym_size, struct sym **new_sym) {
+sym_table_result_t aex_st_find_or_insert(struct sym_table *st, sym_kind_t kind, const char *name, size_t name_len, const struct situs *loc, size_t full_sym_size, struct sym **new_sym) {
   struct sym *s;
   s = st->root_;
   if (!s) {
@@ -655,16 +655,16 @@ sym_table_result_t st_find_or_insert(struct sym_table *st, sym_kind_t kind, cons
   }
 }
 
-void st_init(struct sym_table *st, struct sym_table *parent) {
+void aex_st_init(struct sym_table *st, struct sym_table *parent) {
   st->parent_ = parent;
   st->root_ = NULL;
   st->seq_ = NULL;
 }
 
-void st_cleanup(struct sym_table *st) {
+void aex_st_cleanup(struct sym_table *st) {
   while (st->seq_) {
     struct sym *s = st->seq_;
-    st_remove(st, s);
+    aex_st_remove(st, s);
     sym_cleanup(s);
     free(s);
   }
@@ -763,7 +763,7 @@ int st_test(void) {
   int r = -1;
   int schk;
   struct sym_table st;
-  st_init(&st, NULL);
+  aex_st_init(&st, NULL);
 
   size_t num_names = sizeof(g_testnames_)/sizeof(*g_testnames_);
   size_t n;
@@ -781,7 +781,7 @@ int st_test(void) {
       if (schk) { 
         fprintf(stderr, "(at line %d)\n", __LINE__); r = schk; goto exit;
       }
-      st_remove(&st, tn->s_);
+      aex_st_remove(&st, tn->s_);
       schk = st_sanity(&st);
       if (schk) { 
         fprintf(stderr, "(at line %d)\n", __LINE__); r = schk; goto exit;
@@ -800,7 +800,7 @@ int st_test(void) {
       if (schk) { 
         fprintf(stderr, "(at line %d)\n", __LINE__); r = schk; goto exit;
       }
-      str = st_find_or_insert(&st, SK_STRUCT, tn->name_, strlen(tn->name_), NULL, sizeof(struct sym), &tn->s_);
+      str = aex_st_find_or_insert(&st, SK_STRUCT, tn->name_, strlen(tn->name_), NULL, sizeof(struct sym), &tn->s_);
       if (str != STR_OK) {
         fprintf(stderr, "st_test(): Failed testcase\n");
         goto exit;
@@ -815,7 +815,7 @@ int st_test(void) {
   for (n = 0; n < num_names; ++n) {
     struct testname *tn = g_testnames_ + n;
     if (tn->s_) {
-      st_remove(&st, tn->s_);
+      aex_st_remove(&st, tn->s_);
       sym_cleanup(tn->s_);
       free(tn->s_);
       tn->s_ = NULL;
@@ -826,6 +826,6 @@ int st_test(void) {
 
   r = 0;
 exit:
-  st_cleanup(&st);
+  aex_st_cleanup(&st);
   return r;
 }

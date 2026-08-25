@@ -90,7 +90,7 @@ int mt_remove_macro(struct macro_table *obj, struct macro *s);
 struct macro *mt_find(struct macro_table *obj, const char *name, size_t name_len);
 const struct macro *mt_find_c(const struct macro_table *obj, const char *name, size_t name_len);
 
-void macro_free(struct macro *m);
+void aex_macro_free(struct macro *m);
 
 
 #ifdef __cplusplus

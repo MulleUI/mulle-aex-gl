@@ -357,7 +357,7 @@ void sl_function_search(struct sym_table *current_scope, struct sl_function *f,
 
   size_t name_len = strlen(f->name_);
   for (st = current_scope; st; st = st->parent_) {
-    struct sym *s = st_find(st, f->name_, name_len);
+    struct sym *s = aex_st_find(st, f->name_, name_len);
     if (s) {
       if (s->kind_ == SK_FUNCTION) {
         struct sl_function *cf = s->v_.function_;
@@ -408,7 +408,7 @@ void sl_function_call_search(struct sym_table *current_scope, const char *name, 
 
   size_t name_len = strlen(name);
   for (st = current_scope; st; st = st->parent_) {
-    struct sym *s = st_find(st, name, name_len);
+    struct sym *s = aex_st_find(st, name, name_len);
     if (s) {
       if (s->kind_ == SK_FUNCTION) {
         struct sl_function *cf = s->v_.function_;

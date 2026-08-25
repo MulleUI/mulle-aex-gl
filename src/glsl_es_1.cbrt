@@ -186,7 +186,7 @@ primary-expression: IDENTIFIER {
   struct sym_table *scope = cc->current_scope_;
   struct sl_variable *var = NULL;
   do {
-    s = st_find(scope, $0, strlen($0));
+    s = aex_st_find(scope, $0, strlen($0));
     if (!s) {
       scope = scope->parent_;
     }
@@ -803,7 +803,7 @@ precision-qualifier: LOW_PRECISION    { $$ = SL_TYPE_QUALIFIER_LOW_PRECISION; }
 
 struct-specifier: STRUCT IDENTIFIER LEFT_BRACE struct-declaration-list RIGHT_BRACE {
   struct sym *s = NULL;
-  sym_table_result_t str = st_find_or_insert(cc->current_scope_, SK_STRUCT, $1, strlen($1), &${1}, sizeof(struct sym), &s);
+  sym_table_result_t str = aex_st_find_or_insert(cc->current_scope_, SK_STRUCT, $1, strlen($1), &${1}, sizeof(struct sym), &s);
   if (str == STR_NOMEM) {
     dx_no_memory(cc->dx_);
     return _GLSL_ES1_NO_MEMORY;
@@ -948,7 +948,7 @@ simple-statement: jump-statement {
       break; \
     } \
   } \
-  st_cleanup($$.st_); \
+  aex_st_cleanup($$.st_); \
   free($$.st_); \
 }
 start-scope: {
@@ -957,7 +957,7 @@ start-scope: {
     dx_no_memory(cc->dx_);
     return _GLSL_ES1_NO_MEMORY;
   }
-  st_init(st, cc->current_scope_);
+  aex_st_init(st, cc->current_scope_);
   $$.st_ = st;
   $$.cc_ = cc;
   cc->current_scope_ = st;
