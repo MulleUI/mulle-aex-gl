@@ -238,6 +238,20 @@ AEX_EGL_DECL_SPEC aex_egl_boolean_t AEX_EGL_DECLARATOR_ATTRIB AEX_EGL_FUNCTION_I
     OutputDebugStringW(buffer);
   }
 
+  /* Return the config. Aex has exactly one (RGBA8 + stencil + depth), so every
+   * attribute list this loop accepted is satisfied by it; the selection above
+   * is therefore validation and logging rather than a search. Mirrors GetConfigs. */
+  if (!num_config) {
+    return set_egl_err(AEX_EGL_BAD_PARAMETER);
+  }
+  if (!dpy->initialized_) {
+    return set_egl_err(AEX_EGL_NOT_INITIALIZED);
+  }
+  *num_config = 1;
+  if (configs && config_size > 0) {
+    *configs = &dpy->display_config_;
+  }
+
   return AEX_EGL_TRUE;
 }
 
