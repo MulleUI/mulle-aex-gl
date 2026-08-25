@@ -929,7 +929,7 @@ int macro_expand(struct preprocessor *pp, struct pptk *macro_ident, struct macro
                  * or more commas; which would not cause a placemarker insertion. */
                 struct situs insertion;
                 situs_init_from_after(&insertion, &id->situs_, 0);
-                struct pptk *placemarker = pptk_alloc(cc, &expansion, NULL, PPTK_PLACEMARKER, &insertion);
+                struct pptk *placemarker = pptk_alloc(pp, &expansion, NULL, PPTK_PLACEMARKER, &insertion);
                 situs_cleanup(&insertion);
                 if (!placemarker) {
                   dx_no_memory(pp->dx_);
@@ -941,7 +941,7 @@ int macro_expand(struct preprocessor *pp, struct pptk *macro_ident, struct macro
               }
             }
             else {
-              struct pptk *arg_clone = pptk_clone(cc, tail->tokens_);
+              struct pptk *arg_clone = pptk_clone(pp, tail->tokens_);
               if (tail->tokens_ && !arg_clone) {
                 dx_no_memory(pp->dx_);
                 pptk_free(expansion);
@@ -953,7 +953,7 @@ int macro_expand(struct preprocessor *pp, struct pptk *macro_ident, struct macro
               if (!preceeded_by_hash && !preceeded_by_hash_hash && !followed_by_hash_hash) {
                 /* Expand macros for each __VA_ARGS__ argument individually, and concatenate them together.
                  * (Don't expand as a whole or macro invocations can straddle multiple macro arguments.) */
-                int r = pptk_perform_macro_expansion(cc, &arg_clone, 0 /* keep_defined */);
+                int r = pptk_perform_macro_expansion(pp, &arg_clone, 0 /* keep_defined */);
                 if (r) {
                   pptk_free(arg_clone);
                   pptk_free(expansion);
@@ -969,7 +969,7 @@ int macro_expand(struct preprocessor *pp, struct pptk *macro_ident, struct macro
               if (tail != args) {
                 struct situs insertion;
                 situs_init_from_after(&insertion, &id->situs_, 1 /* comma "," byte length 1 */);
-                if (!pptk_alloc(cc, &expansion, ",", PPTK_COMMA, &insertion)) {
+                if (!pptk_alloc(pp, &expansion, ",", PPTK_COMMA, &insertion)) {
                   situs_cleanup(&insertion);
                   dx_no_memory(pp->dx_);
                   pptk_free(expansion);
@@ -989,9 +989,9 @@ int macro_expand(struct preprocessor *pp, struct pptk *macro_ident, struct macro
              * be checked when counting arguments) -- here we defensively handle it as an empty argument.. */
             struct situs insertion;
             situs_init_from_after(&insertion, &id->situs_, 0);
-            struct pptk *placemarker = pptk_alloc(cc, &expansion, NULL, PPTK_PLACEMARKER, &insertion);
+            struct pptk *placemarker = pptk_alloc(pp, &expansion, NULL, PPTK_PLACEMARKER, &insertion);
             if (!placemarker) {
-              cc_no_memory(cc);
+              dx_no_memory(pp->dx_);
               pptk_free(expansion);
               pptk_free(instanced);
               pptk_free(arg_expanded);
@@ -1000,9 +1000,9 @@ int macro_expand(struct preprocessor *pp, struct pptk *macro_ident, struct macro
           }
         }
         if (preceeded_by_hash) {
-          struct pptk *stringified = pptk_stringize(cc, expansion);
+          struct pptk *stringified = pptk_stringize(pp, expansion);
           if (!stringified) {
-            cc_no_memory(cc);
+            dx_no_memory(pp->dx_);
             pptk_free(expansion);
             pptk_free(instanced);
             pptk_free(arg_expanded);
