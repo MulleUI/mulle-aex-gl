@@ -3574,8 +3574,15 @@ void sl_exec_pop_execution_frame(struct sl_execution *exec) {
   if (exec->num_execution_frames_) exec->num_execution_frames_--;
 }
 
+/* Resolve x's registers against an explicit frame. Needed whenever x does not belong to
+ * the function on top of the frame stack; call arguments live in the caller's frame. */
+static void sl_exec_need_rvalue_in_frame(struct sl_execution *exec, uint32_t chain, int frame, struct sl_expr *x) {
+  sl_reg_move_crossframe(exec, (uint8_t)chain, frame, &x->base_regs_, &x->offset_reg_,
+                                               frame, &x->rvalue_, NULL, 1, 1, 1);
+}
+
 static void sl_exec_need_rvalue(struct sl_execution *exec, uint32_t chain, struct sl_expr *x) {
-  sl_reg_move(exec, chain, &x->base_regs_, &x->offset_reg_, &x->rvalue_, NULL);
+  sl_exec_need_rvalue_in_frame(exec, chain, (int)(exec->num_execution_frames_ - 1), x);
 }
 
 static void sl_exec_initialize_globals(struct sl_execution *exec) {
@@ -4627,9 +4634,11 @@ int sl_exec_run(struct sl_execution *exec, struct sl_function *f, int exec_chain
               ef->local_sampler2D_offset_ += (int)parent->f_->frame_.ract_.rra_sampler2D_.watermark_;
               ef->local_samplerCube_offset_ += (int)parent->f_->frame_.ract_.rra_samplerCube_.watermark_;
 
+              int caller_frame = (int)(exec->num_execution_frames_ - 2);
               for (n = 0; n < ef->f_->num_parameters_; ++n) {
                 struct sl_reg_alloc *param_ra = &ef->f_->parameters_[n].variable_->reg_alloc_;
-                sl_exec_need_rvalue(exec, eps[epi].revisit_chain_, eps[epi].v_.expr_->children_[n]);
+                /* Argument registers were allocated in the caller's frame, not the callee's. */
+                sl_exec_need_rvalue_in_frame(exec, eps[epi].revisit_chain_, caller_frame, eps[epi].v_.expr_->children_[n]);
                 struct sl_reg_alloc *call_arg_ra = EXPR_RVALUE(eps[epi].v_.expr_->children_[n]);
               
                 sl_exec_move_param(exec, eps[epi].revisit_chain_, ef, param_ra, parent, call_arg_ra);
