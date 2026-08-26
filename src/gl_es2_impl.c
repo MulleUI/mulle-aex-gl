@@ -5575,10 +5575,9 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(ReadPixels)(gl
 
   gl_es2_framebuffer_attachment_raw_ptr(&c->framebuffer_->color_attachment0_, &fb_data, &fb_stride);
 
-  int bottom_row = gl_es2_framebuffer_get_bitmap_row_num(c->framebuffer_, y);
-
   /* framebuffer pointer to last row, stride negative (so increasing Y goes back in memory) */
-  void *fb_data_bottom_left = ((char *)fb_data) + ((size_t)(height - 1)) * fb_stride;
+  int bottom_row = gl_es2_framebuffer_get_bitmap_row_num(c->framebuffer_, 0);
+  void *fb_data_bottom_left = ((char *)fb_data) + ((size_t)bottom_row) * fb_stride;
   size_t fb_stride_going_up = (size_t)-(intptr_t)fb_stride; /* two's complement, this'll work, cast to prevent signed/unsigned warnings on - */
 
   blitter_blit_format(pixels, blit_dst_format, fb_data_bottom_left, blit_format_rgba, dst_stride, 0, 0, fb_stride_going_up, x, y, width, height);
