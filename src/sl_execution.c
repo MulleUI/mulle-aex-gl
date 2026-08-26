@@ -4614,6 +4614,11 @@ int sl_exec_run(struct sl_execution *exec, struct sl_function *f, int exec_chain
 
           case exop_function_call: {
             if (eps[epi].v_.expr_->function_->builtin_runtime_fn_) {
+              /* Builtins read arguments through EXPR_RVALUE; materialise it first. */
+              size_t bn;
+              for (bn = 0; bn < eps[epi].v_.expr_->num_children_; ++bn) {
+                sl_exec_need_rvalue(exec, eps[epi].revisit_chain_, eps[epi].v_.expr_->children_[bn]);
+              }
               eps[epi].v_.expr_->function_->builtin_runtime_fn_(exec, eps[epi].revisit_chain_, eps[epi].v_.expr_);
             }
             else {
