@@ -3631,7 +3631,8 @@ int sl_exec_run(struct sl_execution *exec, struct sl_function *f, int exec_chain
   while (exec->num_execution_points_) {
     /* Build "eps[epi]" shorthand for exec->execution_points_[exec->num_execution_points_ - 1] as we'll be referencing it, a lot. */
     size_t epi = exec->num_execution_points_ - 1;
-    struct sl_execution_point *eps = exec->execution_points_;
+    /* Re-read on every use; the sl_exec_push_* calls below realloc execution_points_. */
+#define eps (exec->execution_points_)
 #define CHAIN_REF(x) (((uintptr_t)&(x)) - (uintptr_t)exec->execution_points_)
     if (eps[epi].kind_ == SLEPK_STMT) {
       if (eps[epi].enter_chain_ != SL_EXEC_NO_CHAIN) {
@@ -4751,6 +4752,7 @@ int sl_exec_run(struct sl_execution *exec, struct sl_function *f, int exec_chain
 
   return 0;
 }
+#undef eps
 
 void sl_exec_debug_dump_builtin(struct sl_execution *exec, int exec_chain, struct sl_expr *x) {
   sl_exec_need_rvalue(exec, exec_chain, x->children_[0]);
