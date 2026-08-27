@@ -36,29 +36,29 @@
 
 %scanner%
 
-%prefix pplc_
+%prefix aex_pplc_
 
 %common_type struct situs
-%constructor situs_init(&$$);
-%destructor situs_cleanup(&$$);
+%constructor aex_situs_init(&$$);
+%destructor aex_situs_cleanup(&$$);
 
 %params struct preprocessor *pp, char **output_buf, size_t *output_end, size_t *output_buf_alloc_size, struct situs *output_situs, struct situs *input_situs
 
 $: {
-  situs_move_range(&$, input_situs, $endoffset - $offset, $text);
+  aex_situs_move_range(&$, input_situs, $endoffset - $offset, $text);
 }
 
 : \n|[^\n]*[^\\\n]\n {
   /* Any line that does not end in a continuation (no \ at the end) */
   if (pp_concat_output_b(pp, output_situs, output_buf, output_end, output_buf_alloc_size, &$, $text, $len)) {
-    return _PPLC_NO_MEMORY;
+    return _AEX_PPLC_NO_MEMORY;
   }
 }
 
 : [^\n]*[^\\\n]\Z {
   /* Any line that ends at the end of input. */
   if (pp_concat_output_b(pp, output_situs, output_buf, output_end, output_buf_alloc_size, &$, $text, $len)) {
-    return _PPLC_NO_MEMORY;
+    return _AEX_PPLC_NO_MEMORY;
   }
 }
 
@@ -69,7 +69,7 @@ $: {
 : \n {
   /* A regular newline */
   if (pp_concat_output_b(pp, output_situs, output_buf, output_end, output_buf_alloc_size, &$, $text, $len)) {
-    return _PPLC_NO_MEMORY;
+    return _AEX_PPLC_NO_MEMORY;
   }
 }
 
@@ -80,7 +80,7 @@ $: {
 : [^\n]*\\\Z {
   /* Line at the end of input ending with a line continuation */
   if (pp_concat_output_b(pp, output_situs, output_buf, output_end, output_buf_alloc_size, &$, $text, $len)) {
-    return _PPLC_NO_MEMORY;
+    return _AEX_PPLC_NO_MEMORY;
   }
 }
 
@@ -89,6 +89,6 @@ $: {
    * or the end of file (and are therefore longer), this can only match lines that are part of linecontinuations. */
   /* A line that ends in a line continuation */
   if (pp_concat_output_b(pp, output_situs, output_buf, output_end, output_buf_alloc_size, &$, $text, $len)) {
-    return _PPLC_NO_MEMORY;
+    return _AEX_PPLC_NO_MEMORY;
   }
 }

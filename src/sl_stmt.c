@@ -35,7 +35,7 @@
 
 void sl_stmt_init(struct sl_stmt *s) {
   s->kind_ = slsk_invalid;
-  situs_init(&s->keyword_loc_);
+  aex_situs_init(&s->keyword_loc_);
   s->next_ = s->prev_ = s;
   s->parent_ = NULL;
   s->expr_ = s->condition_ = s->post_ = NULL;

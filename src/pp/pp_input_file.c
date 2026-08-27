@@ -43,7 +43,7 @@
 #include "pp.h"
 #endif
 
-void if_init(struct pp_input_file *ifile, struct preprocessor *pp) {
+void aex_if_init(struct pp_input_file *ifile, struct preprocessor *pp) {
   ifile->unpoppable_ = 0;
   ifile->pp_ = pp;
   ifile->containing_file_ = pp->input_stack_;
@@ -55,8 +55,8 @@ void if_init(struct pp_input_file *ifile, struct preprocessor *pp) {
 
   ifile->input_request_fn_ = NULL;
 
-  pptk_stack_init(&ifile->pptk_);
-  ppld_stack_init(&ifile->ppld_);
+  aex_pptk_stack_init(&ifile->pptk_);
+  aex_ppld_stack_init(&ifile->ppld_);
   ifile->ppld_input_not_finished_ = 0;
   ifile->ppld_end_processed_pop_now_ = 0;
 
@@ -68,22 +68,22 @@ void if_init(struct pp_input_file *ifile, struct preprocessor *pp) {
   ifile->pptk_true_input_line_number_at_start_ = 1;
   ifile->pptk_pushed_final_source_line_ = 0;
 
-  pplc_stack_init(&ifile->pplc_);
+  aex_pplc_stack_init(&ifile->pplc_);
 
-  situs_init(&ifile->post_line_continuation_situs_);
+  aex_situs_init(&ifile->post_line_continuation_situs_);
   ifile->post_line_continuation_ = NULL;
   ifile->post_line_continuation_size_ = 0;
   ifile->post_line_continuation_size_allocated_ = 0;
 
-  pptg_stack_init(&ifile->pptg_);
+  aex_pptg_stack_init(&ifile->pptg_);
 
-  situs_init(&ifile->post_trigraph_situs_);
+  aex_situs_init(&ifile->post_trigraph_situs_);
   ifile->post_trigraph_ = NULL;
   ifile->post_trigraph_size_ = 0;
   ifile->post_trigraph_size_allocated_ = 0;
 }
 
-int if_set_filename(struct preprocessor *pp, struct pp_input_file *ifile, const char *filename) {
+int aex_if_set_filename(struct preprocessor *pp, struct pp_input_file *ifile, const char *filename) {
   char *sf = pp_preserve_filename(pp, filename);
   if (!sf) {
     return -1;
@@ -97,13 +97,13 @@ int if_set_filename(struct preprocessor *pp, struct pp_input_file *ifile, const 
   return 0;
 }
 
-void if_cleanup(struct pp_input_file *ifile) {
-  ppld_stack_cleanup(&ifile->ppld_);
-  pptk_stack_cleanup(&ifile->pptk_);
+void aex_if_cleanup(struct pp_input_file *ifile) {
+  aex_ppld_stack_cleanup(&ifile->ppld_);
+  aex_pptk_stack_cleanup(&ifile->pptk_);
 
   /* Remove ourselves from anywhere in the input stack, this ensures
    * we don't impose a dependency on the order of destruction if multiple
-   * if_cleanup()s are needed. */
+   * aex_if_cleanup()s are needed. */
   struct pp_input_file **ppif = &ifile->pp_->input_stack_;
   while (*ppif) {
     if (*ppif == ifile) {
@@ -119,25 +119,25 @@ void if_cleanup(struct pp_input_file *ifile) {
     fclose(ifile->fp_);
   }
 
-  pplc_stack_cleanup(&ifile->pplc_);
+  aex_pplc_stack_cleanup(&ifile->pplc_);
 
-  situs_cleanup(&ifile->post_line_continuation_situs_);
+  aex_situs_cleanup(&ifile->post_line_continuation_situs_);
   if (ifile->post_line_continuation_) {
     free(ifile->post_line_continuation_);
   }
 
-  pptg_stack_cleanup(&ifile->pptg_);
+  aex_pptg_stack_cleanup(&ifile->pptg_);
 
-  situs_cleanup(&ifile->post_trigraph_situs_);
+  aex_situs_cleanup(&ifile->post_trigraph_situs_);
   if (ifile->post_trigraph_) {
     free(ifile->post_trigraph_);
   }
 }
 
-void if_set_input(struct pp_input_file *ifile, const void *input_buf, size_t input_buf_size, int is_final) {
-  pptk_set_input(&ifile->pptk_, NULL, 0, 0); // reset pptk so it doesn't think it already finished
-  pplc_set_input(&ifile->pplc_, NULL, 0, 0); // reset pplc so it doesn't think it already finished
-  pptg_set_input(&ifile->pptg_, input_buf, input_buf_size, is_final);
+void aex_if_set_input(struct pp_input_file *ifile, const void *input_buf, size_t input_buf_size, int is_final) {
+  aex_pptk_set_input(&ifile->pptk_, NULL, 0, 0); // reset pptk so it doesn't think it already finished
+  aex_pplc_set_input(&ifile->pplc_, NULL, 0, 0); // reset pplc so it doesn't think it already finished
+  aex_pptg_set_input(&ifile->pptg_, input_buf, input_buf_size, is_final);
 
   if (ifile->pp_->pp_output_final_) {
     ifile->pp_->pp_output_final_ = 0;

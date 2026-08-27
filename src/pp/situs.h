@@ -67,31 +67,31 @@ struct situs {
   } u_;
 };
 
-void situs_init(struct situs *s);
-void situs_cleanup(struct situs *s);
+void aex_situs_init(struct situs *s);
+void aex_situs_cleanup(struct situs *s);
 
-int situs_move_range(struct situs *to, struct situs *from, size_t byte_length, const char *text);
-int situs_clone(struct situs *dst, const struct situs *src);
-int situs_concat(struct situs *dsthead, const struct situs *tail);
-int situs_skip(struct situs *from, size_t byte_length, const char *text);
+int aex_situs_move_range(struct situs *to, struct situs *from, size_t byte_length, const char *text);
+int aex_situs_clone(struct situs *dst, const struct situs *src);
+int aex_situs_concat(struct situs *dsthead, const struct situs *tail);
+int aex_situs_skip(struct situs *from, size_t byte_length, const char *text);
 
-size_t situs_len(const struct situs *s);
+size_t aex_situs_len(const struct situs *s);
 
-int situs_line(const struct situs *s);
-int situs_col(const struct situs *s);
-const char *situs_filename(const struct situs *s);
+int aex_situs_line(const struct situs *s);
+int aex_situs_col(const struct situs *s);
+const char *aex_situs_filename(const struct situs *s);
 
-void situs_convert_to_substitution(struct situs *s, size_t num_bytes);
+void aex_situs_convert_to_substitution(struct situs *s, size_t num_bytes);
 
 /* Initializes situs s to tbe at the point after src_after; the span contains no bytes,
  * (so the span's start_ and end_ are identical) but it may represent sourcecode text
  * (and hence num_bytes is non-zero). Useful for edge-case situations where code is 
  * inserted by the compiler.
  * Note that the resulting span is always, by definition, a substitution. */
-void situs_init_from_after(struct situs *s, const struct situs *src_after, size_t num_bytes);
+void aex_situs_init_from_after(struct situs *s, const struct situs *src_after, size_t num_bytes);
 
 /* Ideally used like C++'s std::swap() in that we can move things without incurring
  * memory allocations and still ensuring clean destruction. */
-void situs_swap(struct situs *a, struct situs *b);
+void aex_situs_swap(struct situs *a, struct situs *b);
 
 #endif /* SITUS_H */

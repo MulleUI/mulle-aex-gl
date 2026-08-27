@@ -33,7 +33,7 @@
 #define KLT_SHA1_ROL32(v, s)\
  (((v) << s) | ((v) >> (32 - s)))
 
-KLT_SHA1_OPTIONAL_STATIC void sha1_init(struct sha1_inner_state *state) {
+KLT_SHA1_OPTIONAL_STATIC void aex_sha1_init(struct sha1_inner_state *state) {
   state->h0 = 0x67452301;
   state->h1 = 0xEFCDAB89;
   state->h2 = 0x98BADCFE;
@@ -92,7 +92,7 @@ static void sha1_inner_process_chunk(struct sha1_inner_state *state) {
   state->h4 += e;
 }
 
-KLT_SHA1_OPTIONAL_STATIC int sha1_process(struct sha1_inner_state *state, const void *message_part, size_t message_part_size) {
+KLT_SHA1_OPTIONAL_STATIC int aex_sha1_process(struct sha1_inner_state *state, const void *message_part, size_t message_part_size) {
   const uint8_t *msg = (const uint8_t *)message_part;
   size_t n;
 
@@ -122,7 +122,7 @@ KLT_SHA1_OPTIONAL_STATIC int sha1_process(struct sha1_inner_state *state, const 
   return 0;
 }
 
-KLT_SHA1_OPTIONAL_STATIC int sha1_finish(struct sha1_inner_state *state, uint8_t *digest) {
+KLT_SHA1_OPTIONAL_STATIC int aex_sha1_finish(struct sha1_inner_state *state, uint8_t *digest) {
   /* note the leading 0x80 bit, this is intentional (corresponds to the '1' bit used to pad the
    * content.) */
   static const uint8_t padding[64] = { 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
@@ -150,8 +150,8 @@ KLT_SHA1_OPTIONAL_STATIC int sha1_finish(struct sha1_inner_state *state, uint8_t
   }
   uint64_t message_byte_length = state->message_bit_length >> 3;
   uint64_t message_padded_byte_length = message_fully_padded_length >> 3;
-  sha1_process(state, padding, (size_t)(message_padded_byte_length - message_byte_length - 8));
-  sha1_process(state, message_length_big_endian, 8);
+  aex_sha1_process(state, padding, (size_t)(message_padded_byte_length - message_byte_length - 8));
+  aex_sha1_process(state, message_length_big_endian, 8);
 
   digest[0] = (uint8_t)(state->h0 >> 24);
   digest[1] = (uint8_t)(state->h0 >> 16);

@@ -116,13 +116,13 @@ static int st_sanity_only_parents(struct sym_table *st) {
 void sym_init(struct sym *s) {
   s->is_red_ = 0;
   s->left_ = s->right_ = s->parent_ = s->next_ = s->prev_ = NULL;
-  situs_init(&s->loc_);
+  aex_situs_init(&s->loc_);
   s->name_len_ = 0;
   s->name_ = NULL;
 }
 
 void sym_cleanup(struct sym *s) {
-  situs_cleanup(&s->loc_);
+  aex_situs_cleanup(&s->loc_);
 }
 
 static struct sym *st_rotate_left(struct sym_table *st, struct sym *A) {
@@ -577,7 +577,7 @@ struct sym *st_alloc_sym(const char *name, size_t name_len, const struct situs *
   struct sym *s = (struct sym *)malloc(full_sym_size + name_len + 1 /* null terminator */);
   if (!s) return NULL;
   sym_init(s);
-  if (loc && situs_clone(&s->loc_, loc)) {
+  if (loc && aex_situs_clone(&s->loc_, loc)) {
     /* no memory */
     free(s);
     return NULL;

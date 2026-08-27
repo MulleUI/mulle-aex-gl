@@ -265,9 +265,9 @@ int sl_shader_compile(struct sl_shader *sh) {
   } sha1_token;
 
   struct sha1_inner_state sha1;
-  sha1_init(&sha1);
-  sha1_process(&sha1, sh->source_, sh->source_length_);
-  sha1_finish(&sha1, sha1_token.sha1_digest);
+  aex_sha1_init(&sha1);
+  aex_sha1_process(&sha1, sh->source_, sh->source_length_);
+  aex_sha1_finish(&sha1, sha1_token.sha1_digest);
   sh->hash_ = sha1_token.tokens[0];
 
   const char *debug_file_extension = ".xunknown";

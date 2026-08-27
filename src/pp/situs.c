@@ -38,11 +38,11 @@
 #include "situs.h"
 #endif
 
-void situs_init(struct situs *s) {
+void aex_situs_init(struct situs *s) {
   s->num_spans_ = 0;
 }
 
-void situs_cleanup(struct situs *s) {
+void aex_situs_cleanup(struct situs *s) {
   if (s->num_spans_ > 1) {
     free(s->u_.many_.spans_);
   }
@@ -191,7 +191,7 @@ static size_t situs_chop(struct situs *chop, struct situs *from, size_t byte_len
 }
 
 /* Note that, unlike situs_chop(), here the requirement is that all of chop be appended 
- * to to. Otherwise situs_concat() will not work. */
+ * to to. Otherwise aex_situs_concat() will not work. */
 static int situs_glue(struct situs *to, struct situs *chop) {
   if (!chop->num_spans_) return 0;
   if (!to->num_spans_) {
@@ -297,13 +297,13 @@ static const struct situs_span *situs_first_span_const(const struct situs *sit) 
   return sit->num_spans_ > 1 ? sit->u_.many_.spans_ : &sit->u_.one_;
 }
 
-int situs_move_range(struct situs *to, struct situs *from, size_t byte_length, const char *text) {
+int aex_situs_move_range(struct situs *to, struct situs *from, size_t byte_length, const char *text) {
   struct situs chop;
-  situs_init(&chop);
+  aex_situs_init(&chop);
   while (byte_length) {
     size_t num_bytes_chopped = 0;
     if (situs_chop(&chop, from, byte_length, text, &num_bytes_chopped)) {
-      situs_cleanup(&chop);
+      aex_situs_cleanup(&chop);
       return -1;
     }
     if (!chop.num_spans_) {
@@ -311,7 +311,7 @@ int situs_move_range(struct situs *to, struct situs *from, size_t byte_length, c
       return 1;
     }
     if (situs_glue(to, &chop)) {
-      situs_cleanup(&chop);
+      aex_situs_cleanup(&chop);
       return -1;
     }
     byte_length -= num_bytes_chopped;
@@ -320,25 +320,25 @@ int situs_move_range(struct situs *to, struct situs *from, size_t byte_length, c
   return 0;
 }
 
-int situs_skip(struct situs *from, size_t byte_length, const char *text) {
+int aex_situs_skip(struct situs *from, size_t byte_length, const char *text) {
   struct situs chop;
-  situs_init(&chop);
+  aex_situs_init(&chop);
   while (byte_length) {
     size_t num_bytes_chopped = 0;
     if (situs_chop(&chop, from, byte_length, text, &num_bytes_chopped)) {
-      situs_cleanup(&chop);
+      aex_situs_cleanup(&chop);
       return -1;
     }
     byte_length -= num_bytes_chopped;
     text += num_bytes_chopped;
-    situs_cleanup(&chop);
-    situs_init(&chop);
+    aex_situs_cleanup(&chop);
+    aex_situs_init(&chop);
   }
-  situs_cleanup(&chop);
+  aex_situs_cleanup(&chop);
   return 0;
 }
 
-int situs_clone(struct situs *dst, const struct situs *src) {
+int aex_situs_clone(struct situs *dst, const struct situs *src) {
   if (src->num_spans_ <= 1) {
     if (dst->num_spans_ > 1) free(dst->u_.many_.spans_);
     dst->num_spans_ = src->num_spans_;
@@ -356,24 +356,24 @@ int situs_clone(struct situs *dst, const struct situs *src) {
   return 0;
 }
 
-int situs_concat(struct situs *dsthead, const struct situs *tail) {
+int aex_situs_concat(struct situs *dsthead, const struct situs *tail) {
   struct situs clone;
-  situs_init(&clone);
-  if (situs_clone(&clone, tail)) {
+  aex_situs_init(&clone);
+  if (aex_situs_clone(&clone, tail)) {
     goto fail;
   }
   if (situs_glue(dsthead, &clone)) {
     goto fail;
   }
 
-  situs_cleanup(&clone);
+  aex_situs_cleanup(&clone);
   return 0;
 fail:
-  situs_cleanup(&clone);
+  aex_situs_cleanup(&clone);
   return -1;
 }
 
-size_t situs_len(const struct situs *s) {
+size_t aex_situs_len(const struct situs *s) {
   size_t n;
   size_t len = 0;
   struct situs_span *spans = (s->num_spans_ > 1) ? s->u_.many_.spans_ : &s->u_.one_;
@@ -384,22 +384,22 @@ size_t situs_len(const struct situs *s) {
   return len;
 }
 
-int situs_line(const struct situs *s) {
+int aex_situs_line(const struct situs *s) {
   if (!s->num_spans_) return 0;
   return situs_first_span_const(s)->start_line_;
 }
 
-int situs_col(const struct situs *s) {
+int aex_situs_col(const struct situs *s) {
   if (!s->num_spans_) return 0;
   return situs_first_span_const(s)->start_col_;
 }
 
-const char *situs_filename(const struct situs *s) {
+const char *aex_situs_filename(const struct situs *s) {
   if (!s->num_spans_) return "";
   return situs_first_span_const(s)->filename_;
 }
 
-void situs_convert_to_substitution(struct situs *s, size_t num_bytes) {
+void aex_situs_convert_to_substitution(struct situs *s, size_t num_bytes) {
   size_t n;
   struct situs_span *span = situs_first_span(s);
   for (n = 1; n < s->num_spans_; ++n) {
@@ -411,8 +411,8 @@ void situs_convert_to_substitution(struct situs *s, size_t num_bytes) {
   span->num_bytes_ = num_bytes;
 }
 
-void situs_init_from_after(struct situs *s, const struct situs *src_after, size_t num_bytes) {
-  situs_init(s);
+void aex_situs_init_from_after(struct situs *s, const struct situs *src_after, size_t num_bytes) {
+  aex_situs_init(s);
   if (!src_after || !src_after->num_spans_) return;
   struct situs_span *spans = (src_after->num_spans_ > 1) ? src_after->u_.many_.spans_ : &src_after->u_.one_;
   struct situs_span *last_span = spans + src_after->num_spans_ - 1;
@@ -429,7 +429,7 @@ void situs_init_from_after(struct situs *s, const struct situs *src_after, size_
   span->num_bytes_ = num_bytes;
 }
 
-void situs_swap(struct situs *a, struct situs *b) {
+void aex_situs_swap(struct situs *a, struct situs *b) {
   struct situs tmp = *a;
   *a = *b;
   *b = tmp;

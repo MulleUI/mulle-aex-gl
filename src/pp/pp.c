@@ -98,7 +98,7 @@ struct pp_input_file *pp_push_input_file(struct preprocessor *pp, const char *fi
     free(sf);
     return NULL;
   }
-  if_init(ifile, pp);
+  aex_if_init(ifile, pp);
   ifile->filename_ = sf;
   ifile->ppld_input_line_ = 0;
   ifile->ppld_input_line_filename_ = NULL;
@@ -110,7 +110,7 @@ struct pp_input_file *pp_push_input_file(struct preprocessor *pp, const char *fi
 static void pp_pop_input_file(struct preprocessor *pp) {
   struct pp_input_file *ifile = pp->input_stack_;
   if (ifile) {
-    if_cleanup(ifile);
+    aex_if_cleanup(ifile);
     free(ifile);
   }
 }
@@ -126,7 +126,7 @@ void pp_init(struct preprocessor *pp) {
   pp->ppme_input_ = NULL;
   pp->ppme_input_file_ = NULL;
   pp->ppme_input_line_ = 0;
-  ppme_stack_init(&pp->ppme_);
+  aex_ppme_stack_init(&pp->ppme_);
 
   pp->ppld_input_final_ = 0;
   pp->have_ppld_input_line_ = 0;
@@ -158,14 +158,14 @@ void pp_cleanup(struct preprocessor *pp) {
 
   while (pp->if_section_stack_) pp_if_pop(pp);
 
-  ppme_stack_cleanup(&pp->ppme_);
-  pptk_free(pp->ppme_input_);
+  aex_ppme_stack_cleanup(&pp->ppme_);
+  aex_pptk_free(pp->ppme_input_);
 
-  pptk_free(pp->ppld_input_);
+  aex_pptk_free(pp->ppld_input_);
 
   while (pp->input_stack_) pp_pop_input_file(pp);
 
-  pptk_free(pp->pp_output_);
+  aex_pptk_free(pp->pp_output_);
 
   while (pp->filename_buffers_) {
     struct pp_filename_buffer *fb = pp->filename_buffers_;
@@ -214,8 +214,8 @@ int pp_concat_sub_output_b(struct preprocessor *pp, struct situs *output_situs, 
   memcpy((*output_buf) + *output_pos, span_text, span_text_len);
   (*output_buf)[(*output_pos) + span_text_len] = '\0';
   struct situs substitution;
-  situs_init(&substitution);
-  if (situs_clone(&substitution, span_situs)) {
+  aex_situs_init(&substitution);
+  if (aex_situs_clone(&substitution, span_situs)) {
     dx_no_memory(pp->dx_);
     return -1;
   }
@@ -229,18 +229,18 @@ int pp_concat_sub_output_b(struct preprocessor *pp, struct situs *output_situs, 
     sss[n].num_bytes_ = 0;
   }
   sss[0].num_bytes_ = span_text_len;
-  if (situs_concat(output_situs, &substitution)) {
-    situs_cleanup(&substitution);
+  if (aex_situs_concat(output_situs, &substitution)) {
+    aex_situs_cleanup(&substitution);
     dx_no_memory(pp->dx_);
     return -1;
   }
-  situs_cleanup(&substitution);
+  aex_situs_cleanup(&substitution);
   (*output_pos) += span_text_len;
   return 0;
 }
 
 int pp_concat_output(struct preprocessor *pp, struct situs *output_situs, char **output_buf, size_t *output_pos, size_t *output_buf_size, struct situs *span_situs, const char *span_text) {
-  size_t span_text_len = situs_len(span_situs);
+  size_t span_text_len = aex_situs_len(span_situs);
   return pp_concat_output_b(pp, output_situs, output_buf, output_pos, output_buf_size, span_situs, span_text, span_text_len);
 }
 
@@ -257,7 +257,7 @@ int pp_concat_output_b(struct preprocessor *pp, struct situs *output_situs, char
   }
   memcpy((*output_buf) + *output_pos, span_text, span_text_len);
   (*output_buf)[(*output_pos) + span_text_len] = '\0';
-  if (situs_concat(output_situs, span_situs)) {
+  if (aex_situs_concat(output_situs, span_situs)) {
     dx_no_memory(pp->dx_);
     return -1;
   }
@@ -298,35 +298,35 @@ macro_expander:
     int r;
     int next_sym;
     if (pp->ppme_input_) {
-      next_sym = g_pptk_to_ppme_[pp->ppme_input_->tok_];
+      next_sym = g_aex_pptk_to_ppme_[pp->ppme_input_->tok_];
     }
     else {
-      next_sym = PPME_INPUT_END;
+      next_sym = AEX_PPME_INPUT_END;
     }
     /* "defined" token (therefore operator) always disabled on body text macro expansion; in other words,
      * you could #define defined, and that would work everywhere except in an #if clause. */
-    if (next_sym == PPME_DEFINED) next_sym = PPME_IDENT;
+    if (next_sym == AEX_PPME_DEFINED) next_sym = AEX_PPME_IDENT;
 
-    if (next_sym == PPME_IDENT) {
+    if (next_sym == AEX_PPME_IDENT) {
       struct macro *m = mt_find(&pp->macro_table_, pp->ppme_input_->text_, pp->ppme_input_->text_len_);
 
       if (m && !m->nested_invocation_) {
         if (m->is_function_style_) {
-          next_sym = PPME_FUNCTION;
+          next_sym = AEX_PPME_FUNCTION;
         }
         else {
-          next_sym = PPME_OBJECT;
+          next_sym = AEX_PPME_OBJECT;
         }
       }
     }
-    r = ppme_parse(&pp->ppme_, next_sym, pp, &pp->ppme_input_, pp->ppme_input_final_, &pp->pp_output_, 0);
+    r = aex_ppme_parse(&pp->ppme_, next_sym, pp, &pp->ppme_input_, pp->ppme_input_final_, &pp->pp_output_, 0);
     switch (r) {
-      case _PPME_FINISH:
+      case _AEX_PPME_FINISH:
         pp->pp_output_final_ = 1;
         /* Preprocessor is done */
         return PPR_SUCCESS;
 
-      case _PPME_FEED_ME:
+      case _AEX_PPME_FEED_ME:
         /* Need more input; however, if we have a bit of output ready for the C parser, process that first so
          * we minimize the number of tokens concurrently in-flight. */
         if (pp->pp_output_) {
@@ -334,7 +334,7 @@ macro_expander:
         }
         break; /* get more input .. */
 
-      case _PPME_SYNTAX_ERROR:
+      case _AEX_PPME_SYNTAX_ERROR:
         if (pp->ppme_input_) {
           dx_error_loc(pp->dx_, &pp->ppme_input_->situs_, "syntax error: \"%s\"\n", pp->ppme_input_->text_);
         }
@@ -345,18 +345,18 @@ macro_expander:
         /* keep going */
         goto macro_expander;
 
-      case _PPME_MATCH:
-      case _PPME_OVERFLOW:
-      case _PPME_NO_MEMORY:
-      case _PPME_END_OF_INPUT:
-      case _PPME_LEXICAL_ERROR:
-      case _PPME_INTERNAL_ERROR:
+      case _AEX_PPME_MATCH:
+      case _AEX_PPME_OVERFLOW:
+      case _AEX_PPME_NO_MEMORY:
+      case _AEX_PPME_END_OF_INPUT:
+      case _AEX_PPME_LEXICAL_ERROR:
+      case _AEX_PPME_INTERNAL_ERROR:
       default:
         if (pp->ppme_input_) {
-          dx_error_loc(pp->dx_, &pp->ppme_input_->situs_, "internal error (%d) from ppme_parse: \"%s\"\n", r, pp->ppme_input_->text_);
+          dx_error_loc(pp->dx_, &pp->ppme_input_->situs_, "internal error (%d) from aex_ppme_parse: \"%s\"\n", r, pp->ppme_input_->text_);
         }
         else {
-          dx_printf(pp->dx_, "%s(%d): internal error (%d) from ppme_parse at end of file\n", pp->ppme_input_file_, pp->ppme_input_line_, r);
+          dx_printf(pp->dx_, "%s(%d): internal error (%d) from aex_ppme_parse at end of file\n", pp->ppme_input_file_, pp->ppme_input_line_, r);
           pp->dx_->have_error_ = 1;
         }
         return PPR_FAILED;
@@ -395,16 +395,16 @@ line_directives:
        * whether the total file is final (ppld_input_final_) determines if it is the last line of the file,
        * this line might be empty. */
       if (!pp->input_stack_->ppld_input_not_finished_) {
-        struct pptk *pp_current = pp->ppld_input_ ? pptk_pop_front(&pp->ppld_input_) : NULL;
-        ppld_r = ppld_parse(&pp->input_stack_->ppld_, pp_current ? g_pptk_to_ppld_[pp_current->tok_] : /* have_ppld_input_line_ == true */ PPLD_INPUT_END, pp, &pp_current, &pp->ppld_input_, pp->have_ppld_input_line_, &pp->ppme_input_);
+        struct pptk *pp_current = pp->ppld_input_ ? aex_pptk_pop_front(&pp->ppld_input_) : NULL;
+        ppld_r = aex_ppld_parse(&pp->input_stack_->ppld_, pp_current ? g_aex_pptk_to_ppld_[pp_current->tok_] : /* have_ppld_input_line_ == true */ AEX_PPLD_INPUT_END, pp, &pp_current, &pp->ppld_input_, pp->have_ppld_input_line_, &pp->ppme_input_);
         if (pp_current) {
           /* Front (in current) was not processed, recombine */
-          pp->ppld_input_ = pptk_join(pp_current, pp->ppld_input_);
+          pp->ppld_input_ = aex_pptk_join(pp_current, pp->ppld_input_);
         }
       }
       else {
         // Finish up last line before processing tokens for a new one.
-        ppld_r = ppld_parse(&pp->input_stack_->ppld_, PPLD_INPUT_END, pp, NULL, NULL, 0, &pp->ppme_input_);
+        ppld_r = aex_ppld_parse(&pp->input_stack_->ppld_, AEX_PPLD_INPUT_END, pp, NULL, NULL, 0, &pp->ppme_input_);
         pp->input_stack_->ppld_input_not_finished_ = 0;
       }
       switch (ppld_r) {
@@ -412,12 +412,12 @@ line_directives:
           pp->input_stack_->ppld_input_not_finished_ = 1;
           pp->have_ppld_input_line_ = 0;
           return PPR_NEW_INCLUDE;
-        case _PPLD_FINISH:
+        case _AEX_PPLD_FINISH:
           pp->ppme_input_file_ = pp->input_stack_->ppld_input_line_filename_;
           pp->ppme_input_line_ = pp->input_stack_->ppld_input_line_;
           pp->have_ppld_input_line_ = 0;
           goto macro_expander;
-        case _PPLD_SYNTAX_ERROR:
+        case _AEX_PPLD_SYNTAX_ERROR:
           if (pp->ppld_input_) {
             dx_error_loc(pp->dx_, &pp->ppld_input_->situs_, "syntax error: \"%s\"\n", pp->ppld_input_->text_);
           }
@@ -426,16 +426,16 @@ line_directives:
             pp->dx_->have_error_ = 1;
           }
           break;
-        case _PPLD_MATCH:
-        case _PPLD_END_OF_INPUT:
+        case _AEX_PPLD_MATCH:
+        case _AEX_PPLD_END_OF_INPUT:
           /* Should not reach here - lexer internal codes */
           assert(0 && "Should never return lexer internal codes");
           return PPR_FAILED;
-        case _PPLD_LEXICAL_ERROR:
+        case _AEX_PPLD_LEXICAL_ERROR:
           /* Not lexing, should not return lexer errors */
           assert(0 && "Should never return lexer codes");
           return PPR_FAILED;
-        case _PPLD_FEED_ME:
+        case _AEX_PPLD_FEED_ME:
           /* Needs more input */
           /* If we have input for the macro-expander, process it first before creating more tokens */
           if (pp->ppme_input_) {
@@ -444,15 +444,15 @@ line_directives:
             goto macro_expander;
           }
           goto tokenizer;
-        case _PPLD_OVERFLOW:
+        case _AEX_PPLD_OVERFLOW:
           dx_printf(pp->dx_, "Overflow while parsing line directives\n");
           pp->dx_->have_error_ = 1;
           return PPR_FAILED;
-        case _PPLD_NO_MEMORY:
+        case _AEX_PPLD_NO_MEMORY:
           dx_printf(pp->dx_, "No memory while parsing line directives\n");
           pp->dx_->have_error_ = 1;
           return PPR_FAILED;
-        case _PPLD_INTERNAL_ERROR:
+        case _AEX_PPLD_INTERNAL_ERROR:
           dx_printf(pp->dx_, "Internal error while parsing line directives\n");
           pp->dx_->have_error_ = 1;
           return PPR_FAILED;
@@ -467,77 +467,77 @@ tokenizer:;
   int pptk_r;
   do {
     int break_out = 0;
-    if (ppld_stack_accepts(&pp->input_stack_->ppld_, PPLD_HEADER_NAME)) {
-      switch (pptk_mode(&pp->input_stack_->pptk_)) {
-        case M_PPTK_DEFAULT:
-        case M_PPTK_HEADER_NAME_POSSIBLE:
-          pptk_set_mode(&pp->input_stack_->pptk_, M_PPTK_HEADER_NAME_POSSIBLE);
+    if (aex_ppld_stack_accepts(&pp->input_stack_->ppld_, AEX_PPLD_HEADER_NAME)) {
+      switch (aex_pptk_mode(&pp->input_stack_->pptk_)) {
+        case M_AEX_PPTK_DEFAULT:
+        case M_AEX_PPTK_HEADER_NAME_POSSIBLE:
+          aex_pptk_set_mode(&pp->input_stack_->pptk_, M_AEX_PPTK_HEADER_NAME_POSSIBLE);
           break;
-        case M_PPTK_TEMPLATE_DEFAULT:
-        case M_PPTK_TEMPLATE_HEADER_NAME_POSSIBLE:
-        case M_PPTK_TEMPLATE_START:
-          pptk_set_mode(&pp->input_stack_->pptk_, M_PPTK_TEMPLATE_HEADER_NAME_POSSIBLE);
+        case M_AEX_PPTK_TEMPLATE_DEFAULT:
+        case M_AEX_PPTK_TEMPLATE_HEADER_NAME_POSSIBLE:
+        case M_AEX_PPTK_TEMPLATE_START:
+          aex_pptk_set_mode(&pp->input_stack_->pptk_, M_AEX_PPTK_TEMPLATE_HEADER_NAME_POSSIBLE);
           break;
       }
 
     }
     else {
-      switch (pptk_mode(&pp->input_stack_->pptk_)) {
-        case M_PPTK_DEFAULT:
-        case M_PPTK_HEADER_NAME_POSSIBLE:
-          pptk_set_mode(&pp->input_stack_->pptk_, M_PPTK_DEFAULT);
+      switch (aex_pptk_mode(&pp->input_stack_->pptk_)) {
+        case M_AEX_PPTK_DEFAULT:
+        case M_AEX_PPTK_HEADER_NAME_POSSIBLE:
+          aex_pptk_set_mode(&pp->input_stack_->pptk_, M_AEX_PPTK_DEFAULT);
           break;
-        case M_PPTK_TEMPLATE_DEFAULT:
-        case M_PPTK_TEMPLATE_HEADER_NAME_POSSIBLE:
-          pptk_set_mode(&pp->input_stack_->pptk_, M_PPTK_TEMPLATE_DEFAULT);
+        case M_AEX_PPTK_TEMPLATE_DEFAULT:
+        case M_AEX_PPTK_TEMPLATE_HEADER_NAME_POSSIBLE:
+          aex_pptk_set_mode(&pp->input_stack_->pptk_, M_AEX_PPTK_TEMPLATE_DEFAULT);
           break;
-        case M_PPTK_TEMPLATE_START:
+        case M_AEX_PPTK_TEMPLATE_START:
           /* Keep as is; the pptk tokenizer itself will change in due course */
           break;
       }
     }
 
-    pptk_r = pptk_scan(&pp->input_stack_->pptk_, pp, &pp->ppld_input_, &pp->input_stack_->post_line_continuation_situs_);
+    pptk_r = aex_pptk_scan(&pp->input_stack_->pptk_, pp, &pp->ppld_input_, &pp->input_stack_->post_line_continuation_situs_);
     switch (pptk_r) {
       case PPTK_TOKENIZER_LINE_READY:
         pp->have_ppld_input_line_ = 1;
         pp->input_stack_->ppld_input_line_ = pp->input_stack_->pptk_input_line_;
         pp->input_stack_->ppld_input_line_filename_ = pp->input_stack_->pptk_input_line_filename_;
-        int current_line = pptk_endline(&pp->input_stack_->pptk_);
+        int current_line = aex_pptk_endline(&pp->input_stack_->pptk_);
         pp->input_stack_->pptk_input_line_ += current_line - pp->input_stack_->pptk_true_input_line_number_at_start_;
         pp->input_stack_->pptk_true_input_line_number_at_start_ = current_line;
         goto line_directives;
-      case _PPTK_FINISH:
+      case _AEX_PPTK_FINISH:
         break;
-      case _PPTK_MATCH:
-      case _PPTK_END_OF_INPUT:
+      case _AEX_PPTK_MATCH:
+      case _AEX_PPTK_END_OF_INPUT:
         assert(0); /* lexer internal code */
         break;
-      case _PPTK_SYNTAX_ERROR: {
-        struct situs *situs = (struct situs *)pptk_token_common_data(&pp->input_stack_->pptk_);
+      case _AEX_PPTK_SYNTAX_ERROR: {
+        struct situs *situs = (struct situs *)aex_pptk_token_common_data(&pp->input_stack_->pptk_);
         if (situs) {
-          dx_error_loc(pp->dx_, situs, "syntax error: \"%s\"\n", pptk_text(&pp->input_stack_->pptk_));
+          dx_error_loc(pp->dx_, situs, "syntax error: \"%s\"\n", aex_pptk_text(&pp->input_stack_->pptk_));
         }
         else {
-          dx_printf(pp->dx_, "%s(%d): syntax error at column %d: \"%s\"\n", pp->input_stack_->pptk_input_line_filename_, pptk_line(&pp->input_stack_->pptk_), pptk_column(&pp->input_stack_->pptk_), pptk_text(&pp->input_stack_->pptk_));
+          dx_printf(pp->dx_, "%s(%d): syntax error at column %d: \"%s\"\n", pp->input_stack_->pptk_input_line_filename_, aex_pptk_line(&pp->input_stack_->pptk_), aex_pptk_column(&pp->input_stack_->pptk_), aex_pptk_text(&pp->input_stack_->pptk_));
           pp->dx_->have_error_ = 1;
         }
         break;
       }
-      case _PPTK_LEXICAL_ERROR:
-        dx_printf(pp->dx_, "%s(%d): lexical error at column %d: \"%s\"\n", pp->input_stack_->pptk_input_line_filename_, pptk_line(&pp->input_stack_->pptk_), pptk_column(&pp->input_stack_->pptk_), pptk_text(&pp->input_stack_->pptk_));
+      case _AEX_PPTK_LEXICAL_ERROR:
+        dx_printf(pp->dx_, "%s(%d): lexical error at column %d: \"%s\"\n", pp->input_stack_->pptk_input_line_filename_, aex_pptk_line(&pp->input_stack_->pptk_), aex_pptk_column(&pp->input_stack_->pptk_), aex_pptk_text(&pp->input_stack_->pptk_));
         pp->dx_->have_error_ = 1;
         break;
-      case _PPTK_INTERNAL_ERROR:
-        dx_printf(pp->dx_, "%s(%d): internal error at column %d: \"%s\"\n", pp->input_stack_->pptk_input_line_filename_, pptk_line(&pp->input_stack_->pptk_), pptk_column(&pp->input_stack_->pptk_), pptk_text(&pp->input_stack_->pptk_));
+      case _AEX_PPTK_INTERNAL_ERROR:
+        dx_printf(pp->dx_, "%s(%d): internal error at column %d: \"%s\"\n", pp->input_stack_->pptk_input_line_filename_, aex_pptk_line(&pp->input_stack_->pptk_), aex_pptk_column(&pp->input_stack_->pptk_), aex_pptk_text(&pp->input_stack_->pptk_));
         pp->dx_->have_error_ = 1;
         break;
       case PPTK_TOKENIZER_HEADERNAME_CHECK:
         /* Scanner thinks we should check if a headername is acceptable, this depends on whether the line directive parser can handle it. */
-        /* Go to the line directives parser, parse to the extent input is available, and then come back here (via _PPLD_FEED_ME) to
-         * check ppld_stack_accepts(PPLD_HEADER_NAME) and set the pptk mode appropriately. */
+        /* Go to the line directives parser, parse to the extent input is available, and then come back here (via _AEX_PPLD_FEED_ME) to
+         * check aex_ppld_stack_accepts(AEX_PPLD_HEADER_NAME) and set the pptk mode appropriately. */
         goto line_directives;
-      case _PPTK_FEED_ME:
+      case _AEX_PPTK_FEED_ME:
         if (pp->ppld_input_) {
           /* Process input first; this is not a complete line but ensures we push as much as possible prior to asking
            * for more input. */
@@ -545,9 +545,9 @@ tokenizer:;
         }
         break;
     }
-  } while ((pptk_r != _PPTK_FEED_ME) && (pptk_r != _PPTK_FINISH));
+  } while ((pptk_r != _AEX_PPTK_FEED_ME) && (pptk_r != _AEX_PPTK_FINISH));
 
-  if ((pptk_r == _PPTK_FINISH) && !pp->input_stack_->pptk_pushed_final_source_line_) {
+  if ((pptk_r == _AEX_PPTK_FINISH) && !pp->input_stack_->pptk_pushed_final_source_line_) {
     /* Complete last line directive, the last line never ends with a newline. */
     pp->have_ppld_input_line_ = 1;
     pp->input_stack_->ppld_input_line_ = pp->input_stack_->pptk_input_line_;
@@ -562,9 +562,9 @@ tokenizer:;
     goto line_directives;
   }
 
-  if (pptk_r == _PPTK_FINISH) {
+  if (pptk_r == _AEX_PPTK_FINISH) {
     /* we only get here if trigraphs has depleted its input (or pptk
-     * would not return _PPTK_FINISH but _PPTK_FEED_ME) */
+     * would not return _AEX_PPTK_FINISH but _AEX_PPTK_FEED_ME) */
     /* Cannot pop current input source, we've reached the end; bubble
      * any remaining input up through the stages until we ultimately
      * set all_done_ at the top... */
@@ -574,42 +574,42 @@ tokenizer:;
 line_continuations:;
   int pplc_r;
   do {
-    pplc_r = pplc_scan(&pp->input_stack_->pplc_, pp, &pp->input_stack_->post_line_continuation_, &pp->input_stack_->post_line_continuation_size_, &pp->input_stack_->post_line_continuation_size_allocated_, &pp->input_stack_->post_line_continuation_situs_, &pp->input_stack_->post_trigraph_situs_);
+    pplc_r = aex_pplc_scan(&pp->input_stack_->pplc_, pp, &pp->input_stack_->post_line_continuation_, &pp->input_stack_->post_line_continuation_size_, &pp->input_stack_->post_line_continuation_size_allocated_, &pp->input_stack_->post_line_continuation_situs_, &pp->input_stack_->post_trigraph_situs_);
     switch (pplc_r) {
-      case _PPLC_FINISH:
+      case _AEX_PPLC_FINISH:
         break;
-      case _PPLC_MATCH:
-      case _PPLC_END_OF_INPUT:
+      case _AEX_PPLC_MATCH:
+      case _AEX_PPLC_END_OF_INPUT:
         assert(0); /* lexer internal code */
         break;
-      case _PPLC_SYNTAX_ERROR: {
-        struct situs *situs = (struct situs *)pplc_token_common_data(&pp->input_stack_->pplc_);
+      case _AEX_PPLC_SYNTAX_ERROR: {
+        struct situs *situs = (struct situs *)aex_pplc_token_common_data(&pp->input_stack_->pplc_);
         if (situs) {
-          dx_error_loc(pp->dx_, situs, "syntax error: \"%s\"\n", pplc_text(&pp->input_stack_->pplc_));
+          dx_error_loc(pp->dx_, situs, "syntax error: \"%s\"\n", aex_pplc_text(&pp->input_stack_->pplc_));
         }
         else {
-          dx_printf(pp->dx_, "%s(%d): syntax error at column %d: \"%s\"\n", pp->input_stack_->ppld_input_line_filename_, pplc_line(&pp->input_stack_->pplc_), pplc_column(&pp->input_stack_->pplc_), pplc_text(&pp->input_stack_->pplc_));
+          dx_printf(pp->dx_, "%s(%d): syntax error at column %d: \"%s\"\n", pp->input_stack_->ppld_input_line_filename_, aex_pplc_line(&pp->input_stack_->pplc_), aex_pplc_column(&pp->input_stack_->pplc_), aex_pplc_text(&pp->input_stack_->pplc_));
           pp->dx_->have_error_ = 1;
         }
         break;
       }
-      case _PPLC_LEXICAL_ERROR:
-        dx_printf(pp->dx_, "(%d): lexical error at column %d: \"%s\"\n", pplc_line(&pp->input_stack_->pplc_), pplc_column(&pp->input_stack_->pplc_), pplc_text(&pp->input_stack_->pplc_));
+      case _AEX_PPLC_LEXICAL_ERROR:
+        dx_printf(pp->dx_, "(%d): lexical error at column %d: \"%s\"\n", aex_pplc_line(&pp->input_stack_->pplc_), aex_pplc_column(&pp->input_stack_->pplc_), aex_pplc_text(&pp->input_stack_->pplc_));
         pp->dx_->have_error_ = 1;
         break;
-      case _PPLC_INTERNAL_ERROR:
-        dx_printf(pp->dx_, "(%d): internal error at column %d: \"%s\"\n", pplc_line(&pp->input_stack_->pplc_), pplc_column(&pp->input_stack_->pplc_), pplc_text(&pp->input_stack_->pplc_));
+      case _AEX_PPLC_INTERNAL_ERROR:
+        dx_printf(pp->dx_, "(%d): internal error at column %d: \"%s\"\n", aex_pplc_line(&pp->input_stack_->pplc_), aex_pplc_column(&pp->input_stack_->pplc_), aex_pplc_text(&pp->input_stack_->pplc_));
         pp->dx_->have_error_ = 1;
         break;
-      case _PPLC_FEED_ME:
+      case _AEX_PPLC_FEED_ME:
         break;
     }
-  } while ((pplc_r != _PPLC_FEED_ME) && (pplc_r != _PPLC_FINISH));
+  } while ((pplc_r != _AEX_PPLC_FEED_ME) && (pplc_r != _AEX_PPLC_FINISH));
 
-  if (pp->input_stack_->post_line_continuation_size_ || (pplc_r == _PPLC_FINISH)) {
+  if (pp->input_stack_->post_line_continuation_size_ || (pplc_r == _AEX_PPLC_FINISH)) {
     /* Process output of line continuation translation phase first, to ensure we push as much as possible before asking
      * more input. */
-    pptk_set_input(&pp->input_stack_->pptk_, pp->input_stack_->post_line_continuation_, pp->input_stack_->post_line_continuation_size_, pplc_r == _PPLC_FINISH);
+    aex_pptk_set_input(&pp->input_stack_->pptk_, pp->input_stack_->post_line_continuation_, pp->input_stack_->post_line_continuation_size_, pplc_r == _AEX_PPLC_FINISH);
     pp->input_stack_->post_line_continuation_size_ = 0;
     goto tokenizer;
   }
@@ -617,42 +617,42 @@ line_continuations:;
 trigraphs:;
   int pptg_r;
   do {
-    pptg_r = pptg_scan(&pp->input_stack_->pptg_, pp, pp->input_stack_->filename_, &pp->input_stack_->post_trigraph_, &pp->input_stack_->post_trigraph_size_, &pp->input_stack_->post_trigraph_size_allocated_, &pp->input_stack_->post_trigraph_situs_);
+    pptg_r = aex_pptg_scan(&pp->input_stack_->pptg_, pp, pp->input_stack_->filename_, &pp->input_stack_->post_trigraph_, &pp->input_stack_->post_trigraph_size_, &pp->input_stack_->post_trigraph_size_allocated_, &pp->input_stack_->post_trigraph_situs_);
     switch (pptg_r) {
-      case _PPTG_FINISH:
+      case _AEX_PPTG_FINISH:
         break;
-      case _PPTG_MATCH:
-      case _PPTG_END_OF_INPUT:
+      case _AEX_PPTG_MATCH:
+      case _AEX_PPTG_END_OF_INPUT:
         assert(0); /* lexer internal code */
         break;
-      case _PPTG_SYNTAX_ERROR: {
-        struct situs *situs = (struct situs *)pptg_token_common_data(&pp->input_stack_->pptg_);
+      case _AEX_PPTG_SYNTAX_ERROR: {
+        struct situs *situs = (struct situs *)aex_pptg_token_common_data(&pp->input_stack_->pptg_);
         if (situs) {
-          dx_error_loc(pp->dx_, situs, "syntax error: \"%s\"\n", pptg_text(&pp->input_stack_->pptg_));
+          dx_error_loc(pp->dx_, situs, "syntax error: \"%s\"\n", aex_pptg_text(&pp->input_stack_->pptg_));
         }
         else {
-          dx_printf(pp->dx_, "%s(%d): syntax error at column %d: \"%s\"\n", pp->input_stack_->ppld_input_line_filename_, pptg_line(&pp->input_stack_->pptg_), pptg_column(&pp->input_stack_->pptg_), pptg_text(&pp->input_stack_->pptg_));
+          dx_printf(pp->dx_, "%s(%d): syntax error at column %d: \"%s\"\n", pp->input_stack_->ppld_input_line_filename_, aex_pptg_line(&pp->input_stack_->pptg_), aex_pptg_column(&pp->input_stack_->pptg_), aex_pptg_text(&pp->input_stack_->pptg_));
           pp->dx_->have_error_ = 1;
         }
         break;
       }
-      case _PPTG_LEXICAL_ERROR:
-        dx_printf(pp->dx_, "(%d): lexical error at column %d: \"%s\"\n", pptg_line(&pp->input_stack_->pptg_), pptg_column(&pp->input_stack_->pptg_), pptg_text(&pp->input_stack_->pptg_));
+      case _AEX_PPTG_LEXICAL_ERROR:
+        dx_printf(pp->dx_, "(%d): lexical error at column %d: \"%s\"\n", aex_pptg_line(&pp->input_stack_->pptg_), aex_pptg_column(&pp->input_stack_->pptg_), aex_pptg_text(&pp->input_stack_->pptg_));
         pp->dx_->have_error_ = 1;
         break;
-      case _PPTG_INTERNAL_ERROR:
-        dx_printf(pp->dx_, "(%d): internal error at column %d: \"%s\"\n", pptg_line(&pp->input_stack_->pptg_), pptg_column(&pp->input_stack_->pptg_), pptg_text(&pp->input_stack_->pptg_));
+      case _AEX_PPTG_INTERNAL_ERROR:
+        dx_printf(pp->dx_, "(%d): internal error at column %d: \"%s\"\n", aex_pptg_line(&pp->input_stack_->pptg_), aex_pptg_column(&pp->input_stack_->pptg_), aex_pptg_text(&pp->input_stack_->pptg_));
         pp->dx_->have_error_ = 1;
         break;
-      case _PPTG_FEED_ME:
+      case _AEX_PPTG_FEED_ME:
         break;
     }
-  } while ((pptg_r != _PPTG_FEED_ME) && (pptg_r != _PPTG_FINISH));
+  } while ((pptg_r != _AEX_PPTG_FEED_ME) && (pptg_r != _AEX_PPTG_FINISH));
 
-  if (pp->input_stack_->post_trigraph_size_ || (pptg_r == _PPTG_FINISH)) {
+  if (pp->input_stack_->post_trigraph_size_ || (pptg_r == _AEX_PPTG_FINISH)) {
     /* Process output of trigraph translation phase first, to ensure we push as much as possible before asking
      * more input. */
-    pplc_set_input(&pp->input_stack_->pplc_, pp->input_stack_->post_trigraph_, pp->input_stack_->post_trigraph_size_, pptg_r == _PPTG_FINISH);
+    aex_pplc_set_input(&pp->input_stack_->pplc_, pp->input_stack_->post_trigraph_, pp->input_stack_->post_trigraph_size_, pptg_r == _AEX_PPTG_FINISH);
     pp->input_stack_->post_trigraph_size_ = 0;
     goto line_continuations;
   }
@@ -669,7 +669,7 @@ trigraphs:;
   }
   /* And jump to trigraphs to process what we got. If we got nothing, and the caller or input_request_fn_
    * did not mark it as the end of the file, then we might loop infinitely here, but that'd be a bug in
-   * the calling code (for not setting is_final() when calling if_set_input(), or not calling if_set_input()
+   * the calling code (for not setting is_final() when calling aex_if_set_input(), or not calling aex_if_set_input()
    * at all.) */
   goto trigraphs;
 

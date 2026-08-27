@@ -40,7 +40,7 @@
 
 %grammar%
 
-%prefix ppce_
+%prefix aex_ppce_
 
 %params struct preprocessor *pp, struct pptk **pp_current_tk, struct pptk *input_chain, int is_final, int64_t *presult, int *pis_unsigned
 
@@ -48,17 +48,17 @@
   do {                                               \
     (*pp_current_tk) = (*pp_current_tk)->next_;      \
     if ((*pp_current_tk) != input_chain) {           \
-      sym = g_pptk_to_ppce_[(*pp_current_tk)->tok_]; \
+      sym = g_aex_pptk_to_ppce_[(*pp_current_tk)->tok_]; \
     }                                                \
     else {                                           \
       if (is_final) {                                \
-        sym = PPCE_INPUT_END;                        \
+        sym = AEX_PPCE_INPUT_END;                        \
       }                                              \
       else {                                         \
-        return _PPCE_FEED_ME;                        \
+        return _AEX_PPCE_FEED_ME;                        \
       }                                              \
     }                                                \
-  } while (sym == PPCE_WS);
+  } while (sym == AEX_PPCE_WS);
 
 %token QUESTION_MARK COLON BAR_BAR AMPERSAND_AMPERSAND BAR CARET AMPERSAND BANG_EQUALS EQUALS_EQUALS GT_EQUALS LT_EQUALS GT LT GT_GT LT_LT MINUS PLUS PERCENT SLASH ASTERISK DEFINED PAR_OPEN IDENT PAR_CLOSE BANG TILDE MINUS_MINUS PLUS_PLUS CHAR_LIT INTEGER_LIT WS OTHER
 %token_type struct pptk *
@@ -66,7 +66,7 @@
 %token_action $$ = *pp_current_tk;
 
 %%
-struct ppce_value {
+struct aex_ppce_value {
   int is_unsigned_:1; 
   union { 
     uint64_t u_; 
@@ -77,7 +77,7 @@ struct ppce_value {
 
 %nt constant-exp cond-exp log-or-exp log-and-exp or-exp xor-exp and-exp equ-exp rel-exp shift-exp add-exp mul-exp cast-exp unary-exp postfix-exp primary-exp
 %type constant-exp cond-exp log-or-exp log-and-exp or-exp xor-exp and-exp equ-exp rel-exp shift-exp add-exp mul-exp cast-exp unary-exp postfix-exp primary-exp: \
-  struct ppce_value
+  struct aex_ppce_value
 
 constant-exp: cond-exp { 
   $$ = $0;
@@ -242,7 +242,7 @@ postfix-exp: primary-exp { $$ = $0; }
 primary-exp: PAR_OPEN constant-exp PAR_CLOSE { $$ = $1; }
 
 %%
-static int ppce_int_const_expr_to_value(struct preprocessor *pp, struct ppce_value *v, struct pptk *tk) {
+static int aex_ppce_int_const_expr_to_value(struct preprocessor *pp, struct aex_ppce_value *v, struct pptk *tk) {
   switch (tk->v_type_) {
     case PPVT_SHORT:
     case PPVT_INT:
@@ -267,12 +267,12 @@ static int ppce_int_const_expr_to_value(struct preprocessor *pp, struct ppce_val
 %%
 
 primary-exp: CHAR_LIT { 
-  if (ppce_int_const_expr_to_value(pp, &$$, $0)) {
+  if (aex_ppce_int_const_expr_to_value(pp, &$$, $0)) {
     /* XXX: handle failure.. */
   } 
 }
 primary-exp: INTEGER_LIT {
-  if (ppce_int_const_expr_to_value(pp, &$$, $0)) {
+  if (aex_ppce_int_const_expr_to_value(pp, &$$, $0)) {
     /* XXX: handle failure.. */
   }
 }

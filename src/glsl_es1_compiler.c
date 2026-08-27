@@ -102,12 +102,12 @@ static void glsl_es1_compiler_skip_template_cruft(struct glsl_es1_compiler *cc) 
           ((cc->pp_.pp_output_->tok_ == PPTK_TEMPLATE_DOUBLE_CURLY_OPEN) ||
           (cc->pp_.pp_output_->tok_ == PPTK_TEMPLATE_DOUBLE_CURLY_CLOSE) ||
           ((cc->pp_.pp_output_->tok_ == PPTK_TEMPLATE_LIT) && !cc->pp_.pp_output_->text_len_))) {
-    pptk_free(pptk_pop_front(&cc->pp_.pp_output_));
+    aex_pptk_free(aex_pptk_pop_front(&cc->pp_.pp_output_));
   }
 }
 
 static void glsl_es1_compiler_next_token(struct glsl_es1_compiler *cc) {
-  pptk_free(pptk_pop_front(&cc->pp_.pp_output_));
+  aex_pptk_free(aex_pptk_pop_front(&cc->pp_.pp_output_));
   glsl_es1_compiler_skip_template_cruft(cc);
 }
 
@@ -132,7 +132,7 @@ c_parser_input:
       do {
         if (cc->pp_.pp_output_) {
           struct pptk *tk = cc->pp_.pp_output_;
-          sym = g_pptk_to_glsl_es1_[tk->tok_];
+          sym = g_aex_pptk_to_glsl_es1_[tk->tok_];
           if (sym == GLSL_ES1_IDENTIFIER) {
             /* Possibly retarget to TYPEDEF_NAME at runtime, depending on:
               * 1) if a TYPE_NAME is currently accepted by the grammar
@@ -187,7 +187,7 @@ c_parser_input:
       if ((r == _GLSL_ES1_SYNTAX_ERROR) || (r == _GLSL_ES1_FEED_ME)) {
         if (r == _GLSL_ES1_SYNTAX_ERROR) {
           if (cc->pp_.pp_output_) {
-            dx_error(cc->dx_, "syntax error at column %d: \"%s\"\n", situs_col(&cc->pp_.pp_output_->situs_), cc->pp_.pp_output_->text_);
+            dx_error(cc->dx_, "syntax error at column %d: \"%s\"\n", aex_situs_col(&cc->pp_.pp_output_->situs_), cc->pp_.pp_output_->text_);
           }
           else {
             dx_error(cc->dx_, "syntax error, unexpected end of file\n", cc->dx_->input_file_, cc->dx_->input_line_);
@@ -208,7 +208,7 @@ c_parser_input:
         if (cc->pp_.pp_output_) {
           cc->dx_->fatal_error_ = 1;
           cc->dx_->have_error_ = 1;
-          dx_printf(cc->dx_, "%s(%d): internal error (%d) from cp_parse at column %d: \"%s\"\n", cc->dx_->input_file_, cc->dx_->input_line_, r, situs_col(&cc->pp_.pp_output_->situs_), cc->pp_.pp_output_->text_);
+          dx_printf(cc->dx_, "%s(%d): internal error (%d) from cp_parse at column %d: \"%s\"\n", cc->dx_->input_file_, cc->dx_->input_line_, r, aex_situs_col(&cc->pp_.pp_output_->situs_), cc->pp_.pp_output_->text_);
         }
         else {
           cc->dx_->fatal_error_ = 1;
@@ -263,7 +263,7 @@ struct glsl_es1_compiler_mem_input_file {
 
 static int glsl_es1_compiler_file_mem_input_request_callback(void *baton, struct pp_input_file *ifile) {
   struct glsl_es1_compiler_mem_input_file *mif = (struct glsl_es1_compiler_mem_input_file *)ifile;
-  if_set_input(ifile, mif->mem_, mif->memsize_, 1);
+  aex_if_set_input(ifile, mif->mem_, mif->memsize_, 1);
   return 0;
 }
 
@@ -278,7 +278,7 @@ static struct pp_input_file *glsl_es1_compiler_push_input_file_mem(struct glsl_e
 
 static int glsl_es1_compiler_file_mem_snippet_input_request_callback(void *baton, struct pp_input_file *ifile) {
   struct glsl_es1_compiler_mem_input_file *mif = (struct glsl_es1_compiler_mem_input_file *)ifile;
-  if_set_input(ifile, mif->mem_, mif->memsize_, 1);
+  aex_if_set_input(ifile, mif->mem_, mif->memsize_, 1);
   return 0;
 }
 

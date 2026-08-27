@@ -55,7 +55,7 @@
 
 void sl_variable_init(struct sl_variable *v) {
   v->name_ = NULL;
-  situs_init(&v->location_);
+  aex_situs_init(&v->location_);
   v->chain_ = NULL;
   v->frame_ = NULL;
   v->type_ = NULL;
@@ -68,7 +68,7 @@ void sl_variable_init(struct sl_variable *v) {
 }
 
 void sl_variable_cleanup(struct sl_variable *v) {
-  situs_cleanup(&v->location_);
+  aex_situs_cleanup(&v->location_);
   sl_expr_temp_cleanup(&v->value_);
   sl_reg_alloc_cleanup(&v->reg_alloc_);
   /* We don't free the symbol, as it is owned by the scope. */
@@ -111,7 +111,7 @@ struct sl_variable *sl_frame_alloc_variable(struct sl_frame *frame, const char *
   if (!v) return NULL;
   sl_variable_init(v);
   v->frame_ = frame;
-  if (loc && situs_clone(&v->location_, loc)) {
+  if (loc && aex_situs_clone(&v->location_, loc)) {
     /* Failed memory alloc */
     sl_variable_cleanup(v);
     free(v);
@@ -153,7 +153,7 @@ struct sl_function *sl_frame_alloc_function(const char *name, const struct situs
   struct sl_function *f = (struct sl_function *)malloc(sizeof(struct sl_function));
   if (!f) return NULL;
   f->name_ = NULL;
-  situs_init(&f->location_);
+  aex_situs_init(&f->location_);
   f->overload_chain_ = f;
   f->chain_ = f;
   f->return_type_ = return_type;
@@ -161,16 +161,16 @@ struct sl_function *sl_frame_alloc_function(const char *name, const struct situs
   f->num_parameters_allocated_ = 0;
   f->parameters_ = NULL;
   f->symbol_ = NULL;
-  if (loc && situs_clone(&f->location_, loc)) {
+  if (loc && aex_situs_clone(&f->location_, loc)) {
     /* Failed memory alloc */
-    situs_cleanup(&f->location_);
+    aex_situs_cleanup(&f->location_);
     free(f);
     return NULL;
   }
   if (name) {
     f->name_ = strdup(name);
     if (!f->name_) {
-      situs_cleanup(&f->location_);
+      aex_situs_cleanup(&f->location_);
       free(f);
       return NULL;
     }
@@ -190,7 +190,7 @@ struct sl_function *sl_frame_alloc_function(const char *name, const struct situs
 
 void sl_parameter_cleanup(struct sl_parameter *p) {
   if (p->name_) free(p->name_);
-  situs_cleanup(&p->location_);
+  aex_situs_cleanup(&p->location_);
 }
 
 void sl_frame_free_function(struct sl_function *f) {
@@ -202,7 +202,7 @@ void sl_frame_free_function(struct sl_function *f) {
   if (f->parameters_) {
     free(f->parameters_);
   }
-  situs_cleanup(&f->location_);
+  aex_situs_cleanup(&f->location_);
   if (f->name_) free(f->name_);
   sl_stmt_free_list(f->body_);
   while (f->callers_) {
@@ -242,19 +242,19 @@ size_t sl_function_append_parameter(struct sl_function *f, const char *name, con
   }
   struct sl_parameter *p = f->parameters_ + f->num_parameters_;
   p->name_ = NULL;
-  situs_init(&p->location_);
+  aex_situs_init(&p->location_);
   p->type_ = type;
   p->symbol_ = NULL;
   p->variable_ = NULL;
-  if (loc && situs_clone(&p->location_, loc)) {
+  if (loc && aex_situs_clone(&p->location_, loc)) {
   /* Failed memory alloc */
-    situs_cleanup(&p->location_);
+    aex_situs_cleanup(&p->location_);
     return SIZE_MAX;
   }
   if (name) {
     p->name_ = strdup(name);
     if (!p->name_) {
-      situs_cleanup(&p->location_);
+      aex_situs_cleanup(&p->location_);
       return SIZE_MAX;
     }
   }
@@ -311,7 +311,7 @@ int sl_function_match_parameter_types(struct sl_function *f, size_t num_paramete
 int sl_function_match_validation(struct diags *dx, struct sl_function *fnew, struct sl_function *fexisting) {
   if (!sl_function_match(fnew, fexisting)) {
     /* Functions don't match */
-    dx_error_loc(dx, &fnew->location_, "function \"%s\" does not match previous declaration (see line %d)", fnew->name_, situs_line(&fexisting->location_));
+    dx_error_loc(dx, &fnew->location_, "function \"%s\" does not match previous declaration (see line %d)", fnew->name_, aex_situs_line(&fexisting->location_));
 
     return -1;
   }
@@ -324,7 +324,7 @@ int sl_function_match_validation(struct diags *dx, struct sl_function *fnew, str
     int qualifiers_new = sl_type_qualifiers(pnew->type_);
     int qualifiers_existing = sl_type_qualifiers(pexisting->type_);
     if ((qualifiers_new ^ qualifiers_existing) & SL_PARAMETER_QUALIFIER_MASK) {
-      dx_error_loc(dx, &pnew->location_, "parameter \"%s\" of function \"%s\" does not match previous declaration (see line %d)", pnew->name_, fnew->name_, situs_line(&pexisting->location_));
+      dx_error_loc(dx, &pnew->location_, "parameter \"%s\" of function \"%s\" does not match previous declaration (see line %d)", pnew->name_, fnew->name_, aex_situs_line(&pexisting->location_));
       return -1;
     }
   }

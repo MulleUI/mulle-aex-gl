@@ -36,12 +36,12 @@
 
 %scanner%
 
-%prefix pptg_
+%prefix aex_pptg_
 
 %common_type struct situs
-%constructor situs_init(&$$);
-%move situs_swap(&$$, &$0);
-%destructor situs_cleanup(&$$);
+%constructor aex_situs_init(&$$);
+%move aex_situs_swap(&$$, &$0);
+%destructor aex_situs_cleanup(&$$);
 
 %params struct preprocessor *pp, const char *filename, char **output_buf, size_t *output_end, size_t *output_buf_alloc_size, struct situs *output_situs
 
@@ -60,70 +60,70 @@ $: {
 
 : \?\?= {
   $.u_.one_.end_ = $.u_.one_.start_ + 1;
-  pptg_set_location(stack, $.u_.one_.end_line_, $.u_.one_.end_col_, $.u_.one_.end_);
+  aex_pptg_set_location(stack, $.u_.one_.end_line_, $.u_.one_.end_col_, $.u_.one_.end_);
   if (pp_concat_sub_output(pp, output_situs, output_buf, output_end, output_buf_alloc_size, &$, "#")) {
-    return _PPTG_NO_MEMORY;
+    return _AEX_PPTG_NO_MEMORY;
   }
 }
 : \?\?\( { 
   $.u_.one_.end_ = $.u_.one_.start_ + 1;
-  pptg_set_location(stack, $.u_.one_.end_line_, $.u_.one_.end_col_, $.u_.one_.end_);
+  aex_pptg_set_location(stack, $.u_.one_.end_line_, $.u_.one_.end_col_, $.u_.one_.end_);
   if (pp_concat_sub_output(pp, output_situs, output_buf, output_end, output_buf_alloc_size, &$, "[")) {
-    return _PPTG_NO_MEMORY;
+    return _AEX_PPTG_NO_MEMORY;
   }
 }
 : \?\?/ { 
   $.u_.one_.end_ = $.u_.one_.start_ + 1;
-  pptg_set_location(stack, $.u_.one_.end_line_, $.u_.one_.end_col_, $.u_.one_.end_);
+  aex_pptg_set_location(stack, $.u_.one_.end_line_, $.u_.one_.end_col_, $.u_.one_.end_);
   if (pp_concat_sub_output(pp, output_situs, output_buf, output_end, output_buf_alloc_size, &$, "\\")) {
-    return _PPTG_NO_MEMORY;
+    return _AEX_PPTG_NO_MEMORY;
   }
 }
 : \?\?\) { 
   $.u_.one_.end_ = $.u_.one_.start_ + 1;
-  pptg_set_location(stack, $.u_.one_.end_line_, $.u_.one_.end_col_, $.u_.one_.end_);
+  aex_pptg_set_location(stack, $.u_.one_.end_line_, $.u_.one_.end_col_, $.u_.one_.end_);
   if (pp_concat_sub_output(pp, output_situs, output_buf, output_end, output_buf_alloc_size, &$, "]")) {
-    return _PPTG_NO_MEMORY;
+    return _AEX_PPTG_NO_MEMORY;
   }
 }
 : \?\?\' { 
   $.u_.one_.end_ = $.u_.one_.start_ + 1;
-  pptg_set_location(stack, $.u_.one_.end_line_, $.u_.one_.end_col_, $.u_.one_.end_);
+  aex_pptg_set_location(stack, $.u_.one_.end_line_, $.u_.one_.end_col_, $.u_.one_.end_);
   if (pp_concat_sub_output(pp, output_situs, output_buf, output_end, output_buf_alloc_size, &$, "^")) {
-    return _PPTG_NO_MEMORY;
+    return _AEX_PPTG_NO_MEMORY;
   }
 }
 : \?\?< { 
   $.u_.one_.end_ = $.u_.one_.start_ + 1;
-  pptg_set_location(stack, $.u_.one_.end_line_, $.u_.one_.end_col_, $.u_.one_.end_);
+  aex_pptg_set_location(stack, $.u_.one_.end_line_, $.u_.one_.end_col_, $.u_.one_.end_);
   if (pp_concat_sub_output(pp, output_situs, output_buf, output_end, output_buf_alloc_size, &$, "{")) {
-    return _PPTG_NO_MEMORY;
+    return _AEX_PPTG_NO_MEMORY;
   }
 }
 : \?\?! { 
   $.u_.one_.end_ = $.u_.one_.start_ + 1;
-  pptg_set_location(stack, $.u_.one_.end_line_, $.u_.one_.end_col_, $.u_.one_.end_);
+  aex_pptg_set_location(stack, $.u_.one_.end_line_, $.u_.one_.end_col_, $.u_.one_.end_);
   if (pp_concat_sub_output(pp, output_situs, output_buf, output_end, output_buf_alloc_size, &$, "|")) {
-    return _PPTG_NO_MEMORY;
+    return _AEX_PPTG_NO_MEMORY;
   }
 }
 : \?\?> {
   $.u_.one_.end_ = $.u_.one_.start_ + 1;
-  pptg_set_location(stack, $.u_.one_.end_line_, $.u_.one_.end_col_, $.u_.one_.end_);
+  aex_pptg_set_location(stack, $.u_.one_.end_line_, $.u_.one_.end_col_, $.u_.one_.end_);
   if (pp_concat_sub_output(pp, output_situs, output_buf, output_end, output_buf_alloc_size, &$, "}")) {
-    return _PPTG_NO_MEMORY;
+    return _AEX_PPTG_NO_MEMORY;
   }
 }
 : \?\?\- {
   $.u_.one_.end_ = $.u_.one_.start_ + 1;
-  pptg_set_location(stack, $.u_.one_.end_line_, $.u_.one_.end_col_, $.u_.one_.end_);
+  aex_pptg_set_location(stack, $.u_.one_.end_line_, $.u_.one_.end_col_, $.u_.one_.end_);
   if (pp_concat_sub_output(pp, output_situs, output_buf, output_end, output_buf_alloc_size, &$, "~")) {
-    return _PPTG_NO_MEMORY;
+    return _AEX_PPTG_NO_MEMORY;
   }
 }
 
 : ([^\?]+ | \? [^\?] | \? \?+ [^=\(/\)\'<!>\-])+ { 
   if (pp_concat_output(pp, output_situs, output_buf, output_end, output_buf_alloc_size, &$, $text)) {
-    return _PPTG_NO_MEMORY;
+    return _AEX_PPTG_NO_MEMORY;
   }
 }

@@ -43,28 +43,28 @@ struct pptk;
 
 %grammar%
 
-%prefix ppld_
+%prefix aex_ppld_
 
 %params struct preprocessor *pp, struct pptk **pp_current, struct pptk **pp_input_chain, int is_final, struct pptk **pp_output_chain
 
 %on_next_token \
   if (*pp_current) {                                \
-    pptk_free(*pp_current);                         \
+    aex_pptk_free(*pp_current);                         \
     *pp_current = NULL;                             \
   }                                                 \
   if (*pp_input_chain) {                            \
-    *pp_current = pptk_pop_front(pp_input_chain);   \
-    sym = g_pptk_to_ppld_[(*pp_current)->tok_];     \
+    *pp_current = aex_pptk_pop_front(pp_input_chain);   \
+    sym = g_aex_pptk_to_ppld_[(*pp_current)->tok_];     \
   }                                                 \
   else {                                            \
-    if (!is_final) return _PPLD_FEED_ME;            \
-    sym = PPLD_INPUT_END;                           \
+    if (!is_final) return _AEX_PPLD_FEED_ME;            \
+    sym = AEX_PPLD_INPUT_END;                           \
   }
 
 %token_type struct pptk *
 %constructor $$ = NULL;
 %move $$ = $0; $0 = NULL;
-%destructor pptk_free($$);
+%destructor aex_pptk_free($$);
 %token_action $$ = *pp_current; *pp_current = NULL;
 
 %token HASH_TOK IF_TOK IFDEF_TOK IFNDEF_TOK ELIF_TOK ELSE_TOK ENDIF_TOK INCLUDE_TOK DEFINE_TOK UNDEF_TOK \
@@ -82,7 +82,7 @@ struct pptk;
       par-close comma ellipsis header-pp-tokens hdr-preprocessing-token version : struct pptk *
 %constructor $$ = NULL;
 %move $$ = $0; $0 = NULL; 
-%destructor pptk_free($$);
+%destructor aex_pptk_free($$);
 
 
 pp-line: hash ws-opt non-directive newline-opt {
@@ -92,7 +92,7 @@ pp-line: hash ws-opt non-directive newline-opt {
 pp-line: hash version pp-tokens newline-opt {
   struct pptk *tk = $2;
   if (tk) {
-    while (g_pptk_to_ppld_[tk->tok_] == PPLD_WS_TOK) {
+    while (g_aex_pptk_to_ppld_[tk->tok_] == AEX_PPLD_WS_TOK) {
       tk = tk->next_;
       if (tk == $2) {
         tk = NULL;
@@ -116,7 +116,7 @@ pp-line: hash if pp-tokens newline-opt {
   struct pp_if_section *sec = pp_if_push(pp);
   if (!sec) {
     dx_no_memory(pp->dx_);
-    return _PPLD_NO_MEMORY;
+    return _AEX_PPLD_NO_MEMORY;
   }
   if (parent && (parent->state_ != PP_IFSS_SELECTED)) {
     /* Don't care if the symbol is defined, the entire ifdef is skipped. */
@@ -125,12 +125,12 @@ pp-line: hash if pp-tokens newline-opt {
   else {
     sec->state_ = PP_IFSS_NOT_YET_SELECTED;
     /* Process constant expression */
-    int r = pptk_perform_macro_expansion(pp, &$2, 1 /* note: Keep "defined"! See C99 6.10.1-3 */ );
+    int r = aex_pptk_perform_macro_expansion(pp, &$2, 1 /* note: Keep "defined"! See C99 6.10.1-3 */ );
     if (!r) {
       /* Process pp_const_expr */
       int64_t result;
       int is_unsigned;
-      r = ppce_eval_const_expr(pp, $2, &result, &is_unsigned);
+      r = aex_ppce_eval_const_expr(pp, $2, &result, &is_unsigned);
       if (!r) {
         if (result) {
           /* We're true . */
@@ -155,12 +155,12 @@ pp-line: hash elif pp-tokens newline-opt {
     pp->if_section_stack_->state_ = PP_IFSS_SKIP; /* overwritten below */
 
     /* Process constant expression */
-    int r = pptk_perform_macro_expansion(pp, &$2, 1 /* note: Keep "defined"! See C99 6.10.1-3 */);
+    int r = aex_pptk_perform_macro_expansion(pp, &$2, 1 /* note: Keep "defined"! See C99 6.10.1-3 */);
     if (!r) {
       /* Process pp_const_expr */
       int64_t result;
       int is_unsigned;
-      r = ppce_eval_const_expr(pp, $2, &result, &is_unsigned);
+      r = aex_ppce_eval_const_expr(pp, $2, &result, &is_unsigned);
       if (!r) {
         if (result) {
           /* We're true . */
@@ -187,7 +187,7 @@ pp-line: hash ifdef identifier ws-opt newline-opt {
   struct pp_if_section *sec = pp_if_push(pp);
   if (!sec) {
     dx_no_memory(pp->dx_);
-    return _PPLD_NO_MEMORY;
+    return _AEX_PPLD_NO_MEMORY;
   }
   if (parent && (parent->state_ != PP_IFSS_SELECTED)) {
     /* Don't care if the symbol is defined, the entire ifdef is skipped. */
@@ -209,7 +209,7 @@ pp-line: hash ifndef identifier ws-opt newline-opt  {
   struct pp_if_section *sec = pp_if_push(pp);
   if (!sec) {
     dx_no_memory(pp->dx_);
-    return _PPLD_NO_MEMORY;
+    return _AEX_PPLD_NO_MEMORY;
   }
   if (parent && (parent->state_ != PP_IFSS_SELECTED)) {
     /* Don't care if the symbol is defined, the entire ifdef is skipped. */
@@ -256,18 +256,18 @@ pp-line: hash endif ws-opt newline-opt {
 pp-line: hash include header-pp-tokens newline-opt {
   if (!pp->if_section_stack_ || pp->if_section_stack_->state_ == PP_IFSS_SELECTED) {
     /* #include */
-    $2 = pptk_trim($2);
+    $2 = aex_pptk_trim($2);
     if ($2 && $2->tok_ != PPTK_HEADER_NAME) {
       /* Process tokens for macro expansions and re-evaluate for headername */
-      if (pptk_perform_macro_expansion(pp, &$2, 0)) {
-        return _PPLD_INTERNAL_ERROR;
+      if (aex_pptk_perform_macro_expansion(pp, &$2, 0)) {
+        return _AEX_PPLD_INTERNAL_ERROR;
       }
       struct pptk *rescanned = NULL;
-      int r = pptk_rescan(pp, $2, &rescanned, 1 /* allow header name */);
-      $2 = pptk_trim(rescanned);
+      int r = aex_pptk_rescan(pp, $2, &rescanned, 1 /* allow header name */);
+      $2 = aex_pptk_trim(rescanned);
     
       if (r) {
-        return _PPLD_INTERNAL_ERROR;
+        return _AEX_PPLD_INTERNAL_ERROR;
       }
     }
     if (!$2 || ($2->tok_ != PPTK_HEADER_NAME)) {
@@ -282,7 +282,7 @@ pp-line: hash include header-pp-tokens newline-opt {
       char *headername = (char *)malloc(headername_len - 2 + 1);
       if (!headername) {
         dx_no_memory(pp->dx_);
-        return _PPLD_NO_MEMORY;
+        return _AEX_PPLD_NO_MEMORY;
       }
       memcpy(headername, $2->text_ + 1, headername_len - 2);
       headername[headername_len - 2] = '\0';
@@ -315,7 +315,7 @@ pp-line: hash define identifier non-par-open-replacement-list newline-opt {
       m->is_variadic_ = 0;
       m->nested_invocation_ = 0;
       m->args_ = NULL;
-      m->replacement_list_ = pptk_trim($3);
+      m->replacement_list_ = aex_pptk_trim($3);
       $3 = NULL;
     }
   }
@@ -338,8 +338,8 @@ pp-line: hash define identifier PAR_OPEN_TOK identifier-list-opt PAR_CLOSE_TOK r
       m->is_function_style_ = 1;
       m->is_variadic_ = 0;
       m->nested_invocation_ = 0;
-      m->args_ = pptk_trim($4);
-      m->replacement_list_ = pptk_trim($6);
+      m->args_ = aex_pptk_trim($4);
+      m->replacement_list_ = aex_pptk_trim($6);
       $4 = $6 = NULL;
     }
   }
@@ -363,7 +363,7 @@ pp-line: hash define identifier PAR_OPEN_TOK ELLIPSIS par-close replacement-list
       m->is_variadic_ = 1;
       m->nested_invocation_ = 0;
       m->args_ = NULL;
-      m->replacement_list_ = pptk_trim($6);
+      m->replacement_list_ = aex_pptk_trim($6);
       $6 = NULL;
     }
   }
@@ -386,8 +386,8 @@ pp-line: hash define identifier PAR_OPEN_TOK identifier-list COMMA ELLIPSIS par-
       m->is_function_style_ = 1;
       m->is_variadic_ = 1;
       m->nested_invocation_ = 0;
-      m->args_ = pptk_trim($4);
-      m->replacement_list_ = pptk_trim($8);
+      m->args_ = aex_pptk_trim($4);
+      m->replacement_list_ = aex_pptk_trim($8);
       $4 = $8 = NULL;
     }
   }
@@ -410,7 +410,7 @@ pp-line: hash undef identifier ws-opt newline-opt {
 pp-line: hash line pp-tokens newline-opt;
 pp-line: hash error-nt pp-tokens-opt newline-opt {
   if (!pp->if_section_stack_ || pp->if_section_stack_->state_ == PP_IFSS_SELECTED) {
-    char *msg = pptk_to_str(pp, $2);
+    char *msg = aex_pptk_to_str(pp, $2);
     if (msg) {
       dx_error_loc(pp->dx_, &$1->situs_, "Error: %s", msg);
       free(msg);
@@ -425,8 +425,8 @@ pp-line: hash ws-opt newline-opt {
 pp-line: non-hash-pp-tokens-opt newline-opt {
   /* Regular content *all* moves to the output; if, and only if, the current section is not to be skipped */
   if (!pp->if_section_stack_ || (pp->if_section_stack_->state_ == PP_IFSS_SELECTED)) {
-    *pp_output_chain = pptk_join(*pp_output_chain, $0);
-    *pp_output_chain = pptk_join(*pp_output_chain, $1);
+    *pp_output_chain = aex_pptk_join(*pp_output_chain, $0);
+    *pp_output_chain = aex_pptk_join(*pp_output_chain, $1);
     $0 = $1 = NULL;
   }
 }
@@ -434,8 +434,8 @@ pp-line: non-hash-pp-tokens-opt newline-opt {
 pp-line: ws newline-opt {
   /* Just an empty line, treat as regular content */
   if (!pp->if_section_stack_ || (pp->if_section_stack_->state_ == PP_IFSS_SELECTED)) {
-    *pp_output_chain = pptk_join(*pp_output_chain, $0);
-    *pp_output_chain = pptk_join(*pp_output_chain, $1);
+    *pp_output_chain = aex_pptk_join(*pp_output_chain, $0);
+    *pp_output_chain = aex_pptk_join(*pp_output_chain, $1);
     $0 = $1 = NULL;
   }
 }
@@ -449,14 +449,14 @@ replacement-list: pp-tokens-opt {
 
 non-par-open-replacement-list: ;
 non-par-open-replacement-list: non-par-open-token replacement-list {
-  $$ = pptk_join($0, $1); $0 = $1 = NULL;
+  $$ = aex_pptk_join($0, $1); $0 = $1 = NULL;
 }
 
 non-hash-pp-tokens: ws-opt non-hash-token { 
-  $$ = pptk_join($0, $1); $0 = $1 = NULL;
+  $$ = aex_pptk_join($0, $1); $0 = $1 = NULL;
 }
 non-hash-pp-tokens: non-hash-pp-tokens preprocessing-token {
-  $$ = pptk_join($0, $1); $0 = $1 = NULL;
+  $$ = aex_pptk_join($0, $1); $0 = $1 = NULL;
 }
 
 non-hash-pp-tokens-opt: ;
@@ -464,12 +464,12 @@ non-hash-pp-tokens-opt: non-hash-pp-tokens { $$ = $0; $0 = NULL; }
 
 header-pp-tokens: hdr-preprocessing-token { $$ = $0; $0 = NULL; }
 header-pp-tokens: header-pp-tokens hdr-preprocessing-token {
-  $$ = pptk_join($0, $1); $0 = $1 = NULL;
+  $$ = aex_pptk_join($0, $1); $0 = $1 = NULL;
 }
 
 pp-tokens: preprocessing-token { $$ = $0; $0 = NULL; }
 pp-tokens: pp-tokens preprocessing-token {
-  $$ = pptk_join($0, $1); $0 = $1 = NULL;
+  $$ = aex_pptk_join($0, $1); $0 = $1 = NULL;
 }
 
 pp-tokens-opt: ;
@@ -511,7 +511,7 @@ non-dir-token: COMMA_TOK      { $$ = $0; $0 = NULL; }
 non-dir-token: OTHER_TOK      { $$ = $0; $0 = NULL; }
 
 ws: WS_TOK    { $$ = $0; $0 = NULL; }
-ws: ws WS_TOK { $$ = pptk_join($0, $1); $0 = $1 = NULL; }
+ws: ws WS_TOK { $$ = aex_pptk_join($0, $1); $0 = $1 = NULL; }
 ws-opt: ws    { $$ = $0; $0 = NULL; }
 ws-opt: ;
 
@@ -557,7 +557,7 @@ comma:     ws-opt COMMA_TOK     { $$ = $1; $1 = NULL; }
 ellipsis:  ws-opt ELLIPSIS_TOK  { $$ = $1; $1 = NULL; }
 
 identifier-list: identifier                       { $$ = $0; $0 = NULL; }
-identifier-list: identifier-list comma identifier { $$ = pptk_join($0, $2); $0 = $2 = NULL; }
+identifier-list: identifier-list comma identifier { $$ = aex_pptk_join($0, $2); $0 = $2 = NULL; }
 
 identifier-list-opt: ws-opt ;
 identifier-list-opt: identifier-list ws-opt { $$ = $0; $0 = NULL;}

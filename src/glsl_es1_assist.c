@@ -88,7 +88,7 @@ static uint8_t g_swizzle_map[256] ={
 
 void glsl_es1_function_call_init(struct glsl_es1_function_call *fc) {
   fc->name_ = NULL;
-  situs_init(&fc->loc_);
+  aex_situs_init(&fc->loc_);
   fc->constructor_type_ = NULL;
   fc->num_parameters_ = 0;
   fc->num_parameters_allocated_ = 0;
@@ -99,14 +99,14 @@ void glsl_es1_function_call_move(struct glsl_es1_function_call *dst, struct glsl
   if (dst->name_) free(dst->name_);
   dst->name_ = src->name_;
   src->name_ = NULL;
-  situs_swap(&dst->loc_, &src->loc_);
+  aex_situs_swap(&dst->loc_, &src->loc_);
   dst->constructor_type_ = src->constructor_type_;
   src->constructor_type_ = NULL;
   if (dst->parameters_) {
     size_t n;
     for (n = 0; n < dst->num_parameters_; ++n) {
       sl_expr_free(dst->parameters_[n].expr_);
-      situs_cleanup(&dst->parameters_[n].loc_);
+      aex_situs_cleanup(&dst->parameters_[n].loc_);
     }
     free(dst->parameters_);
   }
@@ -120,12 +120,12 @@ void glsl_es1_function_call_move(struct glsl_es1_function_call *dst, struct glsl
 
 void glsl_es1_function_call_cleanup(struct glsl_es1_function_call *fc) {
   if (fc->name_) free(fc->name_);
-  situs_cleanup(&fc->loc_);
+  aex_situs_cleanup(&fc->loc_);
   if (fc->parameters_) {
     size_t n;
     for (n = 0; n < fc->num_parameters_; ++n) {
       sl_expr_free(fc->parameters_[n].expr_);
-      situs_cleanup(&fc->parameters_[n].loc_);
+      aex_situs_cleanup(&fc->parameters_[n].loc_);
     }
     free(fc->parameters_);
   }
@@ -140,8 +140,8 @@ int glsl_es1_function_call_append_parameter(struct glsl_es1_function_call *fc, s
     fc->num_parameters_allocated_ = new_num_parameters_allocated;
   }
   fc->parameters_[fc->num_parameters_].expr_ = param_expr;
-  situs_init(&fc->parameters_[fc->num_parameters_].loc_);
-  situs_clone(&fc->parameters_[fc->num_parameters_].loc_, param_loc);
+  aex_situs_init(&fc->parameters_[fc->num_parameters_].loc_);
+  aex_situs_clone(&fc->parameters_[fc->num_parameters_].loc_, param_loc);
   fc->num_parameters_++;
   return 0;
 }
@@ -267,7 +267,7 @@ struct sl_expr *glsl_es1_field_or_swizzle_selection(struct diags *dx, struct sl_
     }
 
     /* No match, report as error */
-    dx_error_loc(dx, field_loc, "No field named \"%s\" in struct \"%s\", see line %d", field_id, t->name_, situs_line(&t->tag_loc_));
+    dx_error_loc(dx, field_loc, "No field named \"%s\" in struct \"%s\", see line %d", field_id, t->name_, aex_situs_line(&t->tag_loc_));
     return NULL;
   }
   else if ((t->kind_ == sltk_vec2) || (t->kind_ == sltk_vec3) || (t->kind_ == sltk_vec4) ||
@@ -306,13 +306,13 @@ struct sl_expr *glsl_es1_field_or_swizzle_selection(struct diags *dx, struct sl_
       /* Determine the digit location of the component; this is needed if we report any error on it. */
       struct situs cut_field;
       struct situs digit_loc;
-      situs_init(&cut_field);
-      situs_init(&digit_loc);
-      if (situs_clone(&cut_field, field_loc) ||
-          situs_skip(&cut_field, n, field_id) ||
-          situs_move_range(&digit_loc, &cut_field, 1, field_id+n)) {
-        situs_cleanup(&cut_field);
-        situs_cleanup(&digit_loc);
+      aex_situs_init(&cut_field);
+      aex_situs_init(&digit_loc);
+      if (aex_situs_clone(&cut_field, field_loc) ||
+          aex_situs_skip(&cut_field, n, field_id) ||
+          aex_situs_move_range(&digit_loc, &cut_field, 1, field_id+n)) {
+        aex_situs_cleanup(&cut_field);
+        aex_situs_cleanup(&digit_loc);
         dx_no_memory(dx);
         return NULL;
       }
@@ -322,16 +322,16 @@ struct sl_expr *glsl_es1_field_or_swizzle_selection(struct diags *dx, struct sl_
       if (!swizzle) {
         dx_error_loc(dx, &digit_loc, "Invalid component \"%c\", see line %d", field_id[n]);
 
-        situs_cleanup(&cut_field);
-        situs_cleanup(&digit_loc);
+        aex_situs_cleanup(&cut_field);
+        aex_situs_cleanup(&digit_loc);
 
         return NULL;
       }
       else if ((swizzle & 0xF) >= num_src_components) {
         dx_error_loc(dx, &digit_loc, "Type %s is not large enough for component \"%c\", see line %d", t->name_, field_id[n]);
 
-        situs_cleanup(&cut_field);
-        situs_cleanup(&digit_loc);
+        aex_situs_cleanup(&cut_field);
+        aex_situs_cleanup(&digit_loc);
 
         return NULL;
       }
@@ -342,8 +342,8 @@ struct sl_expr *glsl_es1_field_or_swizzle_selection(struct diags *dx, struct sl_
       else if (name_set != (swizzle & 0xF0)) {
         dx_error_loc(dx, &digit_loc, "Cannot mix component sets");
 
-        situs_cleanup(&cut_field);
-        situs_cleanup(&digit_loc);
+        aex_situs_cleanup(&cut_field);
+        aex_situs_cleanup(&digit_loc);
 
         return NULL;
       }
@@ -764,7 +764,7 @@ struct sl_expr *glsl_es1_function_call_realize(struct diags *dx, struct sym_tabl
       /* Function not found, but symbol found. */
       if (sym_found && sym_found->kind_ == SK_FUNCTION) {
         /* Symbol is a function, but not a match. */
-        dx_error_loc(dx, &fs->loc_, "Function \"%s\" is not a match for the parameter types, see function at line: %d", fs->name_, situs_line(&fs->loc_));
+        dx_error_loc(dx, &fs->loc_, "Function \"%s\" is not a match for the parameter types, see function at line: %d", fs->name_, aex_situs_line(&fs->loc_));
         free(param_types);
         return NULL;
       }
@@ -1022,13 +1022,13 @@ int glsl_es1_process_function_prototype(struct glsl_es1_compiler *cc, struct sl_
   if (existing_fn) {
     /* Existing, matching, function declared */
     if (!is_definition) {
-      dx_error_loc(cc->dx_, &f->location_, "function \"%s\" already declared (see line %d)", f->name_, situs_line(&existing_fn->location_));
+      dx_error_loc(cc->dx_, &f->location_, "function \"%s\" already declared (see line %d)", f->name_, aex_situs_line(&existing_fn->location_));
       return -1;
     }
     else {
       /* Function already declared, check if it was already defined */
       if (existing_fn->body_) {
-        dx_error_loc(cc->dx_, &f->location_, "function \"%s\" already defined (see line %d)", f->name_, situs_line(&existing_fn->location_));
+        dx_error_loc(cc->dx_, &f->location_, "function \"%s\" already defined (see line %d)", f->name_, aex_situs_line(&existing_fn->location_));
         return -1;
       }
       else {
@@ -1040,7 +1040,7 @@ int glsl_es1_process_function_prototype(struct glsl_es1_compiler *cc, struct sl_
             dx_no_memory(cc->dx_);
             return _GLSL_ES1_NO_MEMORY;
           }
-          dx_error_loc(cc->dx_, &f->location_, "function \"%s\" with return type '%s' previously declared with different return type '%s' (see line %d)", f->name_, current_return_type, previous_return_type, situs_line(&existing_fn->location_));
+          dx_error_loc(cc->dx_, &f->location_, "function \"%s\" with return type '%s' previously declared with different return type '%s' (see line %d)", f->name_, current_return_type, previous_return_type, aex_situs_line(&existing_fn->location_));
           free(current_return_type);
           free(previous_return_type);
           return -1;
@@ -1071,7 +1071,7 @@ int glsl_es1_process_function_prototype(struct glsl_es1_compiler *cc, struct sl_
   }
   else if (existing_sym && (existing_scope == cc->current_scope_)) {
     /* Symbol in use on current scope (e.g. variable), but not a function */
-    dx_error_loc(cc->dx_, &f->location_, "symbol \"%s\" already declared (see line %d)", f->name_, situs_line(&existing_sym->loc_));
+    dx_error_loc(cc->dx_, &f->location_, "symbol \"%s\" already declared (see line %d)", f->name_, aex_situs_line(&existing_sym->loc_));
     return -1;
   }
   else {

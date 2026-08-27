@@ -87,13 +87,13 @@ static int sl_type_hash(struct sl_type *t) {
 static void sl_type_field_init(struct sl_type_field *field) {
   field->chain_ = NULL;
   field->ident_ = NULL;
-  situs_init(&field->ident_loc_);
+  aex_situs_init(&field->ident_loc_);
   field->type_ = NULL;
 }
 
 static void sl_type_field_cleanup(struct sl_type_field *field) {
   if (field->ident_) free(field->ident_);
-  situs_cleanup(&field->ident_loc_);
+  aex_situs_cleanup(&field->ident_loc_);
 }
 
 static void sl_type_init(struct sl_type *t, struct sl_type_base *tb) {
@@ -110,7 +110,7 @@ static void sl_type_init(struct sl_type *t, struct sl_type_base *tb) {
   }
   t->name_ = NULL;
   t->tag_ = NULL;
-  situs_init(&t->tag_loc_);
+  aex_situs_init(&t->tag_loc_);
   t->derived_type_ = NULL;
   t->qualifiers_ = 0;
   t->array_size_ = 0;
@@ -119,7 +119,7 @@ static void sl_type_init(struct sl_type *t, struct sl_type_base *tb) {
 
 static void sl_type_cleanup(struct sl_type *t) {
   if (t->tag_) free(t->tag_);
-  situs_cleanup(&t->tag_loc_);
+  aex_situs_cleanup(&t->tag_loc_);
 
   sl_type_field_free_chain(t->fields_);
   t->fields_ = NULL;
@@ -310,8 +310,8 @@ struct sl_type *sl_type_base_struct_type(struct sl_type_base *tb,const char *tag
     t->tag_[tag_len] = '\0';
   }
   if (tag_loc) {
-    if (situs_clone(&t->tag_loc_,tag_loc)) {
-      situs_cleanup(&t->tag_loc_);
+    if (aex_situs_clone(&t->tag_loc_,tag_loc)) {
+      aex_situs_cleanup(&t->tag_loc_);
       free(t->tag_);
       free(t);
       return NULL; /* no memory */
@@ -354,8 +354,8 @@ struct sl_type_field *sl_type_field_alloc(struct sl_type_base *tb, const char *i
   else {
     tf->ident_ = NULL;
   }
-  situs_init(&tf->ident_loc_);
-  if (situs_clone(&tf->ident_loc_, ident_loc)) {
+  aex_situs_init(&tf->ident_loc_);
+  if (aex_situs_clone(&tf->ident_loc_, ident_loc)) {
     free(tf->ident_);
     free(tf);
     return NULL;

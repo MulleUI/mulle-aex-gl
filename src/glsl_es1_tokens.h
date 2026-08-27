@@ -224,7 +224,7 @@ extern "C" {
   xx(PPTK_TEMPLATE_DOUBLE_CURLY_OPEN, GLSL_ES1_OTHER) \
   xx(PPTK_TEMPLATE_DOUBLE_CURLY_CLOSE, GLSL_ES1_OTHER) \
 
-extern int g_pptk_to_glsl_es1_[];
+extern int g_aex_pptk_to_glsl_es1_[];
 
 int glsl_es1_tokens_sanity_check(void);
 

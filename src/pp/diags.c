@@ -89,7 +89,7 @@ int dx_error_loc(struct diags *dx, const struct situs *sit, const char *fmt, ...
   dup_fmt[fmt_len + 1] = '\0';
   dx->have_error_ = 1;
   va_start(args, fmt);
-  r = dx->vprintf_handler(dx->vprintf_baton_, situs_filename(sit), situs_line(sit), dup_fmt, args);
+  r = dx->vprintf_handler(dx->vprintf_baton_, aex_situs_filename(sit), aex_situs_line(sit), dup_fmt, args);
   va_end(args);
   free(dup_fmt);
   return r;
@@ -110,7 +110,7 @@ int dx_fatal_loc(struct diags *dx, const struct situs *sit, const char *fmt, ...
   va_list args;
   dx->have_error_ = dx->fatal_error_ = 1;
   va_start(args, fmt);
-  r = dx->vprintf_handler(dx->vprintf_baton_, situs_filename(sit), situs_line(sit), fmt, args);
+  r = dx->vprintf_handler(dx->vprintf_baton_, aex_situs_filename(sit), aex_situs_line(sit), fmt, args);
   va_end(args);
   return r;
 }
@@ -139,7 +139,7 @@ int dx_warn_loc(struct diags *dx, const struct situs *sit, const char *fmt, ...)
   dup_fmt[fmt_len] = '\n';
   dup_fmt[fmt_len + 1] = '\0';
   va_start(args, fmt);
-  r = dx->vprintf_handler(dx->vprintf_baton_, situs_filename(sit), situs_line(sit), dup_fmt, args);
+  r = dx->vprintf_handler(dx->vprintf_baton_, aex_situs_filename(sit), aex_situs_line(sit), dup_fmt, args);
   va_end(args);
   free(dup_fmt);
   return r;

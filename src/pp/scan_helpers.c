@@ -58,7 +58,7 @@
 #include "pp_tokens.h"
 #endif
 
-int sch_parse_decimal(struct preprocessor *pp, uint64_t *pval, const char *text, size_t len, struct situs *loc) {
+int aex_sch_parse_decimal(struct preprocessor *pp, uint64_t *pval, const char *text, size_t len, struct situs *loc) {
   uint64_t val = 0;
   size_t n;
   for (n = 0; n < len; ++n) {
@@ -81,7 +81,7 @@ int sch_parse_decimal(struct preprocessor *pp, uint64_t *pval, const char *text,
 }
 
 
-int sch_parse_octal(struct preprocessor *pp, uint64_t *pval, const char *text, size_t len, struct situs *loc) {
+int aex_sch_parse_octal(struct preprocessor *pp, uint64_t *pval, const char *text, size_t len, struct situs *loc) {
   uint64_t val = 0;
   size_t n;
   for (n = 1 /* leading 0 */; n < len; ++n) {
@@ -103,7 +103,7 @@ int sch_parse_octal(struct preprocessor *pp, uint64_t *pval, const char *text, s
   return 0;
 }
 
-int sch_parse_hexadecimal(struct preprocessor *pp, uint64_t *pval, const char *text, size_t len, struct situs *loc) {
+int aex_sch_parse_hexadecimal(struct preprocessor *pp, uint64_t *pval, const char *text, size_t len, struct situs *loc) {
   uint64_t val = 0;
   size_t n;
   for (n = 2 /* "0x"|"0X" */; n < len; ++n) {
@@ -135,7 +135,7 @@ int sch_parse_hexadecimal(struct preprocessor *pp, uint64_t *pval, const char *t
   return 0;
 }
 
-int sch_parse_binary(struct preprocessor *pp, uint64_t *pval, const char *text, size_t len, struct situs *loc) {
+int aex_sch_parse_binary(struct preprocessor *pp, uint64_t *pval, const char *text, size_t len, struct situs *loc) {
   uint64_t val = 0;
   size_t n;
   for (n = 2 /* "0b" */; n < len; ++n) {
@@ -194,8 +194,8 @@ static void sch_process_dec_none(struct preprocessor *pp, uint64_t val, enum pp_
   *pvt = vt;
 }
 
-void sch_process_pptk_dec_none(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
-  *pptk = pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
+void aex_sch_process_pptk_dec_none(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
+  *pptk = aex_pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
   if (!*pptk) {
     dx_no_memory(pp->dx_);
     return;
@@ -234,8 +234,8 @@ static void sch_process_dec_U(struct preprocessor *pp, uint64_t val, enum pp_val
   *pvt = vt;
 }
 
-void sch_process_pptk_dec_U(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
-  *pptk = pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
+void aex_sch_process_pptk_dec_U(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
+  *pptk = aex_pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
   if (!*pptk) {
     dx_no_memory(pp->dx_);
     return;
@@ -277,8 +277,8 @@ static void sch_process_dec_L(struct preprocessor *pp, uint64_t val, enum pp_val
   *pvt = vt;
 }
 
-void sch_process_pptk_dec_L(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
-  *pptk = pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
+void aex_sch_process_pptk_dec_L(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
+  *pptk = aex_pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
   if (!*pptk) {
     dx_no_memory(pp->dx_);
     return;
@@ -316,8 +316,8 @@ static void sch_process_dec_UL(struct preprocessor *pp, uint64_t val, enum pp_va
   *pvt = vt;
 }
 
-void sch_process_pptk_dec_UL(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
-  *pptk = pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
+void aex_sch_process_pptk_dec_UL(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
+  *pptk = aex_pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
   if (!*pptk) {
     dx_no_memory(pp->dx_);
     return;
@@ -349,8 +349,8 @@ static void sch_process_dec_LL(struct preprocessor *pp, uint64_t val, enum pp_va
   *pvt = vt;
 }
 
-void sch_process_pptk_dec_LL(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
-  *pptk = pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
+void aex_sch_process_pptk_dec_LL(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
+  *pptk = aex_pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
   if (!*pptk) {
     dx_no_memory(pp->dx_);
     return;
@@ -387,8 +387,8 @@ static void sch_process_dec_ULL(struct preprocessor *pp, uint64_t val, enum pp_v
   *pvt = vt;
 }
 
-void sch_process_pptk_dec_ULL(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
-  *pptk = pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
+void aex_sch_process_pptk_dec_ULL(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
+  *pptk = aex_pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
   if (!*pptk) {
     dx_no_memory(pp->dx_);
     return;
@@ -433,8 +433,8 @@ static void sch_process_ohb_none(struct preprocessor *pp, uint64_t val, enum pp_
   *pvt = vt;
 }
 
-void sch_process_pptk_ohb_none(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
-  *pptk = pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
+void aex_sch_process_pptk_ohb_none(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
+  *pptk = aex_pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
   if (!*pptk) {
     dx_no_memory(pp->dx_);
     return;
@@ -473,8 +473,8 @@ static void sch_process_ohb_U(struct preprocessor *pp, uint64_t val, enum pp_val
   *pvt = vt;
 }
 
-void sch_process_pptk_ohb_U(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
-  *pptk = pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
+void aex_sch_process_pptk_ohb_U(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
+  *pptk = aex_pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
   if (!*pptk) {
     dx_no_memory(pp->dx_);
     return;
@@ -516,8 +516,8 @@ static void sch_process_ohb_L(struct preprocessor *pp, uint64_t val, enum pp_val
   *pvt = vt;
 }
 
-void sch_process_pptk_ohb_L(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
-  *pptk = pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
+void aex_sch_process_pptk_ohb_L(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
+  *pptk = aex_pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
   if (!*pptk) {
     dx_no_memory(pp->dx_);
     return;
@@ -555,8 +555,8 @@ static void sch_process_ohb_UL(struct preprocessor *pp, uint64_t val, enum pp_va
   *pvt = vt;
 }
 
-void sch_process_pptk_ohb_UL(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
-  *pptk = pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
+void aex_sch_process_pptk_ohb_UL(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
+  *pptk = aex_pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
   if (!*pptk) {
     dx_no_memory(pp->dx_);
     return;
@@ -597,8 +597,8 @@ static void sch_process_ohb_LL(struct preprocessor *pp, uint64_t val, enum pp_va
   *pvt = vt;
 }
 
-void sch_process_pptk_ohb_LL(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
-  *pptk = pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
+void aex_sch_process_pptk_ohb_LL(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
+  *pptk = aex_pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
   if (!*pptk) {
     dx_no_memory(pp->dx_);
     return;
@@ -635,8 +635,8 @@ static void sch_process_ohb_ULL(struct preprocessor *pp, uint64_t val, enum pp_v
   *pvt = vt;
 }
 
-void sch_process_pptk_ohb_ULL(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
-  *pptk = pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
+void aex_sch_process_pptk_ohb_ULL(struct preprocessor *pp, struct pptk **pp_chain, const char *text, uint64_t val, struct pptk **pptk, struct situs *loc) {
+  *pptk = aex_pptk_alloc(pp, pp_chain, text, PPTK_INTEGER_LIT, loc);
   if (!*pptk) {
     dx_no_memory(pp->dx_);
     return;
@@ -645,7 +645,7 @@ void sch_process_pptk_ohb_ULL(struct preprocessor *pp, struct pptk **pp_chain, c
   (*pptk)->v_.u64_ = val;
 }
 
-int sch_read_oct_esc_value(const char *octal_num, int *val) {
+int aex_sch_read_oct_esc_value(const char *octal_num, int *val) {
   int n = 0;
   int v = 0;
   /* Octal escapes can be at most 3 digits long (eg. see C99 6.4.4.4 paragraph 14) */
@@ -662,7 +662,7 @@ int sch_read_oct_esc_value(const char *octal_num, int *val) {
   return n;
 }
 
-int sch_read_hex_esc_value(const char *hex_xx_num, int *val) {
+int aex_sch_read_hex_esc_value(const char *hex_xx_num, int *val) {
   int n = 0;
   int v = 0;
 
@@ -689,7 +689,7 @@ int sch_read_hex_esc_value(const char *hex_xx_num, int *val) {
   }
 }
 
-int sch_read_char_value(struct preprocessor *pp, const char *lit_pos, int *val, int max_char, struct situs *loc, const char *kind) {
+int aex_sch_read_char_value(struct preprocessor *pp, const char *lit_pos, int *val, int max_char, struct situs *loc, const char *kind) {
   const unsigned char *c = (const unsigned char *)lit_pos;
   if (*c != '\\') {
     if (*c == '\n') {
@@ -719,7 +719,7 @@ int sch_read_char_value(struct preprocessor *pp, const char *lit_pos, int *val, 
     case '5':
     case '6':
     case '7':
-      num_digits = sch_read_oct_esc_value(c + 1, &num);
+      num_digits = aex_sch_read_oct_esc_value(c + 1, &num);
       if ((!num_digits) || (num > max_char)) {
         dx_error_loc(pp->dx_, loc, "Invalid octal escape sequence");
         *val = *c;
@@ -731,7 +731,7 @@ int sch_read_char_value(struct preprocessor *pp, const char *lit_pos, int *val, 
       }
       break;
     case 'x':
-      num_digits = sch_read_hex_esc_value(c + 2, &num);
+      num_digits = aex_sch_read_hex_esc_value(c + 2, &num);
       if ((!num_digits) || (num > max_char)) {
         dx_error_loc(pp->dx_, loc, "Invalid hex escape sequence");
         *val = *c;

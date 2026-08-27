@@ -68,7 +68,7 @@ struct pp_input_file {
   /* If set, the input file is unpoppable (and EOF will not clear it from the stack) */
   int unpoppable_:1;
 
-  /* Backpointer to the preprocessor where if_set_input() will set the buffer. */
+  /* Backpointer to the preprocessor where aex_if_set_input() will set the buffer. */
   struct preprocessor *pp_;
 
   /* Pointer to the containing file (i.e. the file that included this file.) */
@@ -83,15 +83,15 @@ struct pp_input_file {
   /* File handle or NULL if this is not a file based input file. */
   FILE *fp_;
 
-  /* Pointer to the callback function that will invoke if_set_input() for the input_file.
+  /* Pointer to the callback function that will invoke aex_if_set_input() for the input_file.
    * If NULL, then CCR_NEED_INPUT is returned from cc_compile() instead. */
   int (*input_request_fn_)(void *baton, struct pp_input_file *ifile);
 
   /* Tokenizer for this input file, converts plain text into pptk tokens. */
-  struct pptk_stack pptk_;
+  struct aex_pptk_stack pptk_;
 
   /* Line directives parser */
-  struct ppld_stack ppld_; /* line directives */
+  struct aex_ppld_stack ppld_; /* line directives */
   int ppld_input_not_finished_ : 1;
   int ppld_end_processed_pop_now_ : 1;
 
@@ -116,7 +116,7 @@ struct pp_input_file {
   int pptk_pushed_final_source_line_:1;
 
   /* Tokenizer for line continuations, filters line continuations out from the text */
-  struct pplc_stack pplc_;
+  struct aex_pplc_stack pplc_;
 
   /* Situs for the current post-line-continuation input */
   struct situs post_line_continuation_situs_;
@@ -127,7 +127,7 @@ struct pp_input_file {
   size_t post_line_continuation_size_allocated_;
 
   /* Tokenizer for the trigraphs, converts plain text into text with the trigraphs replaced */
-  struct pptg_stack pptg_;
+  struct aex_pptg_stack pptg_;
 
   /* Situs for the current post-trigraph input (feeds into line continuation processing.) */
   struct situs post_trigraph_situs_;
@@ -144,13 +144,13 @@ struct pp_input_file {
   char aux_[1];
 };
 
-void if_init(struct pp_input_file *ifile, struct preprocessor *pp);
-void if_cleanup(struct pp_input_file *ifile);
+void aex_if_init(struct pp_input_file *ifile, struct preprocessor *pp);
+void aex_if_cleanup(struct pp_input_file *ifile);
 
 /* Returns non-zero in case of memory failure, zero upon success. */
-int if_set_filename(struct preprocessor *pp, struct pp_input_file *ifile, const char *filename);
+int aex_if_set_filename(struct preprocessor *pp, struct pp_input_file *ifile, const char *filename);
 
-void if_set_input(struct pp_input_file *ifile, const void *input_buf, size_t input_buf_size, int is_final);
+void aex_if_set_input(struct pp_input_file *ifile, const void *input_buf, size_t input_buf_size, int is_final);
 
 
 #ifdef __cplusplus

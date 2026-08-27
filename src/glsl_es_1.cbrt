@@ -124,11 +124,11 @@
 grammar: translation-unit;
 
 %common_type struct situs
-%constructor situs_init(&$$);
-%destructor situs_cleanup(&$$);
-%move situs_swap(&$$, &$0);
+%constructor aex_situs_init(&$$);
+%destructor aex_situs_cleanup(&$$);
+%move aex_situs_swap(&$$, &$0);
 %token_action if (input_chain) { \
-  if (situs_clone(&$, &input_chain->situs_)) { \
+  if (aex_situs_clone(&$, &input_chain->situs_)) { \
     dx_no_memory(cc->dx_); \
     return _GLSL_ES1_NO_MEMORY; \
   } \
@@ -142,7 +142,7 @@ $: {
     size_t n;
     size_t len = $len;
     for (n = 0; n < len; ++n) {
-      if (situs_concat(&$, &${n})) {
+      if (aex_situs_concat(&$, &${n})) {
         dx_no_memory(cc->dx_);
         return _GLSL_ES1_NO_MEMORY;
       }
@@ -218,19 +218,19 @@ primary-expression: LEFT_PAREN expression RIGHT_PAREN { $$ = $1; $1 = NULL; }
 postfix-expression: primary-expression{$$ = $0; $0 = NULL;}
 postfix-expression: postfix-expression LEFT_BRACKET integer-expression RIGHT_BRACKET {
   struct situs combined_brackets;
-  situs_init(&combined_brackets);
-  if (situs_concat(&combined_brackets, &${1})) {
+  aex_situs_init(&combined_brackets);
+  if (aex_situs_concat(&combined_brackets, &${1})) {
     dx_no_memory(cc->dx_);
-    situs_cleanup(&combined_brackets);
+    aex_situs_cleanup(&combined_brackets);
     return _GLSL_ES1_NO_MEMORY;
   }
-  if (situs_concat(&combined_brackets, &${3})) {
+  if (aex_situs_concat(&combined_brackets, &${3})) {
     dx_no_memory(cc->dx_);
-    situs_cleanup(&combined_brackets);
+    aex_situs_cleanup(&combined_brackets);
     return _GLSL_ES1_NO_MEMORY;
   }
   $$ = sl_expr_alloc_binop(exop_array_subscript, &combined_brackets, &$0, &$2);
-  situs_cleanup(&combined_brackets);
+  aex_situs_cleanup(&combined_brackets);
   if (!$$) {
     dx_no_memory(cc->dx_); 
     return _GLSL_ES1_NO_MEMORY;
@@ -293,17 +293,17 @@ function-call-header-with-parameters: function-call-header-with-parameters COMMA
 }
 
 %type function-identifier: struct { char *name_; struct situs loc_; struct sl_type *constructor_type_; }
-%constructor $$.name_ = NULL; situs_init(&$$.loc_); $$.constructor_type_ = NULL;
+%constructor $$.name_ = NULL; aex_situs_init(&$$.loc_); $$.constructor_type_ = NULL;
 %move $$.name_ = $0.name_; $0.name_ = NULL; \
-      situs_swap(&$$.loc_, &$0.loc_); \
+      aex_situs_swap(&$$.loc_, &$0.loc_); \
       $$.constructor_type_ = $0.constructor_type_; $0.constructor_type_ = NULL;
 %destructor if ($$.name_) free($$.name_); \
-            situs_cleanup(&$$.loc_);
+            aex_situs_cleanup(&$$.loc_);
 
 function-call-header: function-identifier LEFT_PAREN {
   $$.name_ = $0.name_;
   $0.name_ = NULL;
-  if (situs_clone(&$$.loc_, &$0.loc_)) {
+  if (aex_situs_clone(&$$.loc_, &$0.loc_)) {
     dx_no_memory(cc->dx_);
     return _GLSL_ES1_NO_MEMORY;
   }
@@ -314,7 +314,7 @@ function-call-header: function-identifier LEFT_PAREN {
 %type constructor-identifier: struct sl_type *
 function-identifier: constructor-identifier {
   $$.constructor_type_ = $0;
-  if (situs_clone(&$$.loc_, &${ 0 })) {
+  if (aex_situs_clone(&$$.loc_, &${ 0 })) {
     dx_no_memory(cc->dx_);
     return _GLSL_ES1_NO_MEMORY;
   }
@@ -322,7 +322,7 @@ function-identifier: constructor-identifier {
 function-identifier: IDENTIFIER {
   $$.name_ = $0;
   $0 = NULL;
-  if (situs_clone(&$$.loc_, &${ 0 })) {
+  if (aex_situs_clone(&$$.loc_, &${ 0 })) {
     dx_no_memory(cc->dx_);
     return _GLSL_ES1_NO_MEMORY;
   }
@@ -416,19 +416,19 @@ logical-or-expression: logical-or-expression OR_OP logical-xor-expression { $$ =
 conditional-expression: logical-or-expression  { $$ = $0; $0 = NULL; }
 conditional-expression: logical-or-expression QUESTION expression COLON assignment-expression {
   struct situs question_colon;
-  situs_init(&question_colon);
-  if (situs_concat(&question_colon, &${1})) {
+  aex_situs_init(&question_colon);
+  if (aex_situs_concat(&question_colon, &${1})) {
     dx_no_memory(cc->dx_);
-    situs_cleanup(&question_colon);
+    aex_situs_cleanup(&question_colon);
     return _GLSL_ES1_NO_MEMORY;
   }
-  if (situs_concat(&question_colon, &${3})) {
+  if (aex_situs_concat(&question_colon, &${3})) {
     dx_no_memory(cc->dx_);
-    situs_cleanup(&question_colon);
+    aex_situs_cleanup(&question_colon);
     return _GLSL_ES1_NO_MEMORY;
   }
   $$ = sl_expr_alloc_ternop(exop_logical_or, &question_colon, &$0, &$2, &$4);
-  situs_cleanup(&question_colon);
+  aex_situs_cleanup(&question_colon);
   if (!$$) { 
     dx_no_memory(cc->dx_); 
     return _GLSL_ES1_NO_MEMORY; 
@@ -1151,7 +1151,7 @@ iteration-statement: WHILE start-scope LEFT_PAREN condition RIGHT_PAREN statemen
     dx_no_memory(cc->dx_);
     return _GLSL_ES1_NO_MEMORY;
   }
-  if (situs_clone(&$$->keyword_loc_, &${ 0 })) {
+  if (aex_situs_clone(&$$->keyword_loc_, &${ 0 })) {
     sl_stmt_free($$);
     $$ = NULL;
     dx_no_memory(cc->dx_);
@@ -1175,28 +1175,28 @@ iteration-statement: DO statement-with-scope WHILE LEFT_PAREN expression RIGHT_P
     else {
       /* Conditional expression valid and good to go */
       struct situs combined_keywords;
-      situs_init(&combined_keywords);
+      aex_situs_init(&combined_keywords);
       /* "do" */
-      if (situs_concat(&combined_keywords, &${0})) {
+      if (aex_situs_concat(&combined_keywords, &${0})) {
         dx_no_memory(cc->dx_);
-        situs_cleanup(&combined_keywords);
+        aex_situs_cleanup(&combined_keywords);
         return _GLSL_ES1_NO_MEMORY;
       }
       /* "while" */
-      if (situs_concat(&combined_keywords, &${2})) {
+      if (aex_situs_concat(&combined_keywords, &${2})) {
         dx_no_memory(cc->dx_);
-        situs_cleanup(&combined_keywords);
+        aex_situs_cleanup(&combined_keywords);
         return _GLSL_ES1_NO_MEMORY;
       }
 
       $$ = sl_stmt_alloc();
       if (!$$) {
-        situs_cleanup(&combined_keywords);
+        aex_situs_cleanup(&combined_keywords);
         dx_no_memory(cc->dx_);
         return _GLSL_ES1_NO_MEMORY;
       }
-      situs_swap(&$$->keyword_loc_, &combined_keywords);
-      situs_cleanup(&combined_keywords);
+      aex_situs_swap(&$$->keyword_loc_, &combined_keywords);
+      aex_situs_cleanup(&combined_keywords);
       $$->kind_ = slsk_do;
       $$->condition_ = $4; $4 = NULL;
       $$->true_branch_ = $1; $1 = NULL;
@@ -1239,7 +1239,7 @@ iteration-statement: FOR start-scope LEFT_PAREN for-init-statement for-rest-stat
       dx_no_memory(cc->dx_);
       return _GLSL_ES1_NO_MEMORY;
     }
-    if (situs_clone(&$$->keyword_loc_, &${0})) {
+    if (aex_situs_clone(&$$->keyword_loc_, &${0})) {
       sl_stmt_free($$);
       $$ = NULL;
       dx_no_memory(cc->dx_);
@@ -1286,7 +1286,7 @@ jump-statement: CONTINUE SEMICOLON {
     return _GLSL_ES1_NO_MEMORY; 
   }
   $$->kind_ = slsk_continue;
-  if (situs_clone(&$$->keyword_loc_, &${ 0 })) {
+  if (aex_situs_clone(&$$->keyword_loc_, &${ 0 })) {
     sl_stmt_free($$);
     $$ = NULL;
     dx_no_memory(cc->dx_);
@@ -1301,7 +1301,7 @@ jump-statement: BREAK SEMICOLON {
     return _GLSL_ES1_NO_MEMORY; 
   }
   $$->kind_ = slsk_break;
-  if (situs_clone(&$$->keyword_loc_, &${ 0 })) {
+  if (aex_situs_clone(&$$->keyword_loc_, &${ 0 })) {
     sl_stmt_free($$);
     $$ = NULL;
     dx_no_memory(cc->dx_);
@@ -1316,7 +1316,7 @@ jump-statement: RETURN SEMICOLON {
     return _GLSL_ES1_NO_MEMORY; 
   }
   $$->kind_ = slsk_return;
-  if (situs_clone(&$$->keyword_loc_, &${ 0 })) {
+  if (aex_situs_clone(&$$->keyword_loc_, &${ 0 })) {
     sl_stmt_free($$);
     $$ = NULL;
     dx_no_memory(cc->dx_);
@@ -1332,7 +1332,7 @@ jump-statement: RETURN expression SEMICOLON  {
   }
   $$->kind_ = slsk_return;
   $$->expr_ = $1; $1 = NULL;
-  if (situs_clone(&$$->keyword_loc_, &${ 0 })) {
+  if (aex_situs_clone(&$$->keyword_loc_, &${ 0 })) {
     sl_stmt_free($$);
     $$ = NULL;
     dx_no_memory(cc->dx_);
@@ -1347,7 +1347,7 @@ jump-statement: DISCARD SEMICOLON {
     return _GLSL_ES1_NO_MEMORY;
   }
   $$->kind_ = slsk_discard;
-  if (situs_clone(&$$->keyword_loc_, &${ 0 })) {
+  if (aex_situs_clone(&$$->keyword_loc_, &${ 0 })) {
     sl_stmt_free($$);
     $$ = NULL;
     dx_no_memory(cc->dx_);

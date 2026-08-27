@@ -45,7 +45,7 @@
 
 void sl_expr_init(struct sl_expr *x) {
   x->op_ = exop_invalid;
-  situs_init(&x->op_loc_);
+  aex_situs_init(&x->op_loc_);
   x->num_children_ = 0;
   x->children_ = NULL;
   sl_expr_temp_init_void(&x->literal_value_);
@@ -2253,7 +2253,7 @@ struct sl_expr *sl_expr_alloc(expr_op_t op, const struct situs *loc) {
   if (!x) return NULL;
   sl_expr_init(x);
   x->op_ = op;
-  if (situs_clone(&x->op_loc_, loc)) {
+  if (aex_situs_clone(&x->op_loc_, loc)) {
     /* Failed memory alloc */
     sl_expr_free(x);
     return NULL;

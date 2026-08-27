@@ -87,7 +87,7 @@ struct preprocessor {
   struct pptk *ppme_input_;
   const char *ppme_input_file_;
   int ppme_input_line_;
-  struct ppme_stack ppme_; /* macro-expander */
+  struct aex_ppme_stack ppme_; /* macro-expander */
 
   /* Line directive processing (intermediate phase of translation) */
   int ppld_input_final_:1;
