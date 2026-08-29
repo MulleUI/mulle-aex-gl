@@ -6796,8 +6796,11 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(TexSubImage2D)
   size_t src_downwards_stride = (size_t)-(intptr_t)src_stride;
   char *src_top_left = ((char *)pixels) + src_stride * (height - 1);
 
+  /* The bitmap is stored top-down; y is the bottom-left origin of GL. */
+  size_t dst_y = (size_t)(s2d->mipmaps_[level].height_ - y - height);
+
   blitter_blit_format(s2d->mipmaps_[level].bitmap_, texture_blit_format, src_top_left, src_blit_format,
-                      s2d->mipmaps_[level].num_bytes_per_bitmap_row_, x, y,
+                      s2d->mipmaps_[level].num_bytes_per_bitmap_row_, x, dst_y,
                       src_downwards_stride,
                       0, 0, width, height);
   gl_es2_ctx_release(c);
