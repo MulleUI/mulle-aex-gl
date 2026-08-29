@@ -47,6 +47,12 @@
 #include "blitter.h"
 #endif
 
+/* Texel address. Rows are allocated 8-byte aligned, so the pitch is
+ * num_bytes_per_bitmap_row_ and not always width_ * bpp. */
+#define S2D_TEXEL(s2dm, bpp, s, t) \
+  (((uint8_t * restrict)(s2dm)->bitmap_) + (s2dm)->num_bytes_per_bitmap_row_ * (size_t)(t) \
+                                        + ((size_t)(bpp)) * (size_t)(s))
+
 void sampler_2d_init(struct sampler_2d *s2d) {
   /* Defaults as per ES 2.0 v2.0.25 3.7.12 Texture State (p.84) */
   s2d->wrap_s_ = s2d_repeat;
@@ -304,29 +310,27 @@ static void texture2D(float *prgba, struct sampler_2d *s2d, float s, float t, fl
       /* Load texel at tex_s and tex_t */
       switch (s2dm->components_) {
         case s2d_alpha:
-          alphas[level] = ((uint8_t * restrict)s2dm->bitmap_)[s2dm->width_ * tex_t + tex_s];
+          alphas[level] = *S2D_TEXEL(s2dm, 1, tex_s, tex_t);
           break;
           break;
         case s2d_luminance:
-          reds[level] = ((uint8_t * restrict)s2dm->bitmap_)[s2dm->width_ * tex_t + tex_s];
+          reds[level] = *S2D_TEXEL(s2dm, 1, tex_s, tex_t);
           break;
         case s2d_luminance_alpha: {
-          uint8_t *restrict ptexel = ((uint8_t * restrict)s2dm->bitmap_) + 2 * (s2dm->width_ * tex_t + tex_s);
+          uint8_t *restrict ptexel = S2D_TEXEL(s2dm, 2, tex_s, tex_t);
           reds[level]   = ptexel[0];
           alphas[level] = ptexel[1];
           break;
         }
         case s2d_rgb: {
-          size_t texel_at_pixel = s2dm->width_ * tex_t + tex_s;
-          size_t texel_at_offset = texel_at_pixel * 3; /* "* 4 - 1", rely on compiler to catch this optimization */
-          uint8_t *restrict ptexel = ((uint8_t * restrict)s2dm->bitmap_) + texel_at_offset;
+          uint8_t *restrict ptexel = S2D_TEXEL(s2dm, 3, tex_s, tex_t);
           reds[level]   = ptexel[0];
           greens[level] = ptexel[1];
           blues[level]  = ptexel[2];
           break;
         }
         case s2d_rgba: {
-          uint8_t *restrict ptexel = ((uint8_t * restrict)s2dm->bitmap_) + 4 * (s2dm->width_ * tex_t + tex_s);
+          uint8_t *restrict ptexel = S2D_TEXEL(s2dm, 4, tex_s, tex_t);
           reds[level]   = ptexel[0];
           greens[level] = ptexel[1];
           blues[level]  = ptexel[2];
@@ -520,26 +524,26 @@ static void texture2D(float *prgba, struct sampler_2d *s2d, float s, float t, fl
       /* Load texel at tex_s and tex_t */
       switch (s2dm_levels[0]->components_) {
         case s2d_alpha: {
-          uint32_t tex = ((uint8_t * restrict)s2dm->bitmap_)[s2dm->width_ * tex_t0 + tex_s0] * tex_st_00_fract
-                       + ((uint8_t * restrict)s2dm->bitmap_)[s2dm->width_ * tex_t1 + tex_s0] * tex_st_01_fract
-                       + ((uint8_t * restrict)s2dm->bitmap_)[s2dm->width_ * tex_t0 + tex_s1] * tex_st_10_fract
-                       + ((uint8_t * restrict)s2dm->bitmap_)[s2dm->width_ * tex_t1 + tex_s1] * tex_st_11_fract;
+          uint32_t tex = *S2D_TEXEL(s2dm, 1, tex_s0, tex_t0) * tex_st_00_fract
+                       + *S2D_TEXEL(s2dm, 1, tex_s0, tex_t1) * tex_st_01_fract
+                       + *S2D_TEXEL(s2dm, 1, tex_s1, tex_t0) * tex_st_10_fract
+                       + *S2D_TEXEL(s2dm, 1, tex_s1, tex_t1) * tex_st_11_fract;
           alphas[level] = tex;
           break;
         }
         case s2d_luminance: {
-          uint32_t tex = ((uint8_t * restrict)s2dm->bitmap_)[s2dm->width_ * tex_t0 + tex_s0] * tex_st_00_fract
-                       + ((uint8_t * restrict)s2dm->bitmap_)[s2dm->width_ * tex_t1 + tex_s0] * tex_st_01_fract
-                       + ((uint8_t * restrict)s2dm->bitmap_)[s2dm->width_ * tex_t0 + tex_s1] * tex_st_10_fract
-                       + ((uint8_t * restrict)s2dm->bitmap_)[s2dm->width_ * tex_t1 + tex_s1] * tex_st_11_fract;
+          uint32_t tex = *S2D_TEXEL(s2dm, 1, tex_s0, tex_t0) * tex_st_00_fract
+                       + *S2D_TEXEL(s2dm, 1, tex_s0, tex_t1) * tex_st_01_fract
+                       + *S2D_TEXEL(s2dm, 1, tex_s1, tex_t0) * tex_st_10_fract
+                       + *S2D_TEXEL(s2dm, 1, tex_s1, tex_t1) * tex_st_11_fract;
           reds[level] = tex;
           break;
         }
         case s2d_luminance_alpha: {
-          uint8_t * restrict ptex00 = ((uint8_t * restrict)s2dm->bitmap_) + 2 * (s2dm->width_ * tex_t0 + tex_s0);
-          uint8_t * restrict ptex01 = ((uint8_t * restrict)s2dm->bitmap_) + 2 * (s2dm->width_ * tex_t1 + tex_s0);
-          uint8_t * restrict ptex10 = ((uint8_t * restrict)s2dm->bitmap_) + 2 * (s2dm->width_ * tex_t0 + tex_s1);
-          uint8_t * restrict ptex11 = ((uint8_t * restrict)s2dm->bitmap_) + 2 * (s2dm->width_ * tex_t1 + tex_s1);
+          uint8_t * restrict ptex00 = S2D_TEXEL(s2dm, 2, tex_s0, tex_t0);
+          uint8_t * restrict ptex01 = S2D_TEXEL(s2dm, 2, tex_s0, tex_t1);
+          uint8_t * restrict ptex10 = S2D_TEXEL(s2dm, 2, tex_s1, tex_t0);
+          uint8_t * restrict ptex11 = S2D_TEXEL(s2dm, 2, tex_s1, tex_t1);
 
           uint32_t lum_tex = ptex00[0] * tex_st_00_fract
                            + ptex01[0] * tex_st_01_fract
@@ -556,10 +560,10 @@ static void texture2D(float *prgba, struct sampler_2d *s2d, float s, float t, fl
           break;
         }
         case s2d_rgb: {
-          uint8_t *restrict ptex00 = ((uint8_t * restrict)s2dm->bitmap_) + 3 * (s2dm->width_ * tex_t0 + tex_s0);
-          uint8_t *restrict ptex01 = ((uint8_t * restrict)s2dm->bitmap_) + 3 * (s2dm->width_ * tex_t1 + tex_s0);
-          uint8_t *restrict ptex10 = ((uint8_t * restrict)s2dm->bitmap_) + 3 * (s2dm->width_ * tex_t0 + tex_s1);
-          uint8_t *restrict ptex11 = ((uint8_t * restrict)s2dm->bitmap_) + 3 * (s2dm->width_ * tex_t1 + tex_s1);
+          uint8_t *restrict ptex00 = S2D_TEXEL(s2dm, 3, tex_s0, tex_t0);
+          uint8_t *restrict ptex01 = S2D_TEXEL(s2dm, 3, tex_s0, tex_t1);
+          uint8_t *restrict ptex10 = S2D_TEXEL(s2dm, 3, tex_s1, tex_t0);
+          uint8_t *restrict ptex11 = S2D_TEXEL(s2dm, 3, tex_s1, tex_t1);
 
           uint32_t red_tex = ptex00[0] * tex_st_00_fract
                            + ptex01[0] * tex_st_01_fract
@@ -582,10 +586,10 @@ static void texture2D(float *prgba, struct sampler_2d *s2d, float s, float t, fl
           break;
         }
         case s2d_rgba: {
-          uint8_t *restrict ptex00 = ((uint8_t * restrict)s2dm->bitmap_) + 4 * (s2dm->width_ * tex_t0 + tex_s0);
-          uint8_t *restrict ptex01 = ((uint8_t * restrict)s2dm->bitmap_) + 4 * (s2dm->width_ * tex_t1 + tex_s0);
-          uint8_t *restrict ptex10 = ((uint8_t * restrict)s2dm->bitmap_) + 4 * (s2dm->width_ * tex_t0 + tex_s1);
-          uint8_t *restrict ptex11 = ((uint8_t * restrict)s2dm->bitmap_) + 4 * (s2dm->width_ * tex_t1 + tex_s1);
+          uint8_t *restrict ptex00 = S2D_TEXEL(s2dm, 4, tex_s0, tex_t0);
+          uint8_t *restrict ptex01 = S2D_TEXEL(s2dm, 4, tex_s0, tex_t1);
+          uint8_t *restrict ptex10 = S2D_TEXEL(s2dm, 4, tex_s1, tex_t0);
+          uint8_t *restrict ptex11 = S2D_TEXEL(s2dm, 4, tex_s1, tex_t1);
 
           uint32_t red_tex = ptex00[0] * tex_st_00_fract
                            + ptex01[0] * tex_st_01_fract
