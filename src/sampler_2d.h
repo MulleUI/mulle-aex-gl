@@ -129,6 +129,10 @@ void builtin_textureCubeLod_v3_runtime(struct sl_execution *exec, int exec_chain
  * min/mag filter or a mipmap level or whatnot.) */
 void sampler_2d_update_completeness(struct sampler_2d *s2d);
 
+/* Call after changing wrap_s_/wrap_t_; the masks are applied unconditionally
+ * at sample time, so a non-repeat wrap needs an all-ones mask. */
+void sampler_2d_update_level_repetition_masks(struct sampler_2d *s2d);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

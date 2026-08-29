@@ -288,7 +288,7 @@ static void texture2D(float *prgba, struct sampler_2d *s2d, float s, float t, fl
 
       switch (s2d->wrap_t_) {
         case s2d_clamp_to_edge: {
-          float min_ft = 1 / (2.f * (float)(s2dm->width_));
+          float min_ft = 1 / (2.f * (float)(s2dm->height_));
           float max_ft = 1.f - min_ft;
           tm = (tm < min_ft) ? min_ft : ((tm > max_ft) ? max_ft : tm);
           break;
@@ -480,7 +480,10 @@ static void texture2D(float *prgba, struct sampler_2d *s2d, float s, float t, fl
        * to offset it to (0,0) so we can range the linear interpolation from
        * 0 to 1 in terms of sub-texel coordinates; this is not the case for
        * the nearest filter, only linear. Same for t coordinate. */
-      uint32_t tex_s_fp8 = ((uint32_t)(sm * s2dm->width_ * 256.f)) - 128;
+      /* Saturate: the clamp puts sm at the first texel centre at best, and float
+       * rounding lands a step under it, so the -128 would wrap to ~0. */
+      float s_fp8 = sm * (float)s2dm->width_ * 256.f - 128.f;
+      uint32_t tex_s_fp8 = (uint32_t)((s_fp8 < 0.f) ? 0.f : s_fp8);
       uint32_t tex_s0 = (tex_s_fp8 >> 8) & s2dm->repeat_mask_s_;
       uint32_t tex_s1 = (tex_s0 + 1) & s2dm->repeat_mask_s_;
       uint32_t tex_s1_fract = tex_s_fp8 & 255;
@@ -488,7 +491,7 @@ static void texture2D(float *prgba, struct sampler_2d *s2d, float s, float t, fl
 
       switch (s2d->wrap_t_) {
         case s2d_clamp_to_edge: {
-          float min_ft = 1 / (2.f * (float)(s2dm->width_));
+          float min_ft = 1 / (2.f * (float)(s2dm->height_));
           float max_ft = 1.f - min_ft;
           tm = (tm < min_ft) ? min_ft : ((tm > max_ft) ? max_ft : tm);
           break;
@@ -506,7 +509,8 @@ static void texture2D(float *prgba, struct sampler_2d *s2d, float s, float t, fl
       }
 
       /* Flip Y axis as we do this */
-      uint32_t tex_t_fp8 = ((uint32_t)((1.f - tm) * s2dm->height_ * 256.f)) - 128;
+      float t_fp8 = (1.f - tm) * (float)s2dm->height_ * 256.f - 128.f;
+      uint32_t tex_t_fp8 = (uint32_t)((t_fp8 < 0.f) ? 0.f : t_fp8);
       uint32_t tex_t0 = (tex_t_fp8 >> 8) & s2dm->repeat_mask_t_;
       uint32_t tex_t1 = (tex_t0 + 1) & s2dm->repeat_mask_t_;
       uint32_t tex_t1_fract = tex_t_fp8 & 255;
@@ -2390,13 +2394,17 @@ int sampler_2d_set_storage(struct sampler_2d *s2d, int level, enum s2d_tex_compo
       num_bytes_per_pixel = 4;
       break;
   }
-  size_t num_bytes_per_row_nonaligned = num_bytes_per_pixel * width;
+  /* One spare texel each way: bilinear filtering addresses (s+1, t+1), which at
+   * the far edge is one past the last texel. Its weight there is zero, but the
+   * address is still formed, and the repeat mask only folds it back in range
+   * when the dimension is a power of two. */
+  size_t num_bytes_per_row_nonaligned = num_bytes_per_pixel * ((size_t)width + 1);
   size_t num_bytes_per_row_8B_aligned = (num_bytes_per_row_nonaligned + 7) & ~(size_t)7;
   /* oversize the height to accommodate for 2x2 pixel fragment processing for the case
    * where this texture is used as a framebuffer - if the height is odd, we'll need an 
    * extra row of scratch memory allocated such that an even line follows the last (odd) 
    * line. */
-  size_t alloc_height = (((size_t)height) + 1) & ~(size_t)1;
+  size_t alloc_height = (((size_t)height + 1) + 1) & ~(size_t)1;
 
   void *new_bitmap = malloc(num_bytes_per_row_8B_aligned * (size_t)alloc_height);
   if (!new_bitmap) return SL_ERR_NO_MEM;
@@ -2405,9 +2413,7 @@ int sampler_2d_set_storage(struct sampler_2d *s2d, int level, enum s2d_tex_compo
   lvl->width_ = width;
   lvl->height_ = height;
   lvl->num_bytes_per_bitmap_row_ = num_bytes_per_row_8B_aligned;
-  lvl->repeat_mask_s_ = isolate_msb((uint32_t)width) - 1;
-  lvl->repeat_mask_t_ = isolate_msb((uint32_t)height) - 1;
-
+  sampler_2d_update_level_repetition_masks(s2d);
   sampler_2d_update_completeness(s2d);
 
   return SL_ERR_OK;
