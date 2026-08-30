@@ -479,7 +479,11 @@ void gl_es2_log_CullFace(struct gl_es2_context *c, gl_es2_enum mode) {
 }
 
 void gl_es2_log_DeleteBuffers(struct gl_es2_context *c, gl_es2_sizei n, const gl_es2_uint *buffers) {
-  size_t k;
+  gl_es2_sizei k;
+  if (n < 0) {
+    apilog(c, "glDeleteBuffers(%d, ...);\n", n);
+    return;
+  }
   apilog(c, "glDeleteBuffers(%d, {", n);
   for (k = 0; k < n; ++k) {
     if (k) apilog(c, ", ");
@@ -489,7 +493,11 @@ void gl_es2_log_DeleteBuffers(struct gl_es2_context *c, gl_es2_sizei n, const gl
 }
 
 void gl_es2_log_DeleteFramebuffers(struct gl_es2_context *c, gl_es2_sizei n, const gl_es2_uint *framebuffers) { 
-  size_t k;
+  gl_es2_sizei k;
+  if (n < 0) {
+    apilog(c, "glDeleteFramebuffers(%d, ...);\n", n);
+    return;
+  }
   apilog(c, "glDeleteFramebuffers(%d, {", n);
   for (k = 0; k < n; ++k) {
     if (k) apilog(c, ", ");
@@ -503,7 +511,11 @@ void gl_es2_log_DeleteProgram(struct gl_es2_context *c, gl_es2_uint program) {
 }
 
 void gl_es2_log_DeleteRenderbuffers(struct gl_es2_context *c, gl_es2_sizei n, const gl_es2_uint *renderbuffers) { 
-  size_t k;
+  gl_es2_sizei k;
+  if (n < 0) {
+    apilog(c, "glDeleteRenderbuffers(%d, ...);\n", n);
+    return;
+  }
   apilog(c, "glDeleteRenderbuffers(%d, {", n);
   for (k = 0; k < n; ++k) {
     if (k) apilog(c, ", ");
@@ -517,7 +529,11 @@ void gl_es2_log_DeleteShader(struct gl_es2_context *c, gl_es2_uint shader) {
 }
 
 void gl_es2_log_DeleteTextures(struct gl_es2_context *c, gl_es2_sizei n, const gl_es2_uint *textures) { 
-  size_t k;
+  gl_es2_sizei k;
+  if (n < 0) {
+    apilog(c, "glDeleteTextures(%d, ...);\n", n);
+    return;
+  }
   apilog(c, "glDeleteTextures(%d, {", n);
   for (k = 0; k < n; ++k) {
     if (k) apilog(c, ", ");
