@@ -341,8 +341,9 @@ static void texture2D(float *prgba, struct sampler_2d *s2d, float s, float t, fl
     }
     if ((filter == s2d_nearest) ||
         (filter == s2d_nearest_mipmap_nearest)) {
-      /* ES 2.0 3.7.12: LUMINANCE expands to (L,L,L,1), LUMINANCE_ALPHA to (L,L,L,A),
-       * ALPHA to (0,0,0,A). Same in the three sibling switches below. */
+      /* ES 2.0 table 3.12 (3.8.2): LUMINANCE expands to (L,L,L,1),
+       * LUMINANCE_ALPHA to (L,L,L,A), ALPHA to (0,0,0,A). Same in the three
+       * sibling switches below. */
       switch (s2dm_levels[0]->components_) {
         case s2d_alpha:
           prgba[0] = 0.f;
