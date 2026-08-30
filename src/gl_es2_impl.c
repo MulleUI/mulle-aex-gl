@@ -323,7 +323,7 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(BindAttribLoca
     gl_es2_ctx_release(c);
     return;
   }
-  if (!c->allow_internals_ && !memcmp(name, "gl_", 3)) {
+  if (!c->allow_internals_ && !strncmp(name, "gl_", 3)) {
     set_gl_err(GL_ES2_INVALID_VALUE);
     gl_es2_ctx_release(c);
     return;
@@ -3276,7 +3276,7 @@ GL_ES2_DECL_SPEC gl_es2_int GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(GetAttri
     return -1;
   }
 
-  if (!c->allow_internals_ && !memcmp(name, "gl_", 3)) {
+  if (!c->allow_internals_ && !strncmp(name, "gl_", 3)) {
     /* Not a name we are allowed to find */
     gl_es2_log_GetAttribLocation(c, program, name, -1);
     gl_es2_ctx_release(c);
@@ -4874,7 +4874,7 @@ GL_ES2_DECL_SPEC gl_es2_int GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(GetUnifo
     gl_es2_ctx_release(c);
     return -1;
   }
-  if (!c->allow_internals_ && !memcmp(name, "gl_", 3)) {
+  if (!c->allow_internals_ && !strncmp(name, "gl_", 3)) {
     gl_es2_log_GetUniformLocation(c, program, name, -1);
     gl_es2_ctx_release(c);
     return -1;
