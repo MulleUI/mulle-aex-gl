@@ -769,7 +769,11 @@ void gl_es2_log_FrontFace(struct gl_es2_context *c, gl_es2_enum mode) {
 }
 
 void gl_es2_log_GenBuffers(struct gl_es2_context *c, gl_es2_sizei n, gl_es2_uint *buffers) { 
-  size_t k;
+  gl_es2_sizei k;
+  if (n < 0) {
+    apilog(c, "glGenBuffers(%d, ...);\n", n);
+    return;
+  }
   apilog(c, "glGenBuffers(%d, { ", n);
   for (k = 0; k < n; ++k) {
     apilog(c, "%s%u", k ? ", " : "", buffers[k]);
@@ -788,7 +792,11 @@ void gl_es2_log_GenerateMipmap(struct gl_es2_context *c, gl_es2_enum target) {
 }
 
 void gl_es2_log_GenFramebuffers(struct gl_es2_context *c, gl_es2_sizei n, gl_es2_uint *framebuffers) { 
-  size_t k;
+  gl_es2_sizei k;
+  if (n < 0) {
+    apilog(c, "glGenFramebuffers(%d, ...);\n", n);
+    return;
+  }
   apilog(c, "glGenFramebuffers(%d, { ", n);
   for (k = 0; k < n; ++k) {
     apilog(c, "%s%u", k ? ", " : "", framebuffers[k]);
@@ -797,7 +805,11 @@ void gl_es2_log_GenFramebuffers(struct gl_es2_context *c, gl_es2_sizei n, gl_es2
 }
 
 void gl_es2_log_GenRenderbuffers(struct gl_es2_context *c, gl_es2_sizei n, gl_es2_uint *renderbuffers) { 
-  size_t k;
+  gl_es2_sizei k;
+  if (n < 0) {
+    apilog(c, "glGenRenderbuffers(%d, ...);\n", n);
+    return;
+  }
   apilog(c, "glGenRenderbuffers(%d, { ", n);
   for (k = 0; k < n; ++k) {
     apilog(c, "%s%u", k ? ", " : "", renderbuffers[k]);
