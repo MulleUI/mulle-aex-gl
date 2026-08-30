@@ -3255,6 +3255,12 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(GetAttachedSha
     gl_es2_ctx_release(c);
     return;
   }
+  if (maxCount < 0) {
+    set_gl_err(GL_ES2_INVALID_VALUE);
+    gl_es2_log_GetAttachedShaders(c, program, maxCount, count, shaders);
+    gl_es2_ctx_release(c);
+    return;
+  }
   int num_shaders = 0;
   if (!shaders) maxCount = 0;
   if (prog->vertex_shader_.shader_) {
@@ -4122,6 +4128,12 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(GetProgramInfo
     gl_es2_ctx_release(c);
     return;
   }
+  if (bufsize < 0) {
+    set_gl_err(GL_ES2_INVALID_VALUE);
+    gl_es2_log_GetProgramInfoLog(c, program, bufsize, length, infoLog);
+    gl_es2_ctx_release(c);
+    return;
+  }
   size_t slength = 0;
   sl_info_log_get_log(&prog->program_.log_, bufsize, &slength, (char *)infoLog);
   if (length) *length = (gl_es2_sizei)slength;
@@ -4350,6 +4362,12 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(GetShaderInfoL
     gl_es2_ctx_release(c);
     return;
   }
+  if (bufsize < 0) {
+    set_gl_err(GL_ES2_INVALID_VALUE);
+    gl_es2_log_GetShaderInfoLog(c, shader, bufsize, length, infoLog);
+    gl_es2_ctx_release(c);
+    return;
+  }
   size_t slength = 0;
   sl_info_log_get_log(&shad->shader_.gl_info_log_, bufsize, &slength, (char *)infoLog);
   if (length) *length = (gl_es2_sizei)slength;
@@ -4397,6 +4415,12 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(GetShaderSourc
   uintptr_t shad_name = (uintptr_t)shader;
   struct gl_es2_shader *shad = (struct gl_es2_shader *)not_find(&c->shader_not_, shad_name);
   if (!shad) {
+    set_gl_err(GL_ES2_INVALID_VALUE);
+    gl_es2_log_GetShaderSource(c, shader, bufsize, length, source);
+    gl_es2_ctx_release(c);
+    return;
+  }
+  if (bufsize < 0) {
     set_gl_err(GL_ES2_INVALID_VALUE);
     gl_es2_log_GetShaderSource(c, shader, bufsize, length, source);
     gl_es2_ctx_release(c);
