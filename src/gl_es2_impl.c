@@ -2700,10 +2700,10 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(DrawArrays)(gl
 GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(DrawElements)(gl_es2_enum mode, gl_es2_sizei count, gl_es2_enum type, const void *indices) {
   struct gl_es2_context *c = gl_es2_ctx();
   gl_es2_log_DrawElements(c, mode, count, type, indices);
-  if ((mode == GL_ES2_TRIANGLES) && (count == 456)) {
-    fprintf(stderr, "Area of interest reached.\n");
-    int x = 0;
-    if (!x) return;
+  if (count < 0) {
+    set_gl_err(GL_ES2_INVALID_VALUE);
+    gl_es2_ctx_release(c);
+    return;
   }
   primitive_assembly_mode_t pam;
   if (!gl_mode_to_pam(mode, &pam)) {
@@ -5957,6 +5957,11 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(StencilOpSepar
 GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(TexImage2D)(gl_es2_enum target, gl_es2_int level, gl_es2_int internalformat, gl_es2_sizei width, gl_es2_sizei height, gl_es2_int border, gl_es2_enum format, gl_es2_enum type, const void *pixels) {
   struct gl_es2_context *c = gl_es2_ctx();
   gl_es2_log_TexImage2D(c, target, level, internalformat, width, height, border, format, type, pixels);
+  if (level < 0) {
+    set_gl_err(GL_ES2_INVALID_VALUE);
+    gl_es2_ctx_release(c);
+    return;
+  }
   int r;
   struct gl_es2_texture *tex = NULL;
   struct sampler_2d *s2d = NULL;
