@@ -2687,6 +2687,13 @@ static void perform_draw(primitive_assembly_mode_t mode,
 GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(DrawArrays)(gl_es2_enum mode, gl_es2_int first, gl_es2_sizei count) {
   struct gl_es2_context *c = gl_es2_ctx();
   gl_es2_log_DrawArrays(c, mode, first, count);
+  if ((count < 0) || (first < 0)) {
+    /* 2.8 leaves a negative first undefined but recommends this error; without
+     * it the vertex array is indexed from before its start. */
+    set_gl_err(GL_ES2_INVALID_VALUE);
+    gl_es2_ctx_release(c);
+    return;
+  }
   primitive_assembly_mode_t pam;
   if (!gl_mode_to_pam(mode, &pam)) {
     gl_es2_ctx_release(c);
