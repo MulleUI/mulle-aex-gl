@@ -2874,6 +2874,11 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(FramebufferRen
 GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(FramebufferTexture2D)(gl_es2_enum target, gl_es2_enum attachment, gl_es2_enum textarget, gl_es2_uint texture, gl_es2_int level) {
   struct gl_es2_context *c = gl_es2_ctx();
   gl_es2_log_FramebufferTexture2D(c, target, attachment, textarget, texture, level);
+  if (level < 0) {
+    set_gl_err(GL_ES2_INVALID_VALUE);
+    gl_es2_ctx_release(c);
+    return;
+  }
   if (target != GL_ES2_FRAMEBUFFER) {
     set_gl_err(GL_ES2_INVALID_ENUM);
     gl_es2_ctx_release(c);
