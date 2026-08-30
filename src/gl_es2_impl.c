@@ -8458,7 +8458,7 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(VertexAttrib2f
 GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(VertexAttrib2fv)(gl_es2_uint index, const gl_es2_float *v) {
   struct gl_es2_context *c = gl_es2_ctx();
   gl_es2_log_VertexAttrib2fv(c, index, v);
-  if (index > c->attribs_.num_attribs_) {
+  if (index >= c->attribs_.num_attribs_) {
     set_gl_err(GL_ES2_INVALID_VALUE);
     gl_es2_ctx_release(c);
     return;
@@ -8473,7 +8473,7 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(VertexAttrib2f
 GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(VertexAttrib3f)(gl_es2_uint index, gl_es2_float x, gl_es2_float y, gl_es2_float z) {
   struct gl_es2_context *c = gl_es2_ctx();
   gl_es2_log_VertexAttrib3f(c, index, x, y, z);
-  if (index > c->attribs_.num_attribs_) {
+  if (index >= c->attribs_.num_attribs_) {
     set_gl_err(GL_ES2_INVALID_VALUE);
     gl_es2_ctx_release(c);
     return;
@@ -8488,7 +8488,7 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(VertexAttrib3f
 GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(VertexAttrib3fv)(gl_es2_uint index, const gl_es2_float *v) {
   struct gl_es2_context *c = gl_es2_ctx();
   gl_es2_log_VertexAttrib3fv(c, index, v);
-  if (index > c->attribs_.num_attribs_) {
+  if (index >= c->attribs_.num_attribs_) {
     set_gl_err(GL_ES2_INVALID_VALUE);
     gl_es2_ctx_release(c);
     return;
@@ -8503,7 +8503,7 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(VertexAttrib3f
 GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(VertexAttrib4f)(gl_es2_uint index, gl_es2_float x, gl_es2_float y, gl_es2_float z, gl_es2_float w) {
   struct gl_es2_context *c = gl_es2_ctx();
   gl_es2_log_VertexAttrib4f(c, index, x, y, z, w);
-  if (index > c->attribs_.num_attribs_) {
+  if (index >= c->attribs_.num_attribs_) {
     set_gl_err(GL_ES2_INVALID_VALUE);
     gl_es2_ctx_release(c);
     return;
@@ -8518,7 +8518,7 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(VertexAttrib4f
 GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(VertexAttrib4fv)(gl_es2_uint index, const gl_es2_float *v) {
   struct gl_es2_context *c = gl_es2_ctx();
   gl_es2_log_VertexAttrib4fv(c, index, v);
-  if (index > c->attribs_.num_attribs_) {
+  if (index >= c->attribs_.num_attribs_) {
     set_gl_err(GL_ES2_INVALID_VALUE);
     gl_es2_ctx_release(c);
     return;
