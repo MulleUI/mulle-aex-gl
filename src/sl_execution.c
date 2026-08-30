@@ -3639,8 +3639,15 @@ int sl_exec_run(struct sl_execution *exec, struct sl_function *f, int exec_chain
       if (eps[epi].enter_chain_ != SL_EXEC_NO_CHAIN) {
         switch (eps[epi].v_.stmt_->kind_) {
           case slsk_expression: {
-            r = sl_exec_push_expr(exec, eps[epi].v_.stmt_->expr_, eps[epi].enter_chain_, CHAIN_REF(eps[epi].post_chain_));
-            if (r) return r;
+            if (eps[epi].v_.stmt_->expr_) {
+              r = sl_exec_push_expr(exec, eps[epi].v_.stmt_->expr_, eps[epi].enter_chain_, CHAIN_REF(eps[epi].post_chain_));
+              if (r) return r;
+            }
+            else {
+              /* An empty statement ";" has nothing to evaluate; it completes where
+               * the expression would have continued to. */
+              eps[epi].post_chain_ = sl_exec_join_chains(exec, eps[epi].post_chain_, eps[epi].enter_chain_);
+            }
             eps[epi].enter_chain_ = SL_EXEC_NO_CHAIN;
             break;  
           }
@@ -3852,18 +3859,24 @@ int sl_exec_run(struct sl_execution *exec, struct sl_function *f, int exec_chain
              * note that we have to potentially execute an initializer first, e.g.:
              *   while (bool b = true) { .. }
              * is valid. */
-            size_t condition_eval_index = exec->num_execution_points_;
-            r = sl_exec_push_expr(exec, eps[epi].v_.stmt_->condition_, SL_EXEC_NO_CHAIN, CHAIN_REF(eps[epi].alt_chain_));
-            if (r) return r;
-            size_t condition_prep_stmt_index = exec->num_execution_points_;
-            /* Check if we have a preparatory statement for the condition (an initializer) and execute it prior to the condition expression,
-             * if so. Otherwise wire the enter_chain_ to directly go into the expression. */
-            if (eps[epi].v_.stmt_->prep_cond_) {
-              r = sl_exec_push_stmt(exec, eps[epi].v_.stmt_->prep_cond_, eps[epi].revisit_chain_, CHAIN_REF(eps[condition_eval_index].enter_chain_));
+            if (eps[epi].v_.stmt_->condition_) {
+              size_t condition_eval_index = exec->num_execution_points_;
+              r = sl_exec_push_expr(exec, eps[epi].v_.stmt_->condition_, SL_EXEC_NO_CHAIN, CHAIN_REF(eps[epi].alt_chain_));
               if (r) return r;
+              /* Check if we have a preparatory statement for the condition (an initializer) and execute it prior to the condition expression,
+               * if so. Otherwise wire the enter_chain_ to directly go into the expression. */
+              if (eps[epi].v_.stmt_->prep_cond_) {
+                r = sl_exec_push_stmt(exec, eps[epi].v_.stmt_->prep_cond_, eps[epi].revisit_chain_, CHAIN_REF(eps[condition_eval_index].enter_chain_));
+                if (r) return r;
+              }
+              else {
+                eps[condition_eval_index].enter_chain_ = eps[epi].revisit_chain_;
+              }
             }
             else {
-              eps[condition_eval_index].enter_chain_ = eps[epi].revisit_chain_;
+              /* An omitted condition is an unconditional true; go straight to the
+               * alt chain the condition would have continued to. */
+              eps[epi].alt_chain_ = sl_exec_join_chains(exec, eps[epi].alt_chain_, eps[epi].revisit_chain_);
             }
             eps[epi].revisit_chain_ = SL_EXEC_NO_CHAIN;
 
@@ -3899,13 +3912,19 @@ int sl_exec_run(struct sl_execution *exec, struct sl_function *f, int exec_chain
       else if (eps[epi].alt_chain_ != SL_EXEC_NO_CHAIN) {
         switch (eps[epi].v_.stmt_->kind_) {
           case slsk_for: {
-            sl_exec_need_rvalue(exec, eps[epi].alt_chain_, eps[epi].v_.stmt_->condition_);
             /* Coming back from condition evaluation, split execution flows, true branch goes into the body,
              * false branch goes into post */
             uint32_t true_chain = SL_EXEC_NO_CHAIN;
             uint32_t false_chain = SL_EXEC_NO_CHAIN;
-            sl_exec_split_chains_by_bool(exec, eps[epi].v_.stmt_->condition_, eps[epi].alt_chain_,
-                                        &true_chain, &false_chain);
+            if (eps[epi].v_.stmt_->condition_) {
+              sl_exec_need_rvalue(exec, eps[epi].alt_chain_, eps[epi].v_.stmt_->condition_);
+              sl_exec_split_chains_by_bool(exec, eps[epi].v_.stmt_->condition_, eps[epi].alt_chain_,
+                                          &true_chain, &false_chain);
+            }
+            else {
+              /* No condition: every row takes the body. */
+              true_chain = eps[epi].alt_chain_;
+            }
             eps[epi].alt_chain_ = SL_EXEC_NO_CHAIN;
             if (true_chain != SL_EXEC_NO_CHAIN) {
               /* Set up the true chain, this involves the following:
