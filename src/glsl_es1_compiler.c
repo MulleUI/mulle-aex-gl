@@ -87,6 +87,9 @@ void glsl_es1_compiler_init(struct glsl_es1_compiler *cc) {
 
 void glsl_es1_compiler_cleanup(struct glsl_es1_compiler *cc) {
   sl_type_base_cleanup(&cc->cc_tb_);
+  /* input_file_ borrows a filename owned by the preprocessor, and dx_ may
+   * outlive us; drop it before pp_cleanup frees the buffer. */
+  if (cc->dx_) cc->dx_->input_file_ = "";
   pp_cleanup(&cc->pp_);
   glsl_es1_stack_cleanup(&cc->parser_);
   dx_diags_cleanup(&cc->default_dx_);
