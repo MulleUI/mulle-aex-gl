@@ -3067,6 +3067,7 @@ static void sl_exec_clear_ep(struct sl_execution *exec, size_t ep_index) {
   memset(&ep->v_, 0, sizeof(ep->v_));
   ep->enter_chain_ = ep->revisit_chain_ = ep->post_chain_ = ep->alt_chain_ = SL_EXEC_NO_CHAIN;
   ep->continue_chain_ptr_ = 0;
+  ep->loop_continue_chain_ptr_ = 0;
 }
 
 void sl_exec_init(struct sl_execution *exec) {
@@ -3673,6 +3674,7 @@ int sl_exec_run(struct sl_execution *exec, struct sl_function *f, int exec_chain
           }
           case slsk_do: {
             /* Execute the body, then return onto the alt_chain_ to evaluate the condition */
+            eps[epi].loop_continue_chain_ptr_ = CHAIN_REF(eps[epi].alt_chain_);
             r = sl_exec_push_stmt(exec, eps[epi].v_.stmt_->true_branch_, eps[epi].enter_chain_, CHAIN_REF(eps[epi].alt_chain_));
             if (r) return r;
             eps[epi].enter_chain_ = SL_EXEC_NO_CHAIN;
@@ -3692,24 +3694,15 @@ int sl_exec_run(struct sl_execution *exec, struct sl_function *f, int exec_chain
             break;
           case slsk_continue: {
             /* continue should break out to nearest loop, and continue execution after the loop body, but before
-             * the loop is re-evaluated again. This is not a consistent chain location between while/do/for so 
-             * some care is needed. */
+             * the loop is re-evaluated again. That is the chain the loop gave its body as a continuation, which
+             * the loop records in loop_continue_chain_ptr_; re-deriving it per loop kind gets slsk_for wrong,
+             * because its post expression sits between the body and the condition. */
             size_t pepi = epi - 1;
             while (pepi) {
               if (eps[pepi].kind_ == SLEPK_STMT) {
-                if (eps[pepi].v_.stmt_->kind_ == slsk_while) {
-                  /* slsk_while: stick it on the enter_chain (it'll schedule the condition) */
-                  eps[pepi].enter_chain_ = sl_exec_join_chains(exec, eps[pepi].enter_chain_, eps[epi].enter_chain_);
-                  break;
-                }
-                else if (eps[pepi].v_.stmt_->kind_ == slsk_do) {
-                  /* slsk_do: stick it on the alt_chain (it'll schedule the condition) */
-                  eps[pepi].alt_chain_ = sl_exec_join_chains(exec, eps[pepi].alt_chain_, eps[epi].enter_chain_);
-                  break;
-                }
-                else if (eps[pepi].v_.stmt_->kind_ == slsk_for) {
-                  /* slsk_for: stick it on the revisit_chain (it'll schedule the condition) */
-                  eps[pepi].revisit_chain_ = sl_exec_join_chains(exec, eps[pepi].revisit_chain_, eps[epi].enter_chain_);
+                if (eps[pepi].loop_continue_chain_ptr_) {
+                  uint32_t *body_continuation = (uint32_t *)(((char *)exec->execution_points_) + eps[pepi].loop_continue_chain_ptr_);
+                  *body_continuation = sl_exec_join_chains(exec, *body_continuation, eps[epi].enter_chain_);
                   break;
                 }
               }
@@ -3829,6 +3822,7 @@ int sl_exec_run(struct sl_execution *exec, struct sl_function *f, int exec_chain
             if (true_chain != SL_EXEC_NO_CHAIN) {
               /* Come back onto the enter_chain after executing the body (true_branch) so we can re-evaluate
                * the condition expression. */
+              eps[epi].loop_continue_chain_ptr_ = CHAIN_REF(eps[epi].enter_chain_);
               sl_exec_push_stmt(exec, eps[epi].v_.stmt_->true_branch_, true_chain, CHAIN_REF(eps[epi].enter_chain_));
             }
             /* Any false evaluations of the while condition go straight into the post_chain_ for moving to
@@ -3921,11 +3915,13 @@ int sl_exec_run(struct sl_execution *exec, struct sl_function *f, int exec_chain
               if (eps[epi].v_.stmt_->post_) {
                 size_t post_expr = exec->num_execution_points_;
                 r = sl_exec_push_expr(exec, eps[epi].v_.stmt_->post_, SL_EXEC_NO_CHAIN, CHAIN_REF(eps[epi].revisit_chain_));
+                eps[epi].loop_continue_chain_ptr_ = CHAIN_REF(eps[post_expr].enter_chain_);
                 r = r ? r : sl_exec_push_stmt(exec, eps[epi].v_.stmt_->true_branch_, true_chain, CHAIN_REF(eps[post_expr].enter_chain_));
                 if (r) return r;
               }
               else {
                 /* No post expression, so re-wire the body to continue on our revisit chain directly. */
+                eps[epi].loop_continue_chain_ptr_ = CHAIN_REF(eps[epi].revisit_chain_);
                 r = sl_exec_push_stmt(exec, eps[epi].v_.stmt_->true_branch_, true_chain, CHAIN_REF(eps[epi].revisit_chain_));
                 if (r) return r;
               }
@@ -3949,6 +3945,7 @@ int sl_exec_run(struct sl_execution *exec, struct sl_function *f, int exec_chain
         struct sl_stmt *next = sl_stmt_next_execution_sibling(eps[epi].v_.stmt_);
         if (next) {
           eps[epi].v_.stmt_ = next;
+          eps[epi].loop_continue_chain_ptr_ = 0;
           eps[epi].enter_chain_ = eps[epi].post_chain_;
           eps[epi].post_chain_ = SL_EXEC_NO_CHAIN;
         }

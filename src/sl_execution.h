@@ -138,6 +138,12 @@ struct sl_execution_point {
    */
   size_t continue_chain_ptr_;
 
+  /* Offset, in the same form as continue_chain_ptr_, to the chain this
+   * statement's body continues on once it completes — where a `continue`
+   * inside the body belongs. Set by each loop when it schedules its body, zero
+   * for anything that is not a loop currently executing its body. */
+  size_t loop_continue_chain_ptr_;
+
   union {
     struct sl_expr *expr_;
     struct sl_stmt *stmt_;
