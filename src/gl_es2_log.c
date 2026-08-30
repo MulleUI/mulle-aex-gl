@@ -806,13 +806,14 @@ void gl_es2_log_GenRenderbuffers(struct gl_es2_context *c, gl_es2_sizei n, gl_es
 }
 
 void gl_es2_log_GenTextures(struct gl_es2_context *c, gl_es2_sizei n, gl_es2_uint *textures) { 
-  size_t k;
+  gl_es2_sizei k;
+  if (n < 0) {
+    apilog(c, "glGenTextures(%d, ...);\n", n);
+    return;
+  }
   apilog(c, "glGenTextures(%d, { ", n);
   for (k = 0; k < n; ++k) {
     apilog(c, "%s%u", k ? ", " : "", textures[k]);
-    if (textures[k] == 53) {
-      fprintf(stderr, "Area of interest\n");
-    }
   }
   apilog(c, " });\n");
 }
