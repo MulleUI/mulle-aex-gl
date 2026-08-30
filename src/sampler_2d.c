@@ -341,6 +341,8 @@ static void texture2D(float *prgba, struct sampler_2d *s2d, float s, float t, fl
     }
     if ((filter == s2d_nearest) ||
         (filter == s2d_nearest_mipmap_nearest)) {
+      /* ES 2.0 3.7.12: LUMINANCE expands to (L,L,L,1), LUMINANCE_ALPHA to (L,L,L,A),
+       * ALPHA to (0,0,0,A). Same in the three sibling switches below. */
       switch (s2dm_levels[0]->components_) {
         case s2d_alpha:
           prgba[0] = 0.f;
@@ -350,14 +352,12 @@ static void texture2D(float *prgba, struct sampler_2d *s2d, float s, float t, fl
           break;
         case s2d_luminance:
           prgba[0] = ((float)reds[0]) / 255.f;
-          prgba[1] = 0.f;
-          prgba[2] = 0.f;
-          prgba[3] = 0.f;
+          prgba[1] = prgba[2] = prgba[0];
+          prgba[3] = 1.f;
           break;
         case s2d_luminance_alpha: {
           prgba[0] = ((float)reds[0]) / 255.f;
-          prgba[1] = 0.f;
-          prgba[2] = 0.f;
+          prgba[1] = prgba[2] = prgba[0];
           prgba[3] = ((float)alphas[0]) / 255.f;
           break;
         }
@@ -387,14 +387,12 @@ static void texture2D(float *prgba, struct sampler_2d *s2d, float s, float t, fl
           break;
         case s2d_luminance:
           prgba[0] = ((float)(reds[0] * tau1_fract + reds[1] * tau2_fract)) / (256.f * 255.f);
-          prgba[1] = 0.f;
-          prgba[2] = 0.f;
-          prgba[3] = 0.f;
+          prgba[1] = prgba[2] = prgba[0];
+          prgba[3] = 1.f;
           break;
         case s2d_luminance_alpha: {
           prgba[0] = ((float)(reds[0] * tau1_fract + reds[1] * tau2_fract)) / (256.f * 255.f);
-          prgba[1] = 0.f;
-          prgba[2] = 0.f;
+          prgba[1] = prgba[2] = prgba[0];
           prgba[3] = ((float)(alphas[0] * tau1_fract + alphas[1] * tau2_fract)) / (256.f * 255.f);
           break;
         }
@@ -635,14 +633,12 @@ static void texture2D(float *prgba, struct sampler_2d *s2d, float s, float t, fl
           break;
         case s2d_luminance:
           prgba[0] = ((float)reds[0]) / (65536.f * 255.f);
-          prgba[1] = 0.f;
-          prgba[2] = 0.f;
-          prgba[3] = 0.f;
+          prgba[1] = prgba[2] = prgba[0];
+          prgba[3] = 1.f;
           break;
         case s2d_luminance_alpha: {
           prgba[0] = ((float)reds[0]) / (65536.f * 255.f);
-          prgba[1] = 0.f;
-          prgba[2] = 0.f;
+          prgba[1] = prgba[2] = prgba[0];
           prgba[3] = ((float)alphas[0]) / (65536.f * 255.f);
           break;
         }
@@ -673,14 +669,12 @@ static void texture2D(float *prgba, struct sampler_2d *s2d, float s, float t, fl
           break;
         case s2d_luminance:
           prgba[0] = ((float)(reds[0] * tau1_fract + reds[1] * tau2_fract)) / (16777216.f * 255.f);
-          prgba[1] = 0.f;
-          prgba[2] = 0.f;
-          prgba[3] = 0.f;
+          prgba[1] = prgba[2] = prgba[0];
+          prgba[3] = 1.f;
           break;
         case s2d_luminance_alpha: {
           prgba[0] = ((float)(reds[0] * tau1_fract + reds[1] * tau2_fract)) / (16777216.f * 255.f);
-          prgba[1] = 0.f;
-          prgba[2] = 0.f;
+          prgba[1] = prgba[2] = prgba[0];
           prgba[3] = ((float)(alphas[0] * tau1_fract + alphas[1] * tau2_fract)) / (16777216.f * 255.f);
           break;
         }
