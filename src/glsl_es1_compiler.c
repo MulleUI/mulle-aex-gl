@@ -396,8 +396,17 @@ enum glsl_es1_compiler_result glsl_es1_compiler_compile_mem(struct glsl_es1_comp
   if (s) {
     do {
       if (s->kind_ == SK_FUNCTION) {
-        r = sl_function_alloc_registers(cc->tb_, s->v_.function_);
-        if (r) return GLSL_ES1_R_FAILED;
+        /* A symbol holds every overload of the name on a tail-cyclic chain;
+         * each needs its own registers, not just the one the symbol points at. */
+        struct sl_function *f = s->v_.function_;
+        if (f) {
+          do {
+            f = f->overload_chain_;
+
+            r = sl_function_alloc_registers(cc->tb_, f);
+            if (r) return GLSL_ES1_R_FAILED;
+          } while (f != s->v_.function_);
+        }
       }
 
       s = s->next_;
@@ -411,25 +420,33 @@ enum glsl_es1_compiler_result glsl_es1_compiler_compile_mem(struct glsl_es1_comp
   if (s) {
     do {
       if (s->kind_ == SK_FUNCTION) {
-        struct sl_exec_call_graph_results lcgr;
-        sl_exec_call_graph_results_init(&lcgr);
+        /* As above: every overload on the chain contributes to the counts. */
+        struct sl_function *f = s->v_.function_;
+        if (f) {
+          do {
+            struct sl_exec_call_graph_results lcgr;
+            f = f->overload_chain_;
 
-        r = sl_exec_call_graph_analysis(&lcgr, s->v_.function_);
+            sl_exec_call_graph_results_init(&lcgr);
 
-        if (r) {
-          sl_exec_call_graph_results_cleanup(&lcgr);
-          sl_exec_call_graph_results_cleanup(&cgr);
-          return GLSL_ES1_R_FAILED;
+            r = sl_exec_call_graph_analysis(&lcgr, f);
+
+            if (r) {
+              sl_exec_call_graph_results_cleanup(&lcgr);
+              sl_exec_call_graph_results_cleanup(&cgr);
+              return GLSL_ES1_R_FAILED;
+            }
+
+            lcgr.num_float_regs_ += cc->cu_->global_frame_.ract_.rra_floats_.watermark_;
+            lcgr.num_int_regs_ += cc->cu_->global_frame_.ract_.rra_ints_.watermark_;
+            lcgr.num_bool_regs_ += cc->cu_->global_frame_.ract_.rra_bools_.watermark_;
+            lcgr.num_sampler2D_regs_ += cc->cu_->global_frame_.ract_.rra_sampler2D_.watermark_;
+            lcgr.num_samplerCube_regs_ += cc->cu_->global_frame_.ract_.rra_samplerCube_.watermark_;
+
+            sl_exec_cgr_max(&cgr, &lcgr);
+            sl_exec_call_graph_results_cleanup(&lcgr);
+          } while (f != s->v_.function_);
         }
-
-        lcgr.num_float_regs_ += cc->cu_->global_frame_.ract_.rra_floats_.watermark_;
-        lcgr.num_int_regs_ += cc->cu_->global_frame_.ract_.rra_ints_.watermark_;
-        lcgr.num_bool_regs_ += cc->cu_->global_frame_.ract_.rra_bools_.watermark_;
-        lcgr.num_sampler2D_regs_ += cc->cu_->global_frame_.ract_.rra_sampler2D_.watermark_;
-        lcgr.num_samplerCube_regs_ += cc->cu_->global_frame_.ract_.rra_samplerCube_.watermark_;
-
-        sl_exec_cgr_max(&cgr, &lcgr);
-        sl_exec_call_graph_results_cleanup(&lcgr);
       }
 
       s = s->next_;
