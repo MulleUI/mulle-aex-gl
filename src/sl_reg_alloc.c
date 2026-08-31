@@ -336,9 +336,6 @@ int sl_reg_alloc_is_allocated(const struct sl_reg_alloc *ra) {
 int sl_reg_alloc_clone(struct sl_reg_alloc *dst, const struct sl_reg_alloc *src) {
   int r = 0;
 
-  dst->kind_ = src->kind_;
-  dst->local_frame_ = src->local_frame_;
-  dst->is_indirect_ = src->is_indirect_;
   if (src->kind_ == slrak_struct) {
     size_t n;
     if (!src->v_.comp_.fields_) {
@@ -395,7 +392,7 @@ int sl_reg_alloc_clone(struct sl_reg_alloc *dst, const struct sl_reg_alloc *src)
     dst->is_indirect_ = src->is_indirect_;
     dst->v_.array_.num_elements_ = src->v_.array_.num_elements_;
     dst->v_.array_.element_type_ = src->v_.array_.element_type_;
-    dst->v_.array_.head_ = src->v_.array_.head_;
+    dst->v_.array_.head_ = new_element_ra;
   }
   else {
     sl_reg_alloc_cleanup(dst);
