@@ -38,7 +38,16 @@ void data_buffer_cleanup(struct data_buffer *db) {
 
 int data_buffer_set_data(struct data_buffer *db, size_t size, const void *data) {
   if (db->size_ != size) {
-    void *p = realloc(db->data_, size);
+    void *p;
+    if (!size) {
+      /* realloc to 0 may free and return NULL, which is indistinguishable from
+       * failure; release explicitly instead. */
+      free(db->data_);
+      db->data_ = NULL;
+      db->size_ = 0;
+      return 0;
+    }
+    p = realloc(db->data_, size);
     if (!p) {
       return -1;
     }
