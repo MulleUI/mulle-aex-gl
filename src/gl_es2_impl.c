@@ -5725,6 +5725,10 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(RenderbufferSt
     case GL_ES2_STENCIL_INDEX8:
       actual_format = gl_es2_renderbuffer_format_stencil16;
       break;
+    default:
+      set_gl_err(GL_ES2_INVALID_ENUM);
+      gl_es2_ctx_release(c);
+      return;
   }
   int r;
   r = gl_es2_renderbuffer_storage(c->renderbuffer_, actual_format, width, height);
