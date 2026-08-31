@@ -1193,6 +1193,11 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(BufferData)(gl
       gl_es2_ctx_release(c);
       return;
   }
+  if (size < 0) {
+    set_gl_err(GL_ES2_INVALID_VALUE);
+    gl_es2_ctx_release(c);
+    return;
+  }
   if (data_buffer_set_data(&buf->buf_, size, data)) {
     /* no memory */
     set_gl_err(GL_ES2_OUT_OF_MEMORY);
