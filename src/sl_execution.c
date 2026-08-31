@@ -3934,15 +3934,28 @@ int sl_exec_run(struct sl_execution *exec, struct sl_function *f, int exec_chain
               if (eps[epi].v_.stmt_->post_) {
                 size_t post_expr = exec->num_execution_points_;
                 r = sl_exec_push_expr(exec, eps[epi].v_.stmt_->post_, SL_EXEC_NO_CHAIN, CHAIN_REF(eps[epi].revisit_chain_));
-                eps[epi].loop_continue_chain_ptr_ = CHAIN_REF(eps[post_expr].enter_chain_);
-                r = r ? r : sl_exec_push_stmt(exec, eps[epi].v_.stmt_->true_branch_, true_chain, CHAIN_REF(eps[post_expr].enter_chain_));
                 if (r) return r;
+                eps[epi].loop_continue_chain_ptr_ = CHAIN_REF(eps[post_expr].enter_chain_);
+                if (eps[epi].v_.stmt_->true_branch_) {
+                  r = sl_exec_push_stmt(exec, eps[epi].v_.stmt_->true_branch_, true_chain, CHAIN_REF(eps[post_expr].enter_chain_));
+                  if (r) return r;
+                }
+                else {
+                  /* Empty body: go straight to the post expression. */
+                  eps[post_expr].enter_chain_ = sl_exec_join_chains(exec, eps[post_expr].enter_chain_, true_chain);
+                }
               }
               else {
                 /* No post expression, so re-wire the body to continue on our revisit chain directly. */
                 eps[epi].loop_continue_chain_ptr_ = CHAIN_REF(eps[epi].revisit_chain_);
-                r = sl_exec_push_stmt(exec, eps[epi].v_.stmt_->true_branch_, true_chain, CHAIN_REF(eps[epi].revisit_chain_));
-                if (r) return r;
+                if (eps[epi].v_.stmt_->true_branch_) {
+                  r = sl_exec_push_stmt(exec, eps[epi].v_.stmt_->true_branch_, true_chain, CHAIN_REF(eps[epi].revisit_chain_));
+                  if (r) return r;
+                }
+                else {
+                  /* Empty body and nothing to do after it: straight back to the condition. */
+                  eps[epi].revisit_chain_ = sl_exec_join_chains(exec, eps[epi].revisit_chain_, true_chain);
+                }
               }
             }
 
@@ -4502,6 +4515,7 @@ int sl_exec_run(struct sl_execution *exec, struct sl_function *f, int exec_chain
             else {
               /* eps[epi].v_.expr_ shares registers with second child, we're already done even if both are lvalues */
             }
+            break;
           }
 
           case exop_conditional: {
@@ -4542,7 +4556,10 @@ int sl_exec_run(struct sl_execution *exec, struct sl_function *f, int exec_chain
                 assert(0);
                 return -1;
               }
-              if (!sl_reg_alloc_are_equal(&x->base_regs_, &sx->base_regs_)) {
+              /* The field selection aliases the child's field, not the child's
+               * whole struct; comparing against the struct can never hold, the
+               * two are of different kinds. */
+              if (!sl_reg_alloc_are_equal(&x->base_regs_, child_field)) {
                 assert(0);
                 return -1;
               }
