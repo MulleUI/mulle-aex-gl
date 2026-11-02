@@ -1,11 +1,36 @@
 # mulle-aex-gl
 
-#### 🛸 mulle-aex-gl does something
+`mulle-aex-gl` is a [mulle-sde](//github.com/mulle-sde) C library fork of
+[Aex-GL](https://github.com/kingletbv/aex-gl), a dependency-free software
+implementation of OpenGL ES 2.0.
 
-It works, sometimes.
+The purpose of the fork is to provide MulleUI with a self-contained software
+GLES2 backend for headless rendering, without Carburetta at build or run time
+and without EGL, X11, Wayland or a GPU.
 
+- upstream: `kingletbv/aex-gl`, Apache-2.0
+- fork base: see [UPSTREAM.md](UPSTREAM.md)
+- plan: [MATCHPLAN.md](MATCHPLAN.md)
 
-## mulle-sde
+## Status
+
+This is a work in progress. The imported upstream sources are still in their
+original layout; the mulle-sde build integration and the Carburetta-generated
+parsers are being added.
+
+Upstream implements:
+
+- vertex and fragment shader compilation and execution at GLSL ES 1.00 level,
+- 32-bit RGBA framebuffer,
+- 16-bit stencil buffering,
+- 16- and 32-bit depth buffering,
+- all blending modes,
+- lines and triangles,
+- `dFdx()`, `dFdy()` and `fwidth()`.
+
+Missing upstream: points and MSAA.
+
+## Build
 
 This is a [mulle-sde](//github.com/mulle-sde) project. mulle-sde combines
 recursive package management with cross-platform builds via **cmake**:
@@ -13,27 +38,13 @@ recursive package management with cross-platform builds via **cmake**:
 | Action  | Command                               | Description               |
 |---------|---------------------------------------|---------------------------|
 | Build   | `mulle-sde craft [--release/--debug]` | Builds into local `kitchen` folder |
-| Add     | `mulle-sde dependency add --c --github <|GITHUB_USER|> mulle-aex-gl` | Add mulle-aex-gl to another mulle-sde project as a dependency |
-| Install | `mulle-sde install --prefix /usr/local https://github.com/<|GITHUB_USER|>/mulle-aex-gl.git` | Like `make install` |
+| Check   | `mulle-sde check`                     | Fast syntax check |
+| Reflect | `mulle-sde reflect`                   | Regenerate CMake file lists |
 
+The headless smoke test is `renderbmp`, which renders the upstream demos into
+BMP files without a display server.
 
-### Manual Installation
+## License
 
-
-Install the requirements:
-
-| Requirements                                      | Description             |
-|---------------------------------------------------|-------------------------|
-| [some-requirement](//github.com/some/requirement) | Some requirement        |
-
-
-Install into `/usr/local`:
-
-``` sh
-cmake -B build \
-      -DCMAKE_INSTALL_PREFIX=/usr/local \
-      -DCMAKE_PREFIX_PATH=/usr/local \
-      -DCMAKE_BUILD_TYPE=Release &&
-cmake --build build --config Release &&
-cmake --install build --config Release
-```
+Apache License 2.0. See [LICENSE](LICENSE). This fork preserves the upstream
+license and attribution.

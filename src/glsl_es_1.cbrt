@@ -1,0 +1,1405 @@
+/* Copyright 2023-2024 Kinglet B.V.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#ifndef STDLIB_H_INCLUDED
+#define STDLIB_H_INCLUDED
+#include <stdlib.h>
+#endif
+
+#ifndef STDIO_H_INCLUDED
+#define STDIO_H_INCLUDED
+#include <stdio.h>
+#endif
+
+#ifndef STRING_H_INCLUDED
+#define STRING_H_INCLUDED
+#include <string.h>
+#endif
+
+#ifndef ASSERT_H_INCLUDED
+#define ASSERT_H_INCLUDED
+#include <assert.h>
+#endif
+
+#ifndef GLSL_ES_1_H_INCLUDED
+#define GLSL_ES_1_H_INCLUDED
+#include "glsl_es_1.h"
+#endif
+
+#ifndef GLSL_ES1_COMPILER_H_INCLUDED
+#define GLSL_ES1_COMPILER_H_INCLUDED
+#include "glsl_es1_compiler.h"
+#endif
+
+#ifndef PP_TOKENS_H_INCLUDED
+#define PP_TOKENS_H_INCLUDED
+#include "pp/pp_tokens.h"
+#endif
+
+#ifndef SITUS_H_INCLUDED
+#define SITUS_H_INCLUDED
+#include "situs.h"
+#endif
+
+#ifndef SL_EXPR_H_INCLUDED
+#define SL_EXPR_H_INCLUDED
+#include "sl_expr.h"
+#endif
+
+#ifndef SL_FRAME_H_INCLUDED
+#define SL_FRAME_H_INCLUDED
+#include "sl_frame.h"
+#endif
+
+#ifndef SL_STMT_H_INCLUDED
+#define SL_STMT_H_INCLUDED
+#include "sl_stmt.h"
+#endif
+
+#ifndef GLSL_ES1_ASSIST_H_INCLUDED
+#define GLSL_ES1_ASSIST_H_INCLUDED
+#include "glsl_es1_assist.h"
+#endif
+
+#ifndef SL_COMPILATION_UNIT_H_INCLUDED
+#define SL_COMPILATION_UNIT_H_INCLUDED
+#include "sl_compilation_unit.h"
+#endif
+
+%grammar%
+
+%prefix glsl_es1_
+
+%params struct glsl_es1_compiler *cc, struct pptk *input_chain
+
+%token ATTRIBUTE CONST BOOL FLOAT INT BREAK CONTINUE DO ELSE FOR IF DISCARD RETURN
+%token BVEC2 BVEC3 BVEC4 IVEC2 IVEC3 IVEC4 VEC2 VEC3 VEC4 MAT2 MAT3 MAT4 IN OUT INOUT
+%token UNIFORM VARYING SAMPLER2D SAMPLERCUBE STRUCT VOID WHILE
+%token IDENTIFIER TYPE_NAME FLOATCONSTANT INTCONSTANT BOOLCONSTANT
+%token LEFT_OP RIGHT_OP INC_OP DEC_OP LE_OP GE_OP EQ_OP NE_OP AND_OP OR_OP XOR_OP 
+%token MUL_ASSIGN DIV_ASSIGN ADD_ASSIGN MOD_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN
+%token XOR_ASSIGN OR_ASSIGN SUB_ASSIGN 
+
+%token LEFT_PAREN RIGHT_PAREN LEFT_BRACKET RIGHT_BRACKET LEFT_BRACE RIGHT_BRACE DOT 
+%token COMMA COLON SEMICOLON EQUAL BANG DASH TILDE PLUS STAR SLASH PERCENT 
+%token LEFT_ANGLE RIGHT_ANGLE VERTICAL_BAR CARET AMPERSAND QUESTION
+
+%token INVARIANT
+%token HIGH_PRECISION MEDIUM_PRECISION LOW_PRECISION PRECISION
+
+%token OTHER /* used for tokens we don't recognize for GLSL; will always create a syntax error. */
+%token WHITESPACE /* used for whitespace; will always be ignored (not used inside grammar itself.) */
+
+%nt primary-expression postfix-expression integer-expression function-call
+%nt function-call-generic function-call-header-no-parameters function-call-header-with-parameters
+%nt function-call-header function-identifier constructor-identifier
+%nt unary-expression unary-operator multiplicative-expression additive-expression shift-expression
+%nt relational-expression equality-expression and-expression exclusive-or-expression inclusive-or-expression
+%nt logical-and-expression logical-xor-expression logical-or-expression conditional-expression
+%nt assignment-expression assignment-operator expression constant-expression declaration
+%nt function-prototype-decl function-prototype function-declarator function-header-with-parameters 
+%nt function-header parameter-declarator parameter-declaration parameter-qualifier parameter-type-specifier
+%nt init-declarator-list single-declaration fully-specified-type type-qualifier type-specifier
+%nt type-specifier-no-prec precision-qualifier struct-specifier struct-declaration-list
+%nt struct-declaration struct-declarator-list struct-declarator initializer declaration-statement 
+%nt statement-no-new-scope simple-statement compound-statement-with-scope statement-with-scope 
+%nt compound-statement-no-new-scope statement-list expression-statement selection-statement
+%nt selection-rest-statement condition iteration-statement for-init-statement 
+%nt for-rest-statement jump-statement translation-unit external-declaration function-definition
+%nt start-scope function-definition-setup
+
+%nt grammar
+
+grammar: translation-unit;
+
+%common_type struct situs
+%constructor aex_situs_init(&$$);
+%destructor aex_situs_cleanup(&$$);
+%move aex_situs_swap(&$$, &$0);
+%token_action if (input_chain) { \
+  if (aex_situs_clone(&$, &input_chain->situs_)) { \
+    dx_no_memory(cc->dx_); \
+    return _GLSL_ES1_NO_MEMORY; \
+  } \
+}
+
+/* Common action for all productions that follow */
+$: {
+  /* iterate over all common-data and merge their situs; this ensures
+   * non-terminals also carry source location data. */
+  if ($len) {
+    size_t n;
+    size_t len = $len;
+    for (n = 0; n < len; ++n) {
+      if (aex_situs_concat(&$, &${n})) {
+        dx_no_memory(cc->dx_);
+        return _GLSL_ES1_NO_MEMORY;
+      }
+    }
+  }
+}
+
+%type IDENTIFIER: char *
+%constructor $$ = NULL;
+%move $$ = $0; $0 = NULL;
+%destructor if ($$) free($$);
+%token_action $$ = input_chain->text_; input_chain->text_ = NULL; /* take pptk's text buffer by force to prevent allocation */
+
+%type TYPE_NAME: struct sl_type *
+%constructor $$ = NULL;
+%move $$ = $0;
+%token_action $$ = input_chain->v_.type_;
+
+%type primary-expression postfix-expression function-call integer-expression unary-expression multiplicative-expression additive-expression shift-expression \
+      relational-expression equality-expression and-expression exclusive-or-expression inclusive-or-expression logical-and-expression logical-xor-expression \
+      logical-or-expression conditional-expression assignment-expression expression constant-expression initializer: struct sl_expr *
+%constructor $$ = NULL;
+%move $$ = $0; $0 = NULL;
+%destructor sl_expr_free($$);
+
+%type INTCONSTANT: int64_t
+%constructor $$ = 0;
+%token_action $$ = input_chain->v_.i64_;
+
+%type FLOATCONSTANT: float
+%constructor $$ = 0.f;
+%token_action $$ = (input_chain->v_type_ == PPVT_FLOAT) ? input_chain->v_.f_ : (float)input_chain->v_.d_;
+
+%type BOOLCONSTANT: int
+%constructor $$ = 0;
+%token_action $$ = !!input_chain->v_.u64_;
+
+primary-expression: IDENTIFIER {
+  /* variable */
+  struct sym *s = NULL;
+  struct sym_table *scope = cc->current_scope_;
+  struct sl_variable *var = NULL;
+  do {
+    s = aex_st_find(scope, $0, strlen($0));
+    if (!s) {
+      scope = scope->parent_;
+    }
+  } while (!s && scope);
+  if (s) {
+    if (s->kind_ == SK_VARIABLE) {
+      var = s->v_.variable_;
+      assert(var);
+      $$ = sl_expr_alloc_variable(var, &${0});
+      if (!$$) {
+        dx_no_memory(cc->dx_);
+        return _GLSL_ES1_NO_MEMORY;
+      }
+    }
+    else {
+      dx_error_loc(cc->dx_, &${0}, "Error: identifier \"%s\" is not a variable", $0);
+    }
+  }
+  else {
+    dx_error_loc(cc->dx_, &${0}, "Error: identifier \"%s\" not declared", $0);
+  }
+}
+
+primary-expression: INTCONSTANT   { $$ = sl_expr_alloc_int_lit($0, &${0});   if (!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+primary-expression: FLOATCONSTANT { $$ = sl_expr_alloc_float_lit($0, &${0}); if (!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+primary-expression: BOOLCONSTANT  { $$ = sl_expr_alloc_bool_lit($0, &${0});  if (!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+primary-expression: LEFT_PAREN expression RIGHT_PAREN { $$ = $1; $1 = NULL; }
+
+postfix-expression: primary-expression{$$ = $0; $0 = NULL;}
+postfix-expression: postfix-expression LEFT_BRACKET integer-expression RIGHT_BRACKET {
+  struct situs combined_brackets;
+  aex_situs_init(&combined_brackets);
+  if (aex_situs_concat(&combined_brackets, &${1})) {
+    dx_no_memory(cc->dx_);
+    aex_situs_cleanup(&combined_brackets);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  if (aex_situs_concat(&combined_brackets, &${3})) {
+    dx_no_memory(cc->dx_);
+    aex_situs_cleanup(&combined_brackets);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  $$ = sl_expr_alloc_binop(exop_array_subscript, &combined_brackets, &$0, &$2);
+  aex_situs_cleanup(&combined_brackets);
+  if (!$$) {
+    dx_no_memory(cc->dx_); 
+    return _GLSL_ES1_NO_MEMORY;
+  }
+}
+
+postfix-expression: function-call { $$ = $0; $0 = NULL; }
+
+postfix-expression: postfix-expression DOT IDENTIFIER {
+  $$ = glsl_es1_field_or_swizzle_selection(cc->dx_, cc->tb_, $0, $2, &${2});
+  if ($$) $0 = NULL; /* Ownership of $0 is transferred to $$ */
+}
+
+postfix-expression: postfix-expression INC_OP { $$ = sl_expr_alloc_unop(exop_post_inc, &${1}, &$0); if (!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+postfix-expression: postfix-expression DEC_OP { $$ = sl_expr_alloc_unop(exop_post_dec, &${1}, &$0); if (!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+
+integer-expression: expression  { $$ = $0; $0 = NULL; }
+
+%type function-call-header function-call-header-with-parameters \
+      function-call-header-no-parameters function-call-generic: struct glsl_es1_function_call 
+%constructor glsl_es1_function_call_init(&$$);
+%move glsl_es1_function_call_move(&$$, &$0);
+%destructor glsl_es1_function_call_cleanup(&$$);
+
+function-call: function-call-generic {
+  $$ = glsl_es1_function_call_realize(cc->dx_, cc->current_scope_, cc->tb_, &$0);
+}
+
+function-call-generic: function-call-header-with-parameters RIGHT_PAREN {
+  glsl_es1_function_call_move(&$$, &$0); 
+}
+function-call-generic: function-call-header-no-parameters RIGHT_PAREN {
+  glsl_es1_function_call_move(&$$, &$0);
+}
+
+function-call-header-no-parameters: function-call-header VOID {
+  glsl_es1_function_call_move(&$$, &$0);
+}
+
+function-call-header-no-parameters: function-call-header {
+  glsl_es1_function_call_move(&$$, &$0); 
+}
+
+function-call-header-with-parameters: function-call-header assignment-expression {
+  glsl_es1_function_call_move(&$$, &$0);
+  if (glsl_es1_function_call_append_parameter(&$$, $1, &${1})) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  $1 = NULL;
+}
+
+function-call-header-with-parameters: function-call-header-with-parameters COMMA assignment-expression {
+  glsl_es1_function_call_move(&$$, &$0);
+  if (glsl_es1_function_call_append_parameter(&$$, $2, &${2})) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  $2 = NULL;
+}
+
+%type function-identifier: struct { char *name_; struct situs loc_; struct sl_type *constructor_type_; }
+%constructor $$.name_ = NULL; aex_situs_init(&$$.loc_); $$.constructor_type_ = NULL;
+%move $$.name_ = $0.name_; $0.name_ = NULL; \
+      aex_situs_swap(&$$.loc_, &$0.loc_); \
+      $$.constructor_type_ = $0.constructor_type_; $0.constructor_type_ = NULL;
+%destructor if ($$.name_) free($$.name_); \
+            aex_situs_cleanup(&$$.loc_);
+
+function-call-header: function-identifier LEFT_PAREN {
+  $$.name_ = $0.name_;
+  $0.name_ = NULL;
+  if (aex_situs_clone(&$$.loc_, &$0.loc_)) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  $$.constructor_type_ = $0.constructor_type_;
+  $0.constructor_type_ = NULL;
+}
+
+%type constructor-identifier: struct sl_type *
+function-identifier: constructor-identifier {
+  $$.constructor_type_ = $0;
+  if (aex_situs_clone(&$$.loc_, &${ 0 })) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+}
+function-identifier: IDENTIFIER {
+  $$.name_ = $0;
+  $0 = NULL;
+  if (aex_situs_clone(&$$.loc_, &${ 0 })) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+}
+
+
+constructor-identifier: FLOAT { $$ = &cc->tb_->float_; }
+constructor-identifier: INT { $$ = &cc->tb_->int_; }
+constructor-identifier: BOOL { $$ = &cc->tb_->bool_; }
+constructor-identifier: VEC2 { $$ =  &cc->tb_->vec2_; }
+constructor-identifier: VEC3 { $$ =  &cc->tb_->vec3_; }
+constructor-identifier: VEC4 { $$ =  &cc->tb_->vec4_; }
+constructor-identifier: BVEC2 { $$ =  &cc->tb_->bvec2_; }
+constructor-identifier: BVEC3 { $$ =  &cc->tb_->bvec3_; }
+constructor-identifier: BVEC4 { $$ =  &cc->tb_->bvec4_; }
+constructor-identifier: IVEC2 { $$ =  &cc->tb_->ivec2_; }
+constructor-identifier: IVEC3 { $$ =  &cc->tb_->ivec3_; }
+constructor-identifier: IVEC4 { $$ =  &cc->tb_->ivec4_; }
+constructor-identifier: MAT2 { $$ =  &cc->tb_->mat2_; }
+constructor-identifier: MAT3 { $$ =  &cc->tb_->mat3_; }
+constructor-identifier: MAT4 { $$ =  &cc->tb_->mat4_; }
+constructor-identifier: TYPE_NAME { $$ = $0; cc->is_typename_permitted_ = 1; }
+
+unary-expression: postfix-expression  { $$ = $0; $0 = NULL; }
+unary-expression: INC_OP unary-expression { $$ = sl_expr_alloc_unop(exop_pre_inc, &${0}, &$1); if (!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+unary-expression: DEC_OP unary-expression { $$ = sl_expr_alloc_unop(exop_pre_dec, &${0}, &$1); if (!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+
+%type unary-operator: expr_op_t
+%constructor $$ = exop_invalid;
+
+unary-expression: unary-operator unary-expression {
+  if ($0 == exop_invalid) {
+    $$ = $1;
+    $1 = NULL;
+  }
+  else {
+    $$ = sl_expr_alloc_unop($0, &${0}, &$1);
+    if(!$$) {
+      dx_no_memory(cc->dx_); 
+      return _GLSL_ES1_NO_MEMORY; 
+    }
+  }
+}
+
+unary-operator: PLUS { $$ = exop_invalid; }
+unary-operator: DASH { $$ = exop_negate; }
+unary-operator: BANG { $$ = exop_logical_not; }
+unary-operator: TILDE { dx_error_loc(cc->dx_, &${0}, "bitwise-not is reserved in GLSL 1"); }
+
+multiplicative-expression: unary-expression  { $$ = $0; $0 = NULL; }
+multiplicative-expression: multiplicative-expression STAR unary-expression { $$ = sl_expr_alloc_binop(exop_multiply, &${1}, &$0, &$2); if (!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+multiplicative-expression: multiplicative-expression SLASH unary-expression { $$ = sl_expr_alloc_binop(exop_divide, &${1}, &$0, &$2); if (!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+multiplicative-expression: multiplicative-expression PERCENT unary-expression { dx_error_loc(cc->dx_, &${1}, "modulo is reserved in GLSL 1"); }
+
+additive-expression: multiplicative-expression  { $$ = $0; $0 = NULL; }
+additive-expression: additive-expression PLUS multiplicative-expression { $$ = sl_expr_alloc_binop(exop_add, &${1}, &$0, &$2); if (!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+additive-expression: additive-expression DASH multiplicative-expression { $$ = sl_expr_alloc_binop(exop_subtract, &${1}, &$0, &$2); if (!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+
+shift-expression: additive-expression  { $$ = $0; $0 = NULL; }
+shift-expression: shift-expression LEFT_OP additive-expression { dx_error_loc(cc->dx_, &${1}, "left shift is reserved in GLSL 1"); }
+shift-expression: shift-expression RIGHT_OP additive-expression { dx_error_loc(cc->dx_, &${1}, "right shift is reserved in GLSL 1"); }
+
+relational-expression: shift-expression  { $$ = $0; $0 = NULL; }
+relational-expression: relational-expression LEFT_ANGLE shift-expression { $$ = sl_expr_alloc_binop(exop_lt, &${1}, &$0, &$2); if (!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+relational-expression: relational-expression RIGHT_ANGLE shift-expression { $$ = sl_expr_alloc_binop(exop_gt, &${1}, &$0, &$2); if (!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+relational-expression: relational-expression LE_OP shift-expression { $$ = sl_expr_alloc_binop(exop_le, &${1}, &$0, &$2); if (!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+relational-expression: relational-expression GE_OP shift-expression { $$ = sl_expr_alloc_binop(exop_ge, &${1}, &$0, &$2); if (!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+
+equality-expression: relational-expression  { $$ = $0; $0 = NULL; }
+equality-expression: equality-expression EQ_OP relational-expression { $$ = sl_expr_alloc_binop(exop_eq, &${1}, &$0, &$2); if (!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+equality-expression: equality-expression NE_OP relational-expression { $$ = sl_expr_alloc_binop(exop_ne, &${1}, &$0, &$2); if (!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+
+and-expression: equality-expression  { $$ = $0; $0 = NULL; }
+and-expression: and-expression AMPERSAND equality-expression { dx_error_loc(cc->dx_, &${1}, "bitwise-and is reserved in GLSL 1"); }
+
+exclusive-or-expression: and-expression  { $$ = $0; $0 = NULL; }
+exclusive-or-expression: exclusive-or-expression CARET and-expression { dx_error_loc(cc->dx_, &${1}, "bitwise-exclusive-or is reserved in GLSL 1"); }
+
+inclusive-or-expression: exclusive-or-expression  { $$ = $0; $0 = NULL; }
+inclusive-or-expression: inclusive-or-expression VERTICAL_BAR exclusive-or-expression { dx_error_loc(cc->dx_, &${1}, "bitwise-or is reserved in GLSL 1"); }
+
+logical-and-expression: inclusive-or-expression  { $$ = $0; $0 = NULL; }
+logical-and-expression: logical-and-expression AND_OP inclusive-or-expression { $$ = sl_expr_alloc_binop(exop_logical_and, &${1}, &$0, &$2); if(!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+
+logical-xor-expression: logical-and-expression  { $$ = $0; $0 = NULL; }
+logical-xor-expression: logical-xor-expression XOR_OP logical-and-expression { $$ = sl_expr_alloc_binop(exop_logical_xor, &${1}, &$0, &$2); if(!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+
+logical-or-expression: logical-xor-expression  { $$ = $0; $0 = NULL; }
+logical-or-expression: logical-or-expression OR_OP logical-xor-expression { $$ = sl_expr_alloc_binop(exop_logical_or, &${1}, &$0, &$2); if(!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+
+conditional-expression: logical-or-expression  { $$ = $0; $0 = NULL; }
+conditional-expression: logical-or-expression QUESTION expression COLON assignment-expression {
+  struct situs question_colon;
+  aex_situs_init(&question_colon);
+  if (aex_situs_concat(&question_colon, &${1})) {
+    dx_no_memory(cc->dx_);
+    aex_situs_cleanup(&question_colon);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  if (aex_situs_concat(&question_colon, &${3})) {
+    dx_no_memory(cc->dx_);
+    aex_situs_cleanup(&question_colon);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  $$ = sl_expr_alloc_ternop(exop_logical_or, &question_colon, &$0, &$2, &$4);
+  aex_situs_cleanup(&question_colon);
+  if (!$$) { 
+    dx_no_memory(cc->dx_); 
+    return _GLSL_ES1_NO_MEMORY; 
+  } 
+}
+
+%type assignment-operator: expr_op_t
+%constructor $$ = exop_invalid;
+
+assignment-expression: conditional-expression  { $$ = $0; $0 = NULL; }
+assignment-expression: unary-expression assignment-operator assignment-expression {
+  if ($1 == exop_invalid) {
+    /* Cannot perform op, (e.g. not supported) error already reported, just pass NULL along. */
+  }
+  else {
+    $$ = sl_expr_alloc_binop($1, &${1}, &$0, &$2); 
+    if (!$$) { 
+      dx_no_memory(cc->dx_); 
+      return _GLSL_ES1_NO_MEMORY; 
+    }
+  }
+}
+
+assignment-operator: EQUAL { $$ = exop_assign; }
+assignment-operator: MUL_ASSIGN { $$ = exop_mul_assign; }
+assignment-operator: DIV_ASSIGN { $$ = exop_div_assign; }
+assignment-operator: MOD_ASSIGN { dx_error_loc(cc->dx_, &${0}, "modulo-assignment is reserved in GLSL 1"); }
+assignment-operator: ADD_ASSIGN { $$ = exop_add_assign; }
+assignment-operator: SUB_ASSIGN { $$ = exop_sub_assign; }
+assignment-operator: LEFT_ASSIGN { dx_error_loc(cc->dx_, &${0}, "left-shift-assignment is reserved in GLSL 1"); }
+assignment-operator: RIGHT_ASSIGN { dx_error_loc(cc->dx_, &${0}, "right-shift-assignment is reserved in GLSL 1"); }
+assignment-operator: AND_ASSIGN { dx_error_loc(cc->dx_, &${0}, "bitwise-and-assignment is reserved in GLSL 1"); }
+assignment-operator: XOR_ASSIGN { dx_error_loc(cc->dx_, &${0}, "bitwise-xor-assignment is reserved in GLSL 1"); }
+assignment-operator: OR_ASSIGN { dx_error_loc(cc->dx_, &${0}, "bitwise-or-assignment is reserved in GLSL 1"); }
+
+expression: assignment-expression  { $$ = $0; $0 = NULL; }
+expression: expression COMMA assignment-expression { $$ = sl_expr_alloc_binop(exop_sequence, &${1}, &$0, &$2); if (!$$) { dx_no_memory(cc->dx_); return _GLSL_ES1_NO_MEMORY; } }
+
+constant-expression: conditional-expression  { 
+  int validation = sl_expr_validate(cc->dx_, cc->tb_, $0);
+  if (validation & SLXV_INVALID) {
+    /* Expression is invalid, this has already been reported */
+    $$ = NULL;
+  }
+  else if (validation & SLXV_NOT_CONSTANT) {
+    /* Expression is not constant, this has not yet been reported */
+    dx_error_loc(cc->dx_, &${0}, "Error: expression is not constant");
+  }
+  else {
+    $$ = $0;
+    $0 = NULL;
+  }
+}
+
+%type function-prototype: struct sl_function *
+%constructor $$ = NULL;
+%move $$ = $0; $0 = NULL;
+%destructor if ($$) sl_frame_free_function($$);
+
+/* The statements being passed up here for declaration, init-declarator-list and single-declaration, are not declarations 
+ * but initializers. The declaration part is 
+ * in the symbol tables and frames. */
+%type declaration init-declarator-list single-declaration \
+      declaration-statement statement-no-new-scope simple-statement compound-statement-with-scope statement-with-scope \
+      compound-statement-no-new-scope statement-list expression-statement selection-statement selection-rest-statement \
+      iteration-statement for-init-statement jump-statement: struct sl_stmt *
+%constructor $$ = NULL;
+%move $$ = $0; $0 = NULL;
+%destructor if ($$) sl_stmt_free_list($$);
+
+/* Move function-prototype declarations into its own non-terminal, reason being that we need to process
+ * the function prototype declaration with SEMICOLON as a lookahead, and not as a shifted symbol. If we
+ * wait for the symbol to be shifted, then we need the token *after* the SEMICOLON as a lookahead. This
+ * would confuse matters when we adorn builtin function declarations (which compile a little piece at
+ * a time) with their builtin flags, based on "the last prototype we parsed." */
+declaration: function-prototype-decl SEMICOLON;
+
+function-prototype-decl: function-prototype {
+ int r = glsl_es1_process_function_prototype(cc, &$0, 0 /* function declaration */);
+  if (r == _GLSL_ES1_NO_MEMORY) return r;
+  if (!r) {
+    $0 = NULL;
+  }
+}
+
+declaration: init-declarator-list SEMICOLON {
+  $$ = $0; $0 = NULL; cc->is_typename_permitted_ = 1;
+}
+declaration: PRECISION precision-qualifier type-specifier-no-prec SEMICOLON;
+
+function-prototype: function-declarator RIGHT_PAREN {
+  /* Function prototype formed in cc->current_function_prototype_ (if no error),
+   * do we promote it to the symbol table & current frame? */
+  if (cc->current_function_prototype_) {
+    if (sl_function_post_process_parameters(cc->tb_, cc->current_function_prototype_)) {
+      dx_no_memory(cc->dx_);
+      return _GLSL_ES1_NO_MEMORY;
+    }
+    $$ = cc->current_function_prototype_;
+    cc->current_function_prototype_ = NULL;
+  }
+}
+/* Note that function-declarator and function-header-with-parameters don't need to do much because all the
+ * work is done in function-header and parameter-declaration. The former sets cc->current_function_prototype_
+ * and the latter appends parameters to it. */
+function-declarator: function-header;
+function-declarator: function-header-with-parameters;
+
+function-header-with-parameters: function-header parameter-declaration;
+function-header-with-parameters: function-header-with-parameters COMMA parameter-declaration;
+
+function-header: fully-specified-type function-identifier LEFT_PAREN {
+  //struct sl_function *sl_frame_alloc_function(const char *name, const struct situs *loc, struct sl_type *return_type)
+  struct sl_function *f = sl_frame_alloc_function($1.name_, &$1.loc_, $0);
+  if (!f) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  cc->current_function_prototype_ = f;
+}
+
+// careful with this: the sl_parameter is an element in an array, lasts only until the next sl_function_append_parameter.
+%type parameter-declarator: struct sl_parameter *
+%move $$ = $0;
+parameter-declarator: type-specifier IDENTIFIER {
+  if (cc->current_function_prototype_ && $0) {
+    size_t parameter_index = sl_function_append_parameter(cc->current_function_prototype_, $1, &${ 1 }, $0);
+    if (parameter_index == SIZE_MAX) {
+      dx_no_memory(cc->dx_);
+      return _GLSL_ES1_NO_MEMORY;
+    }
+  }
+}
+
+parameter-declarator: type-specifier IDENTIFIER LEFT_BRACKET constant-expression RIGHT_BRACKET {
+  if (cc->current_function_prototype_ && $0) {
+    struct sl_type *array_type = NULL;
+    int r;
+    r = glsl_es1_build_array_type(cc->dx_, cc->tb_, $0, $3, &${ 3 }, &array_type);
+    if (r) return r;
+    if (!array_type) {
+      /* Failed to put an array type together, already reported */
+    }
+    else {
+      size_t parameter_index = sl_function_append_parameter(cc->current_function_prototype_, $1, &${ 1 }, array_type);
+      if (parameter_index == SIZE_MAX) {
+        dx_no_memory(cc->dx_);
+        return _GLSL_ES1_NO_MEMORY;
+      }
+    }
+  }
+}
+
+parameter-declaration: type-qualifier parameter-qualifier parameter-declarator {
+  struct sl_parameter *p = $2;
+  if (p) {
+    struct sl_type *qualified_type = sl_type_base_qualified_type(cc->tb_, p->type_, $0 | $1);
+    if (!p->type_) {
+      dx_no_memory(cc->dx_);
+      return _GLSL_ES1_NO_MEMORY;
+    }
+  }
+}
+
+parameter-declaration: parameter-qualifier parameter-declarator {
+  struct sl_parameter *p = $1;
+  if (p) {
+    struct sl_type *qualified_type = sl_type_base_qualified_type(cc->tb_, p->type_, $0);
+    if (!p->type_) {
+      dx_no_memory(cc->dx_);
+      return _GLSL_ES1_NO_MEMORY;
+    }
+  }
+}
+
+parameter-declaration: type-qualifier parameter-qualifier parameter-type-specifier {
+  if (cc->current_function_prototype_ && $2) {
+    struct sl_type *qualified_type = sl_type_base_qualified_type(cc->tb_, $2, $0 | $1);
+    if (!qualified_type) {
+      dx_no_memory(cc->dx_);
+      return _GLSL_ES1_NO_MEMORY;
+    }
+    size_t parameter_index = sl_function_append_parameter(cc->current_function_prototype_, NULL, &${2}, qualified_type);
+    if (parameter_index == SIZE_MAX) {
+      dx_no_memory(cc->dx_);
+      return _GLSL_ES1_NO_MEMORY;
+    }
+  }
+}
+
+parameter-declaration: parameter-qualifier parameter-type-specifier {
+  if (cc->current_function_prototype_ && $1) {
+    struct sl_type *qualified_type = sl_type_base_qualified_type(cc->tb_, $1, $0);
+    if (!qualified_type) {
+      dx_no_memory(cc->dx_);
+      return _GLSL_ES1_NO_MEMORY;
+    }
+    size_t parameter_index = sl_function_append_parameter(cc->current_function_prototype_, NULL, &${1}, qualified_type);
+    if (parameter_index == SIZE_MAX) {
+      dx_no_memory(cc->dx_);
+      return _GLSL_ES1_NO_MEMORY;
+    }
+  }
+}
+
+parameter-qualifier: ;
+parameter-qualifier: IN { $$ = SL_PARAMETER_QUALIFIER_IN; }
+parameter-qualifier: OUT { $$ = SL_PARAMETER_QUALIFIER_OUT; }
+parameter-qualifier: INOUT { $$ = SL_PARAMETER_QUALIFIER_INOUT; }
+
+%type parameter-type-specifier: struct sl_type *
+parameter-type-specifier: type-specifier {
+  $$ = $0;
+}
+
+parameter-type-specifier: type-specifier LEFT_BRACKET constant-expression RIGHT_BRACKET {
+  if ($0) {
+    struct sl_type *array_type = NULL;
+    int r;
+    r = glsl_es1_build_array_type(cc->dx_, cc->tb_, $0, $2, &${ 2 }, &array_type);
+    if (r) return r;
+    if (!array_type) {
+      /* Failed to put an array type together, already reported */
+    }
+    else {
+      $$ = array_type;
+    }
+  }
+}
+
+init-declarator-list: single-declaration {
+  $$ = $0; $0 = NULL;
+}
+
+init-declarator-list: init-declarator-list COMMA IDENTIFIER {
+  int r = glsl_es1_declare_variable(cc, $2, &${ 2 }, cc->last_type_specifier_, NULL);
+  if (r) return r;
+  /* No initializers on this one, pass up any previous ones */
+  $$ = $0; $0 = NULL;
+}
+
+init-declarator-list: init-declarator-list COMMA IDENTIFIER LEFT_BRACKET constant-expression RIGHT_BRACKET {
+  struct sl_type *array_type = NULL;
+  int r;
+  r = glsl_es1_build_array_type(cc->dx_, cc->tb_, cc->last_type_specifier_, $4, &${ 4 }, &array_type);
+  if (r) return r;
+  if (!array_type) {
+    /* Failed to put an array type together, already reported */
+  }
+  else {
+    struct sl_variable *var = NULL;
+    int r = glsl_es1_declare_variable(cc, $2, &${ 2 }, array_type, &var);
+    if (r) return r;
+  }
+  /* No initializers on this one, pass up any previous ones */
+  $$ = $0; $0 = NULL;
+}
+
+init-declarator-list: init-declarator-list COMMA IDENTIFIER EQUAL initializer {
+  struct sl_variable *var = NULL;
+  int r = glsl_es1_declare_variable(cc, $2, &${ 2 }, cc->last_type_specifier_, &var);
+  if (r) return r;
+  struct sl_stmt *stmt = NULL;
+  r = glsl_es1_process_initializer(cc, var, &$4, &${ 4 }, &${3}, &stmt);
+  if (r) return r;
+
+  /* Pass up both this initializer (if any) and any prior ones */
+  $$ = sl_stmt_append_list($0, stmt);
+  $0 = NULL;
+}
+
+single-declaration: fully-specified-type;
+single-declaration: fully-specified-type IDENTIFIER {
+  int r = glsl_es1_declare_variable(cc, $1, &${1}, cc->last_type_specifier_, NULL);
+  if (r) return r;
+}
+
+single-declaration: fully-specified-type IDENTIFIER LEFT_BRACKET constant-expression RIGHT_BRACKET {
+  struct sl_type *array_type = NULL;
+  int r;
+  r = glsl_es1_build_array_type(cc->dx_, cc->tb_, $0, $3, &${ 3 }, &array_type);
+  if (r) return r;
+  if (!array_type) {
+    /* Failed to put an array type together, already reported */
+  }
+  else {
+    struct sl_variable *var = NULL;
+    int r = glsl_es1_declare_variable(cc, $1, &${ 1 }, array_type, &var);
+    if (r) return r;
+  }
+}
+single-declaration: fully-specified-type IDENTIFIER EQUAL initializer {
+  struct sl_variable *var = NULL;
+  int r = glsl_es1_declare_variable(cc, $1, &${ 1 }, cc->last_type_specifier_, &var);
+  struct sl_stmt *stmt = NULL;
+  r = glsl_es1_process_initializer(cc, var, &$3, &${ 3 }, &${2}, &stmt);
+  if (r) return r;
+
+  /* Pass up initializer (if any) */
+  $$ = stmt;
+}
+
+single-declaration: INVARIANT IDENTIFIER; /* XXX: HANDLE INVARIANT */
+
+%type fully-specified-type type-specifier type-specifier-no-prec struct-specifier: struct sl_type *
+%constructor $$ = NULL;
+/* note: no %destructor, sl_type* is owned by sl_type_base. */
+%move $$ = $0;
+
+%type type-qualifier precision-qualifier parameter-qualifier: int
+%constructor $$ = 0;
+
+fully-specified-type: type-specifier { 
+  $$ = $0; 
+  cc->last_type_specifier_ = $$;
+}
+fully-specified-type: type-qualifier type-specifier { 
+  struct sl_type *t = sl_type_base_qualified_type(cc->tb_, $1, $0);
+  if (!t && $1) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  $$ = t;
+  cc->last_type_specifier_ = t;
+}
+
+type-qualifier: CONST             { $$ = SL_TYPE_QUALIFIER_CONST; }
+type-qualifier: ATTRIBUTE         { $$ = SL_TYPE_QUALIFIER_ATTRIBUTE; }
+type-qualifier: VARYING           { $$ = SL_TYPE_QUALIFIER_VARYING; }
+type-qualifier: INVARIANT VARYING { $$ = SL_TYPE_QUALIFIER_INVARIANT | SL_TYPE_QUALIFIER_VARYING; }
+type-qualifier: UNIFORM           { $$ = SL_TYPE_QUALIFIER_UNIFORM; }
+
+type-specifier: type-specifier-no-prec { 
+  $$ = $0; 
+  cc->last_type_specifier_ = $0;
+}
+type-specifier: precision-qualifier type-specifier-no-prec { 
+  struct sl_type *t = sl_type_base_qualified_type(cc->tb_, $1, $0);
+  if (!t && $1) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  $$ = t;
+  cc->last_type_specifier_ = t;
+}
+
+type-specifier-no-prec: VOID  { $$ = &cc->tb_->void_; }
+type-specifier-no-prec: FLOAT { $$ = &cc->tb_->float_; }
+type-specifier-no-prec: INT   { $$ = &cc->tb_->int_; }
+type-specifier-no-prec: BOOL  { $$ = &cc->tb_->bool_; }
+type-specifier-no-prec: VEC2  { $$ = &cc->tb_->vec2_; }
+type-specifier-no-prec: VEC3  { $$ = &cc->tb_->vec3_; }
+type-specifier-no-prec: VEC4  { $$ = &cc->tb_->vec4_; }
+type-specifier-no-prec: BVEC2 { $$ = &cc->tb_->bvec2_; }
+type-specifier-no-prec: BVEC3 { $$ = &cc->tb_->bvec3_; }
+type-specifier-no-prec: BVEC4 { $$ = &cc->tb_->bvec4_; }
+type-specifier-no-prec: IVEC2 { $$ = &cc->tb_->ivec2_; }
+type-specifier-no-prec: IVEC3 { $$ = &cc->tb_->ivec3_; }
+type-specifier-no-prec: IVEC4 { $$ = &cc->tb_->ivec4_; }
+type-specifier-no-prec: MAT2  { $$ = &cc->tb_->mat2_; }
+type-specifier-no-prec: MAT3  { $$ = &cc->tb_->mat3_; }
+type-specifier-no-prec: MAT4  { $$ = &cc->tb_->mat4_; }
+type-specifier-no-prec: SAMPLER2D { $$ = &cc->tb_->sampler2D_; }
+type-specifier-no-prec: SAMPLERCUBE { $$ = &cc->tb_->samplerCube_; }
+type-specifier-no-prec: struct-specifier { $$ = $0; }
+type-specifier-no-prec: TYPE_NAME { $$ = $0; }
+
+
+precision-qualifier: HIGH_PRECISION   { $$ = SL_TYPE_QUALIFIER_HIGH_PRECISION; }
+precision-qualifier: MEDIUM_PRECISION { $$ = SL_TYPE_QUALIFIER_MEDIUM_PRECISION; }
+precision-qualifier: LOW_PRECISION    { $$ = SL_TYPE_QUALIFIER_LOW_PRECISION; }
+
+struct-specifier: STRUCT IDENTIFIER LEFT_BRACE struct-declaration-list RIGHT_BRACE {
+  struct sym *s = NULL;
+  sym_table_result_t str = aex_st_find_or_insert(cc->current_scope_, SK_STRUCT, $1, strlen($1), &${1}, sizeof(struct sym), &s);
+  if (str == STR_NOMEM) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  if (str == STR_DUPLICATE) {
+    dx_error_loc(cc->dx_, &${1}, "Error: duplicate identifier \"%s\" declaration", $1);
+    dx_error_loc(cc->dx_, &s->loc_, "See original use of \"%s\"", s->name_);
+  }
+  struct sl_type *t = sl_type_base_struct_type(cc->tb_, $1, &${1}, $3);
+  if (!t) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  if (str == STR_OK) {
+    /* Store a pointer to the type inside the sym */
+    s->v_.type_ = t;
+  }
+  t->fields_ = $3; $3 = NULL;
+  $$ = t;
+}
+
+struct-specifier: STRUCT LEFT_BRACE struct-declaration-list RIGHT_BRACE {
+  /* Use "struct" &{0} location for source reference */
+  struct sl_type *t = sl_type_base_struct_type(cc->tb_, NULL, &${0}, $2);
+  if (!t) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  t->fields_ = $2; $2 = NULL;
+  $$ = t;
+}
+
+%type struct-declaration-list struct-declaration struct-declarator-list struct-declarator: struct sl_type_field *
+%constructor $$ = NULL;
+%move $$ = $0; $0 = NULL;
+%destructor sl_type_field_free_chain($$);
+
+struct-declaration-list: struct-declaration {
+  $$ = $0;
+  $0 = NULL;
+}
+struct-declaration-list: struct-declaration-list struct-declaration {
+  $$ = sl_type_field_join($0, $1);
+  $0 = $1 = NULL;
+}
+
+struct-declaration: type-specifier struct-declarator-list SEMICOLON {
+  /* type-specifier reduction was already passed to the struct-declarator-list
+   * through cc->last_type_specifier_ ; so just pass along the struct-declarator-list */
+  $$ = $1;
+  $1 = NULL;
+  cc->is_typename_permitted_ = 1;
+}
+
+struct-declarator-list: struct-declarator {
+  $$ = $0;
+  $0 = NULL;
+}
+struct-declarator-list: struct-declarator-list COMMA struct-declarator {
+  $$ = sl_type_field_join($0, $2);
+  $0 = $2 = NULL;
+}
+
+struct-declarator: IDENTIFIER {
+  struct sl_type_field *tf = sl_type_field_alloc(cc->tb_, $0, &${0}, cc->last_type_specifier_);
+  if (!tf) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  tf->ident_ = $0; /* tf adopts ownership, prevents malloc/free pair. */
+  $0 = NULL; /* tf adopted ownership */
+  $$ = tf;
+}
+
+struct-declarator: IDENTIFIER LEFT_BRACKET constant-expression RIGHT_BRACKET {
+  struct sl_type *array_type = NULL;
+  int r;
+  r = glsl_es1_build_array_type(cc->dx_, cc->tb_, cc->last_type_specifier_, $2, &${ 2 }, &array_type);
+  if (r) return r;
+  if (!array_type) {
+    /* Failed to put an array type together, already reported */
+  }
+  else {
+    struct sl_type_field *tf = sl_type_field_alloc(cc->tb_, $0, &${ 0 }, array_type);
+    if (!tf) {
+      dx_no_memory(cc->dx_);
+      return _GLSL_ES1_NO_MEMORY;
+    }
+    tf->ident_ = $0; /* tf adopts ownership, prevents malloc/free pair. */
+    $0 = NULL; /* tf adopted ownership */
+    $$ = tf;
+  }
+}
+
+initializer: assignment-expression {
+  $$ = $0;
+  $0 = NULL;
+}
+
+declaration-statement: declaration {
+  $$ = $0; $0 = NULL;
+}
+
+statement-no-new-scope: compound-statement-with-scope {
+  $$ = $0; $0 = NULL;
+}
+statement-no-new-scope: simple-statement {
+  $$ = $0; $0 = NULL;
+}
+
+simple-statement: declaration-statement {
+  $$ = $0; $0 = NULL;
+}
+simple-statement: expression-statement {
+  $$ = $0; $0 = NULL;
+}
+simple-statement: selection-statement {
+  $$ = $0; $0 = NULL;
+}
+simple-statement: iteration-statement {
+  $$ = $0; $0 = NULL;
+}
+simple-statement: jump-statement {
+  $$ = $0; $0 = NULL;
+}
+
+/* start-scope also gets 'cc' as backlink because we'd like to access it from
+ * destructors. Those are called when productions are reduced, when in error-
+ * recovery or, and this is the problem, when the parser is being destroyed
+ * in glsl_es1_stack_cleanup() -- there we don't have access to parameters
+ * passed to the parser (a carburetta design choice.) So we pass a backlink
+ * in manually. */
+%type start-scope: struct { struct sym_table *st_; struct glsl_es1_compiler *cc_; }
+%constructor $$.st_ = NULL; $$.cc_ = NULL;
+%move $$.st_ = $0.st_; $$.cc_ = $0.cc_; $0.st_ = NULL;
+%destructor if ($$.st_) { \
+  struct sym_table *st; \
+  /* pop out of scope if on stack (e.g. during error recovery) */ \
+  for (st = $$.cc_->current_scope_; st; st = st->parent_) { \
+    if (st == $$.st_) { \
+      $$.cc_->current_scope_ = st->parent_; \
+      break; \
+    } \
+  } \
+  aex_st_cleanup($$.st_); \
+  free($$.st_); \
+}
+start-scope: {
+  struct sym_table *st = (struct sym_table *)malloc(sizeof(struct sym_table));
+  if (!st) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  aex_st_init(st, cc->current_scope_);
+  $$.st_ = st;
+  $$.cc_ = cc;
+  cc->current_scope_ = st;
+}
+
+compound-statement-with-scope: LEFT_BRACE RIGHT_BRACE {
+  /* Passing up NULL, rather than an empty block sl_stmt of some kind.. */
+}
+compound-statement-with-scope: LEFT_BRACE start-scope statement-list RIGHT_BRACE {
+  /* pop scope */
+  if ($1.st_) {
+    assert((cc->current_scope_ == $1.st_) && "scope should be set or restored to start-scope of same production");
+    cc->current_scope_ = $1.st_->parent_;
+  }
+
+  $$ = sl_stmt_alloc();
+  if (!$$) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  $$->kind_ = slsk_compound;
+  $$->scope_ = $1.st_; $1.st_ = NULL;
+  $$->true_branch_ = $2; $2 = NULL;
+  sl_stmt_set_list_parent($$->true_branch_, $$);
+}
+
+statement-with-scope: start-scope compound-statement-no-new-scope {
+  /* pop scope */
+  if ($0.st_) {
+    assert((cc->current_scope_ == $0.st_) && "scope should be set or restored to start-scope of same production");
+    cc->current_scope_ = $0.st_->parent_;
+  }
+  /* Treat this as a compound statement due to the presence of scope. */
+  $$ = sl_stmt_alloc();
+  if (!$$) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  $$->kind_ = slsk_compound;
+  $$->scope_ = $0.st_; $0.st_ = NULL;
+  $$->true_branch_ = $1; $1 = NULL;
+  sl_stmt_set_list_parent($$->true_branch_, $$);
+}
+
+statement-with-scope: start-scope simple-statement {
+  /* pop scope */
+  if ($0.st_) {
+    assert((cc->current_scope_ == $0.st_) && "scope should be set or restored to start-scope of same production");
+    cc->current_scope_ = $0.st_->parent_;
+  }
+  /* Treat this as a compound statement due to the presence of scope. */
+  $$ = sl_stmt_alloc();
+  if (!$$) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  $$->kind_ = slsk_compound;
+  $$->scope_ = $0.st_; $0.st_ = NULL;
+  $$->true_branch_ = $1; $1 = NULL;
+  sl_stmt_set_list_parent($$->true_branch_, $$);
+}
+
+compound-statement-no-new-scope: LEFT_BRACE RIGHT_BRACE {
+  /* Passing up NULL, rather than an empty block sl_stmt of some kind.. */
+}
+compound-statement-no-new-scope: LEFT_BRACE statement-list RIGHT_BRACE {
+  $$ = $1; $1 = NULL;
+}
+
+statement-list: statement-no-new-scope {
+  $$ = $0; $0 = NULL;
+}
+
+statement-list: statement-list statement-no-new-scope {
+  $$ = sl_stmt_append_list($0, $1);
+  $0 = $1 = NULL;
+}
+
+expression-statement: SEMICOLON {
+  $$ = sl_stmt_alloc();
+  if (!$$) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  $$->kind_ = slsk_expression;
+  $$->expr_ = NULL;
+}
+
+expression-statement: expression SEMICOLON {
+  if ($0) {
+    int validation = sl_expr_validate(cc->dx_, cc->tb_, $0);
+    if (validation & SLXV_INVALID) {
+      /* Expression is invalid, how has just been reported to the user by sl_expr_validate() */
+      $$ = NULL;
+    }
+    else {
+      $$ = sl_stmt_alloc();
+      if (!$$) {
+        dx_no_memory(cc->dx_);
+        return _GLSL_ES1_NO_MEMORY;
+      }
+      $$->kind_ = slsk_expression;
+      $$->expr_ = $0;
+      $0 = NULL;
+    }
+  }
+}
+
+selection-statement: IF LEFT_PAREN expression RIGHT_PAREN selection-rest-statement {
+  if ($4) {
+    $4->condition_ = $2;
+    $2 = NULL;
+  }
+  $$ = $4; $4 = NULL;
+}
+
+selection-rest-statement: statement-with-scope ELSE statement-with-scope {
+  $$ = sl_stmt_alloc();
+  if (!$$) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  $$->kind_ = slsk_if;
+  $$->true_branch_ = $0;
+  sl_stmt_set_list_parent($$->true_branch_, $$);
+  $$->false_branch_ = $2;
+  sl_stmt_set_list_parent($$->false_branch_, $$);
+  $0 = NULL;
+  $2 = NULL;
+}
+
+selection-rest-statement: statement-with-scope {
+  $$ = sl_stmt_alloc();
+  if (!$$) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  $$->kind_ = slsk_if;
+  $$->true_branch_ = $0;
+  sl_stmt_set_list_parent($$->true_branch_, $$);
+  $0 = NULL;
+}
+
+%prefer selection-rest-statement: statement-with-scope * ELSE statement-with-scope
+%over   selection-rest-statement: statement-with-scope *
+
+%type condition: struct { struct sl_stmt *initializer_; struct sl_expr *condition_; }
+%constructor \
+  $$.initializer_ = NULL; \
+  $$.condition_ = NULL;
+%move \
+  $$.initializer_ = $0.initializer_; \
+  $$.condition_ = $0.condition_; \
+  $0.initializer_ = NULL; \
+  $0.condition_ = NULL;
+%destructor \
+  if ($$.initializer_) sl_stmt_free($$.initializer_); \
+  if ($$.condition_) sl_expr_free($$.condition_);
+
+condition: expression {
+  $$.condition_ = $0;
+  $0 = NULL;
+}
+condition: fully-specified-type IDENTIFIER EQUAL initializer {
+  /* First build up the initializer statement, then create a reference
+   * to the variable as the condition. */
+  struct sl_variable *var = NULL;
+  int r = glsl_es1_declare_variable(cc, $1, &${ 1 }, $0, &var);
+  struct sl_stmt *stmt = NULL;
+  r = glsl_es1_process_initializer(cc, var, &$3, &${ 3 }, &${2}, &stmt);
+  if (r) return r;
+
+  struct sl_expr *cond = sl_expr_alloc_variable(var, &${1});
+  if (!cond) {
+    sl_stmt_free_list(stmt);
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  $$.initializer_ = stmt;
+  $$.condition_ = cond;
+}
+
+iteration-statement: WHILE start-scope LEFT_PAREN condition RIGHT_PAREN statement-no-new-scope {
+  /* pop scope */
+  if ($1.st_) {
+    assert((cc->current_scope_ == $1.st_) && "scope should be set or restored to start-scope of same production");
+    cc->current_scope_ = $1.st_->parent_;
+  }
+  $$ = sl_stmt_alloc();
+  if (!$$) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  if (aex_situs_clone(&$$->keyword_loc_, &${ 0 })) {
+    sl_stmt_free($$);
+    $$ = NULL;
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  $$->kind_ = slsk_while;
+  $$->scope_ = $1.st_; $1.st_ = NULL;
+  $$->condition_ = $3.condition_; $3.condition_ = NULL;
+  $$->prep_cond_ = $3.initializer_; $3.initializer_ = NULL;
+  sl_stmt_set_list_parent($$->prep_cond_, $$);
+  $$->true_branch_ = $5; $5 = NULL;
+  sl_stmt_set_list_parent($$->true_branch_, $$);
+}
+
+iteration-statement: DO statement-with-scope WHILE LEFT_PAREN expression RIGHT_PAREN SEMICOLON {
+  if ($4) {
+    int validation = sl_expr_validate(cc->dx_, cc->tb_, $4);
+    if (validation & SLXV_INVALID) {
+      /* Expression is invalid, this has been reported by sl_expr_validate */
+    }
+    else {
+      /* Conditional expression valid and good to go */
+      struct situs combined_keywords;
+      aex_situs_init(&combined_keywords);
+      /* "do" */
+      if (aex_situs_concat(&combined_keywords, &${0})) {
+        dx_no_memory(cc->dx_);
+        aex_situs_cleanup(&combined_keywords);
+        return _GLSL_ES1_NO_MEMORY;
+      }
+      /* "while" */
+      if (aex_situs_concat(&combined_keywords, &${2})) {
+        dx_no_memory(cc->dx_);
+        aex_situs_cleanup(&combined_keywords);
+        return _GLSL_ES1_NO_MEMORY;
+      }
+
+      $$ = sl_stmt_alloc();
+      if (!$$) {
+        aex_situs_cleanup(&combined_keywords);
+        dx_no_memory(cc->dx_);
+        return _GLSL_ES1_NO_MEMORY;
+      }
+      aex_situs_swap(&$$->keyword_loc_, &combined_keywords);
+      aex_situs_cleanup(&combined_keywords);
+      $$->kind_ = slsk_do;
+      $$->condition_ = $4; $4 = NULL;
+      $$->true_branch_ = $1; $1 = NULL;
+      sl_stmt_set_list_parent($$->true_branch_, $$);
+    }
+  }
+}
+
+%type for-rest-statement: struct { struct sl_expr *condition_, *post_; struct sl_stmt *condition_prep_; int failed_; }
+%constructor \
+  $$.condition_ = NULL; \
+  $$.post_ = NULL; \
+  $$.condition_prep_ = NULL; \
+  $$.failed_ = 0;
+%move \
+  $$.condition_ = $0.condition_; \
+  $$.post_ = $0.post_; \
+  $$.condition_prep_ = $0.condition_prep_; \
+  $$.failed_ = $0.failed_; \
+  $0.condition_ = NULL; \
+  $0.post_ = NULL; \
+  $0.condition_prep_ = NULL;
+%destructor \
+  if ($$.condition_) sl_expr_free($$.condition_); \
+  if ($$.post_) sl_expr_free($$.post_); \
+  if ($$.condition_prep_) sl_stmt_free_list($$.condition_prep_);
+
+iteration-statement: FOR start-scope LEFT_PAREN for-init-statement for-rest-statement RIGHT_PAREN statement-no-new-scope {
+  if ($1.st_) {
+    assert((cc->current_scope_ == $1.st_) && "scope should be set or restored to start-scope of same production");
+    cc->current_scope_ = $1.st_->parent_;
+  }
+  if ($4.failed_) {
+    /* Failed to parse for-rest-statement, already reported */
+    $$ = NULL;
+  }
+  else {
+    $$ = sl_stmt_alloc();
+    if (!$$) {
+      dx_no_memory(cc->dx_);
+      return _GLSL_ES1_NO_MEMORY;
+    }
+    if (aex_situs_clone(&$$->keyword_loc_, &${0})) {
+      sl_stmt_free($$);
+      $$ = NULL;
+      dx_no_memory(cc->dx_);
+      return _GLSL_ES1_NO_MEMORY;
+    }
+    $$->kind_ = slsk_for;
+    $$->scope_ = $1.st_; $1.st_ = NULL;
+    $$->prep_ = $3; $3 = NULL;
+    sl_stmt_set_list_parent($$->prep_, $$);
+    $$->prep_cond_ = $4.condition_prep_; $4.condition_prep_ = NULL;
+    sl_stmt_set_list_parent($$->prep_cond_, $$);
+    $$->condition_ = $4.condition_; $4.condition_ = NULL;
+    $$->post_ = $4.post_; $4.post_ = NULL;
+    $$->true_branch_ = $6; $6 = NULL;
+    sl_stmt_set_list_parent($$->true_branch_, $$);
+  }
+}
+
+for-init-statement: expression-statement  { $$ = $0; $0 = NULL; }
+for-init-statement: declaration-statement { $$ = $0; $0 = NULL; }
+
+for-rest-statement:           SEMICOLON            {
+}
+for-rest-statement:           SEMICOLON expression {
+  if (!$1) $$.failed_ = 1;
+  $$.post_ = $1; $1 = NULL;
+}
+for-rest-statement: condition SEMICOLON            {
+  if (!$0.condition_) $$.failed_ = 1;
+  $$.condition_ = $0.condition_; $0.condition_ = NULL;
+  $$.condition_prep_ = $0.initializer_; $0.initializer_ = NULL;
+}
+for-rest-statement: condition SEMICOLON expression {
+  if (!$0.condition_ || !$2) $$.failed_ = 1;
+  $$.condition_ = $0.condition_; $0.condition_ = NULL;
+  $$.condition_prep_ = $0.initializer_; $0.initializer_ = NULL;
+  $$.post_ = $2; $2 = NULL;
+}
+
+jump-statement: CONTINUE SEMICOLON {
+  $$ = sl_stmt_alloc();
+  if (!$$) { 
+    dx_no_memory(cc->dx_); 
+    return _GLSL_ES1_NO_MEMORY; 
+  }
+  $$->kind_ = slsk_continue;
+  if (aex_situs_clone(&$$->keyword_loc_, &${ 0 })) {
+    sl_stmt_free($$);
+    $$ = NULL;
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+}
+
+jump-statement: BREAK SEMICOLON {
+  $$ = sl_stmt_alloc();
+  if (!$$) { 
+    dx_no_memory(cc->dx_); 
+    return _GLSL_ES1_NO_MEMORY; 
+  }
+  $$->kind_ = slsk_break;
+  if (aex_situs_clone(&$$->keyword_loc_, &${ 0 })) {
+    sl_stmt_free($$);
+    $$ = NULL;
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+}
+
+jump-statement: RETURN SEMICOLON {
+  $$ = sl_stmt_alloc();
+  if (!$$) { 
+    dx_no_memory(cc->dx_); 
+    return _GLSL_ES1_NO_MEMORY; 
+  }
+  $$->kind_ = slsk_return;
+  if (aex_situs_clone(&$$->keyword_loc_, &${ 0 })) {
+    sl_stmt_free($$);
+    $$ = NULL;
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+}
+
+jump-statement: RETURN expression SEMICOLON  {
+  $$ = sl_stmt_alloc();
+  if (!$$) { 
+    dx_no_memory(cc->dx_); 
+    return _GLSL_ES1_NO_MEMORY; 
+  }
+  $$->kind_ = slsk_return;
+  $$->expr_ = $1; $1 = NULL;
+  if (aex_situs_clone(&$$->keyword_loc_, &${ 0 })) {
+    sl_stmt_free($$);
+    $$ = NULL;
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+}
+
+jump-statement: DISCARD SEMICOLON {
+  $$ = sl_stmt_alloc();
+  if (!$$) {
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+  $$->kind_ = slsk_discard;
+  if (aex_situs_clone(&$$->keyword_loc_, &${ 0 })) {
+    sl_stmt_free($$);
+    $$ = NULL;
+    dx_no_memory(cc->dx_);
+    return _GLSL_ES1_NO_MEMORY;
+  }
+}
+
+/* Reset common action - we don't want to merge the entire source into a single large situs; hence
+ * the largest productions (translation unit, external declarations and whole function definitions)
+ * are at the bottom and don't merge the situs of their parts. */
+$: {}
+
+translation-unit: external-declaration;
+translation-unit: translation-unit external-declaration;
+
+external-declaration: function-definition;
+external-declaration: declaration;
+
+%type function-definition-setup: struct { struct sl_function *f_; struct glsl_es1_compiler *cc_; }
+%constructor $$.f_ = NULL; $$.cc_ = cc;
+%move $$.f_ = $0.f_; $$.cc_ = $0.cc_; $0.f_ = NULL;
+%destructor if ($$.f_) { \
+  $$.cc_->current_frame_ = &$$.cc_->cu_->global_frame_; \
+  /* pop scope */ \
+  if ($$.f_->body_ && $$.f_->body_->scope_) { \
+    assert(($$.cc_->current_scope_ == $$.f_->body_->scope_) && "scope should be set or restored to top-level scope of the function"); \
+    $$.cc_->current_scope_ = $$.f_->body_->scope_->parent_; \
+  } \
+}
+
+function-definition-setup: function-prototype {
+  struct sl_function *f = $0;
+
+  if ($0) {
+    int r = glsl_es1_process_function_prototype(cc, &$0, 1 /* function definition */);
+    if (r == _GLSL_ES1_NO_MEMORY) return r;
+    if (r) {
+      $$.f_ = NULL;
+    }
+    else {
+      $$.f_ = f;
+    }
+  }
+}
+
+function-definition: function-definition-setup compound-statement-no-new-scope {
+  if ($0.f_) {
+    if ($0.f_->body_) {
+      sl_stmt_set_list_parent($1, $0.f_->body_);
+      $0.f_->body_->true_branch_ = sl_stmt_append_list($0.f_->body_->true_branch_, $1);
+      $1 = NULL;
+    }
+  }
+}
+
