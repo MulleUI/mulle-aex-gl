@@ -223,6 +223,12 @@ Done:
     clipRect, which is bogus for the offscreen adapter
     (`GL_INVALID_VALUE` from `glScissor`). The demo calls
     `-drawOpenGLInContext:` directly after setting its own viewport.
+- `MulleCGNanovgGL` now has a proper default/softgles2 reflect split:
+  `src/reflect` stays aex-free, `src/reflect.softgles2` carries the
+  `mulle-aex-gl` include, and `CMakeLists.txt` selects `reflect.<config>`.
+  `mulle-sde test run` passes 9/9; the new
+  `test/60-context/softgles2-runtime.m` is a no-op unless the aex header is
+  available in a softgles2 test environment.
 
 Known porting compromises:
 
@@ -242,10 +248,9 @@ Next:
 - Promote the demo-local `AexGLOSWindow` into a reusable
   `MulleUIOS`/`MulleGLFW` software window so `UIWindow` and
   `UIApplication` can run headless without a per-demo adapter.
-- The `MulleCGNanovgGL` test harness still needs a `softgles2` test
-  environment to run `test/60-context/softgles2-runtime.m` via
-  `mulle-sde test run`; the runtime check above was driven directly from
-  the softgles2 build.
+- Add a `softgles2` test environment for `MulleCGNanovgGL` so the real
+  `test/60-context/softgles2-runtime.m` runs in CI (currently it compiles
+  as a no-op in the default build).
 
 ## Risks
 
