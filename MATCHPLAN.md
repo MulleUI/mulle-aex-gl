@@ -177,11 +177,13 @@ Done:
   imported headers self-contained; excluded `egl_impl.c`,
   `src/AexGL-DLL/` and `src/tester/`; added the `m` system library.
 - `mulle-sde craft` builds `libmulle-aex-gl.a`.
-- `mulle-sde test run` passes 4/4:
+- `mulle-sde test run` passes 5/5:
   - `test/10-first/gles2-headless` - context init, clear, readpixels,
   - `test/20-triangle/gles2-triangle` - GLSL ES 1.00 shader compile/link,
     VBO upload, triangle rasterization, pixel check,
   - `test/30-gl2shim/gl2shim` - `<GLES2/gl2.h>` maps to `aex_gl_es2_*`,
+  - `test/40-extension/extension` - `#extension` line is accepted and
+    `GL_FRAMEBUFFER_BINDING`/`GL_RENDERBUFFER_BINDING` queries work,
   - `test/10-first/hello` - scaffold smoke test.
 - GLES2 compatibility shim installed at `include/GLES2/gl2.h`; it maps 142
   standard `gl*` names to the aex entry points.
