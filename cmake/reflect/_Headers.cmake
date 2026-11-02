@@ -13,9 +13,9 @@ endif()
 set( INCLUDE_DIRS
 src/reflect
 src/generic
+src/GLES2
 src
 src/pp
-src/GLES2
 )
 
 #
@@ -36,6 +36,8 @@ src/generic/include-private.h
 # contents selected with patternfile ??-header--private-headers
 #
 set( PRIVATE_HEADERS
+src/GLES2/gl2ext.h
+src/GLES2/gl2.h
 src/attrib_binding_table.h
 src/attrib_routing.h
 src/attrib_set.h
@@ -126,8 +128,6 @@ src/generic/include.h
 # contents selected with patternfile ??-header--public-headers
 #
 set( PUBLIC_HEADERS
-src/GLES2/gl2ext.h
-src/GLES2/gl2.h
 src/mulle-aex-gl.h
 )
 

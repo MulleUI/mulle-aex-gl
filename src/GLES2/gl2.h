@@ -14,7 +14,11 @@
 #include_next <GLES2/gl2.h>
 #undef GL_GLES_PROTOTYPES
 
-#include <mulle-aex-gl/gl_es2_impl.h>
+#if defined( MULLE__AEX__GL_BUILD)
+# include "gl_es2_impl.h"
+#else
+# include <mulle-aex-gl/gl_es2_impl.h>
+#endif
 
 #define glActiveTexture aex_gl_es2_ActiveTexture
 #define glAttachShader aex_gl_es2_AttachShader
