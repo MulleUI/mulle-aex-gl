@@ -207,6 +207,22 @@ Done:
   - implements `glGetIntegerv(GL_FRAMEBUFFER_BINDING)` and
     `glGetIntegerv(GL_RENDERBUFFER_BINDING)`, which `nvgluCreateFramebuffer`
     uses to save/restore the current FBO/RBO.
+- Phase 4 (partial): the 3D/custom-shader path works.
+  `MulleUIOS/demo/src/main-softgles2-3d.m` drives
+  `CAOpenGLLayer -drawOpenGLInContext:` (GLSL ES 1.00 vertex/fragment
+  shaders, VBO, `glVertexAttribPointer`, `glDrawArrays`) into a
+  `CGFramebuffer`, verifies colored pixels and writes `softgles2-3d.png`.
+  The demo enables the modern OpenGL shader path with
+  `MULLE_CG_HAVE_MODERN_OPENGL=1`, `MULLE_CG_GLVERSION=2` and
+  `-include GLES2/gl2.h`.
+- Open items found by the 3D demo:
+  - `CGFramebuffer` currently has only a color attachment, so clearing
+    `GL_DEPTH_BUFFER_BIT`/`GL_STENCIL_BUFFER_BIT` correctly raises
+    `GL_INVALID_FRAMEBUFFER_OPERATION`; the demo clears color only.
+  - `CAOpenGLLayer -renderInContext:` derives a scissor from the layer
+    clipRect, which is bogus for the offscreen adapter
+    (`GL_INVALID_VALUE` from `glScissor`). The demo calls
+    `-drawOpenGLInContext:` directly after setting its own viewport.
 
 Known porting compromises:
 
@@ -219,8 +235,10 @@ Known porting compromises:
 
 Next:
 
-- Phase 4: exercise the 3D path (`CAOpenGLLayer`, custom GLSL shaders,
-  depth/stencil, `CGGraphicsLayer`) through the software backend.
+- Give `CGFramebuffer` real depth/stencil attachments (or a texture-flag
+  option) so depth testing and combined color/depth/stencil clears work.
+- Make `CAOpenGLLayer -renderInContext:` produce a valid viewport/scissor
+  for an offscreen context, so the full layer render path can be used.
 - Promote the demo-local `AexGLOSWindow` into a reusable
   `MulleUIOS`/`MulleGLFW` software window so `UIWindow` and
   `UIApplication` can run headless without a per-demo adapter.
