@@ -445,7 +445,10 @@ pp-line: ws newline-opt {
   }
 }
 
-non-directive: non-dir-token pp-tokens-opt;
+non-directive: non-dir-token pp-tokens-opt {
+  $$ = $0;
+  $0 = NULL;
+}
 
 replacement-list: pp-tokens-opt {
   $$ = $0;

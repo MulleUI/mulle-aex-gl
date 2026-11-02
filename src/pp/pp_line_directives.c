@@ -2005,6 +2005,7 @@ int aex_ppld_parse(struct aex_ppld_stack *stack, int sym, struct preprocessor *p
     case 154: goto C154;
     case 155: goto C155;
     case 156: goto C156;
+    case 236: goto C236;
     case 157: goto C157;
     case 158: goto C158;
     case 159: goto C159;
@@ -3263,6 +3264,16 @@ if (stack->mute_error_turns_) stack->mute_error_turns_--;
 #line 3256 "src/pp/pp_line_directives.c"
               }
               C49:;
+              stack->continue_at_ = 236;
+              {
+#line 443 "grammar/pp/pp_line_directives.cbrt"
+                {
+  (stack->stack_[1].v_.uv1_) = (stack->sym_data_[0].v_.uv1_);
+  (stack->sym_data_[0].v_.uv1_) = NULL;
+}
+#line 3265 "src/pp/pp_line_directives.c"
+              }
+              C236:;
             }
             break;
             /* replacement-list: pp-tokens-opt */

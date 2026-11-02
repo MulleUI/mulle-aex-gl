@@ -3964,6 +3964,12 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(GetIntegerv)(g
     case GL_ES2_CURRENT_PROGRAM:
       data[0] = (gl_es2_int)(c->current_program_ ? c->current_program_->no_.name_ : 0);
       break;
+    case GL_ES2_FRAMEBUFFER_BINDING:
+      data[0] = (gl_es2_int)(c->framebuffer_ ? c->framebuffer_->no_.name_ : 0);
+      break;
+    case GL_ES2_RENDERBUFFER_BINDING:
+      data[0] = (gl_es2_int)(c->renderbuffer_ ? c->renderbuffer_->no_.name_ : 0);
+      break;
     case GL_ES2_IMPLEMENTATION_COLOR_READ_FORMAT:
       /* We support more, but this is one of them */
       data[0] = (gl_es2_int)GL_ES2_RGBA;
