@@ -188,9 +188,23 @@ Done:
 - A standalone nanovg GLES2 scene (antialiased rect with
   `NVG_STENCIL_STROKES`) renders through `mulle-aex-gl` in a manual
   out-of-tree check.
-- Phase 3 (partial): `MulleCGNanovgGL` has a `softgles2` config and builds
-  with `-DMULLE_CG_GLVERSION=2 -DMULLE_CG_USE_SOFTGLES2=1` against the
-  shim; `libMulleCGNanovgGL.a` carries 102 `aex_gl_es2_*` references.
+- Phase 3: `MulleCGNanovgGL` has a `softgles2` config and builds with
+  `-DMULLE_CG_GLVERSION=2 -DMULLE_CG_USE_SOFTGLES2=1` against the shim;
+  `libMulleCGNanovgGL.a` carries 102 `aex_gl_es2_*` references.
+- Runtime render through the real MulleCG stack:
+  `MulleCGNanovgGL/test/60-context/softgles2-runtime.m` creates a
+  `CGContext` and `CGFramebuffer`, draws a 64x64 red rect, reads the
+  framebuffer back, and verifies the pixels.
+- `MulleUIOS/demo` has a `softgles2` config with
+  `src/main-softgles2-cg.m` (demo-local `AexGLOSWindow` implementing
+  `UIOSGraphicsContext`). It builds `softgles2-cg`, renders through
+  MulleCG/nanovg and writes `softgles2-cg.png` (64x64 RGBA).
+- To make the MulleCG/nanovg GLES2 path work, `mulle-aex-gl` now:
+  - accepts and ignores GLSL `#extension` lines instead of rejecting the
+    shader (the preprocessor still rejects other unknown directives),
+  - implements `glGetIntegerv(GL_FRAMEBUFFER_BINDING)` and
+    `glGetIntegerv(GL_RENDERBUFFER_BINDING)`, which `nvgluCreateFramebuffer`
+    uses to save/restore the current FBO/RBO.
 
 Known porting compromises:
 
@@ -203,10 +217,15 @@ Known porting compromises:
 
 Next:
 
-- Phase 3 remainder: add a `softgles2` config/craftinfo to
-  `MulleUIOS/demo`, provide a demo-local `UIOSGraphicsContext` adapter
-  around `aex_gl_es2_context_init`, and render a real `CGContext` /
-  `CGGraphicsLayer` scene through `MulleCGNanovgGL`.
+- Phase 4: exercise the 3D path (`CAOpenGLLayer`, custom GLSL shaders,
+  depth/stencil, `CGGraphicsLayer`) through the software backend.
+- Promote the demo-local `AexGLOSWindow` into a reusable
+  `MulleUIOS`/`MulleGLFW` software window so `UIWindow` and
+  `UIApplication` can run headless without a per-demo adapter.
+- The `MulleCGNanovgGL` test harness still needs a `softgles2` test
+  environment to run `test/60-context/softgles2-runtime.m` via
+  `mulle-sde test run`; the runtime check above was driven directly from
+  the softgles2 build.
 
 ## Risks
 
