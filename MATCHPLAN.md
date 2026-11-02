@@ -227,25 +227,25 @@ Done:
   attachment, so a stencil-only FBO raised
   `GL_INVALID_FRAMEBUFFER_OPERATION` and never cleared. The new
   `test/50-stencil/stencil.c` covers this.
-- The offscreen `CGContext` does not clear the stencil buffer in
-  `beginRender`; `softgles2-stroke` explicitly does
-  `glClearStencil(0); glClear(GL_STENCIL_BUFFER_BIT)` before drawing.
-  Without that, nanovg's first `GL_EQUAL 0` stencil pass fails.
-- Open items found by the 3D demo:
-  - `CGFramebuffer` has color + stencil (from `nvgluCreateFramebuffer`)
-    but no depth attachment, so clearing `GL_DEPTH_BUFFER_BIT` correctly
-    raises `GL_INVALID_FRAMEBUFFER_OPERATION`; the 3D demo clears color
-    only.
-  - `CAOpenGLLayer -renderInContext:` derives a scissor from the layer
-    clipRect, which is bogus for the offscreen adapter
-    (`GL_INVALID_VALUE` from `glScissor`). The demo calls
-    `-drawOpenGLInContext:` directly after setting its own viewport.
-- `MulleCGNanovgGL` now has a proper default/softgles2 reflect split:
-  `src/reflect` stays aex-free, `src/reflect.softgles2` carries the
-  `mulle-aex-gl` include, and `CMakeLists.txt` selects `reflect.<config>`.
-  `mulle-sde test run` passes 9/9; the new
-  `test/60-context/softgles2-runtime.m` is a no-op unless the aex header is
-  available in a softgles2 test environment.
+- High-level `CGFramebuffer` rendering is now the supported path. The new
+  `framebufferWithBitmapSize:backgroundColor:textureFlags:drawFunction:...`
+  clears color, depth and stencil when present. The low-level
+  `_bindToContext` + `CGContext -beginRender:` path remains caller-cleared.
+  `softgles2-cg` and `softgles2-stroke` now use the high-level path;
+  `softgles2-stroke` no longer clears stencil manually.
+- Depth attachments are supported. `mulle-nanovg` has `NVG_IMAGE_DEPTH`
+  (1<<9) and `NVG_IMAGE_STENCIL_LESS` (alias of `NVG_IMAGE_RBO_LESS`);
+  `NVGLUframebuffer` carries a `depthRbo`, created/attached/deleted by
+  `nvgluCreateFramebuffer`. `MulleCG` mirrors these as
+  `CGImageFlagDepth` and `CGImageFlagStencilLess` (deprecated alias
+  `CGImageFlagRBOLess`).
+- `softgles2-3d` uses the high-level `CGFramebuffer` API with
+  `CGImageFlagDepth`, enables depth test, and draws via
+  `CAOpenGLLayer -drawOpenGLInContext:`. It writes `softgles2-3d.png`.
+- `CAOpenGLLayer -renderInContext:` still computes an invalid offscreen
+  scissor from the layer clipRect (`GL_INVALID_VALUE` from `glScissor`),
+  so the 3D demo uses `-drawOpenGLInContext:` inside the high-level
+  framebuffer callback.
 
 Known porting compromises:
 
@@ -258,19 +258,20 @@ Known porting compromises:
 
 Next:
 
-- Clear stencil automatically in offscreen `CGContext -beginRender:` when
-  `_framebufferBits` includes `GL_STENCIL_BUFFER_BIT`, so nanovg stencil
-  strokes work without per-caller setup.
-- Give `CGFramebuffer` a depth attachment (or a texture-flag option) so
-  depth testing and combined color/depth clears work.
 - Make `CAOpenGLLayer -renderInContext:` produce a valid viewport/scissor
   for an offscreen context, so the full layer render path can be used.
+- Add a depth-ordered 3D test (two triangles at different z) to prove
+  depth testing, not just depth attachment/clear.
+- Document the high-level vs low-level clear split.
 - Promote the demo-local `AexGLOSWindow` into a reusable
   `MulleUIOS`/`MulleGLFW` software window so `UIWindow` and
   `UIApplication` can run headless without a per-demo adapter.
 - Add a `softgles2` test environment for `MulleCGNanovgGL` so the real
   `test/60-context/softgles2-runtime.m` runs in CI (currently it compiles
   as a no-op in the default build).
+- Consider combined depth-stencil, MRT and depth textures later; aex
+  currently maps `GL_DEPTH24_STENCIL8` to depth32 only and has one color
+  attachment.
 
 ## Risks
 
