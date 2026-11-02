@@ -18,6 +18,11 @@
 #include <stdlib.h>
 #endif
 
+#ifndef LIMITS_H_INCLUDED
+#define LIMITS_H_INCLUDED
+#include <limits.h>
+#endif
+
 #ifndef SL_DEFS_H_INCLUDED
 #define SL_DEFS_H_INCLUDED
 #include "sl_defs.h"

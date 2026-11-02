@@ -1,0 +1,2 @@
+mulle-core;${MULLE__CORE_NODETYPE:-tar};no-all-load,no-cmake-loader,no-cmake-searchpath,no-import,no-singlephase;A9F7B357-67AD-4406-A9F5-9C5882B9534D;${MULLE__CORE_URL:-https://github.com/mulle-core/mulle-core/archive/${MULLE_TAG}.tar.gz};${MULLE__CORE_BRANCH};${MULLE__CORE_TAG:-latest};;
+m;none;no-build,no-cmake-inherit,no-delete,no-dependency,no-fs,no-header,no-import,no-share,no-update;7EC9BB05-80EF-41C0-B8FE-BC8062E2402E;;;;;

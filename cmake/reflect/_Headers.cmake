@@ -14,6 +14,8 @@ set( INCLUDE_DIRS
 src/reflect
 src/generic
 src
+src/pp
+src/GLES2
 )
 
 #
@@ -28,6 +30,81 @@ src/reflect/_mulle-aex-gl-include-private.h
 #
 set( PRIVATE_GENERIC_HEADERS
 src/generic/include-private.h
+)
+
+#
+# contents selected with patternfile ??-header--private-headers
+#
+set( PRIVATE_HEADERS
+src/attrib_binding_table.h
+src/attrib_routing.h
+src/attrib_set.h
+src/blend.h
+src/blitter.h
+src/builtins_binding_inc.h
+src/builtins.h
+src/clipping_stage.h
+src/data_buffer.h
+src/debug_dump.h
+src/egl_impl.h
+src/fragment_buffer.h
+src/gl_es2_context.h
+src/gl_es2_impl.h
+src/gl_es2_impl_types.h
+src/gl_es2_log.h
+src/glsl_es1_assist.h
+src/glsl_es1_compiler.h
+src/glsl_es_1.h
+src/glsl_es1_tokens.h
+src/ir.h
+src/ir_registry.h
+src/named_object_table.h
+src/perspective_division.h
+src/pp/diags.h
+src/pp/pp_const_expr.h
+src/pp/pp.h
+src/pp/pp_input_file.h
+src/pp/pp_line_continuations.h
+src/pp/pp_line_directives.h
+src/pp/pp_macro_expander.h
+src/pp/pp_macro_table.h
+src/pp/pp_tokenizer.h
+src/pp/pp_tokens.h
+src/pp/pp_trigraphs.h
+src/pp/scan_helpers.h
+src/pp/situs.h
+src/primitive_assembly.h
+src/rasterizer_core_inc.h
+src/rasterizer.h
+src/ref_range_allocator.h
+src/sampler_2d.h
+src/sha1.h
+src/sl_binop_snippet_inc.h
+src/sl_compilation_unit.h
+src/sl_defs.h
+src/sl_execution.h
+src/sl_expr.h
+src/sl_expr_temp.h
+src/sl_frame.h
+src/sl_info_log.h
+src/sl_ir.h
+src/sl_octonop_snippet_inc.h
+src/sl_program.h
+src/sl_quadop_snippet_inc.h
+src/sl_reg_alloc.h
+src/sl_reg_move.h
+src/sl_senop_snippet_inc.h
+src/sl_shader.h
+src/sl_stmt.h
+src/sl_ternop_snippet_inc.h
+src/sl_types.h
+src/sl_uniforms.h
+src/sl_unop_snippet_inc.h
+src/source_gen.h
+src/sym_table.h
+src/thread_context.h
+src/thread_mutex.h
+src/viewport_transformation.h
 )
 
 #
@@ -49,6 +126,8 @@ src/generic/include.h
 # contents selected with patternfile ??-header--public-headers
 #
 set( PUBLIC_HEADERS
+src/GLES2/gl2ext.h
+src/GLES2/gl2.h
 src/mulle-aex-gl.h
 )
 

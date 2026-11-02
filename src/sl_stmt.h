@@ -32,6 +32,8 @@ extern "C" {
 
 struct sl_expr;
 struct sym_table;
+struct sl_reg_allocator;
+struct sl_type_base;
 
 typedef enum sl_stmt_kind {
   slsk_invalid,

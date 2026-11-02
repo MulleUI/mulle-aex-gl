@@ -831,7 +831,7 @@ struct sampler_2d *split_execution_chains_to_cubemap_sampler_tex_chains(struct s
   return samplers;
 }
 
-struct sampler_2d *split_execution_chains_to_sampler_tex_chains(struct sl_execution *exec, int exec_chain, void * restrict * restrict sampler_column) {
+struct sampler_2d *split_execution_chains_to_sampler_tex_chains(struct sl_execution *exec, int exec_chain, void ** sampler_column) {
   uint8_t *restrict chain_column = exec->exec_chain_reg_;
   uint32_t row = exec_chain;
   struct sampler_2d *samplers = NULL;

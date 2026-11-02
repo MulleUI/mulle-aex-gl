@@ -26,6 +26,7 @@ extern "C" {
 #endif
 
 struct sl_type;
+struct sl_type_base;
 
 typedef enum sl_expr_temp_kind {
   sletk_void,

@@ -50,6 +50,9 @@
 extern "C" {
 #endif
 
+struct diags;
+struct sl_reg_allocator;
+
 /* Flags returned by sl_expr_validate() */
 
 /* The expression is not valid and should not be evaluated */

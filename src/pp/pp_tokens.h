@@ -30,6 +30,9 @@
 extern "C" {
 #endif
 
+struct macro;
+struct preprocessor;
+
 /* Returned by the line directives parser when a file is to be included */
 #define PPLD_INCLUDE_FILE -1
 

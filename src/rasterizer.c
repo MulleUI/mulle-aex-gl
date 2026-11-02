@@ -904,7 +904,7 @@ int rasterizer_triangle(struct rasterizer *rasterizer,
      * For 128 bits, this leaves us 128-72 = 56 bits to play with, let's adopt 8 bits fixed point at 32
      * bits signed total for the offset factor */
 #if RASTERIZER_SUBPIXEL_BITS > 8
-#error You'll want to verify this logic when upping the bits
+#error You will want to verify this logic when upping the bits
 #endif
     muls128(Dz_gradient_hi, Dz_gradient_lo, ((int64_t)offset_factor_fixed8) >> 63, (int64_t)offset_factor_fixed8, &Dz_gradient_hi, &Dz_gradient_lo);
     int64_t Dz_gradient_rem;

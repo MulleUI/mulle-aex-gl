@@ -44,6 +44,9 @@ renders through `mulle-aex-gl` with no GL, EGL, OSMesa or GPU.
 - **Per-backend shaders.** Custom shaders are registered per
   `UIGraphicsBackend`, so a software backend gets GLSL ES 1.00 variants
   instead of pretending to be desktop GL.
+- **mulle-core threading.** Use `mulle_thread_mutex_t`,
+  `mulle_thread_once_t` and `mulle_thread_tss_t`; one cross-platform
+  implementation, no per-platform thread shims.
 - **No D3D11 or Skia work in this plan.**
 
 ## Phase 0 - Fork and scaffold
@@ -92,23 +95,28 @@ mulle-sde scaffold and upstream `src/`, `renderbmp/`, `3rdparty/`,
 Acceptance: a fresh clone builds with no Carburetta installed and no
 `.cbrt` file in the include or source search path.
 
-## Phase 2 - POSIX and headless build
+## Phase 2 - mulle-core threading and headless build
 
-1. Add `src/thread_context_posix.c` and `src/thread_mutex_posix.c`:
-   - TLS via `pthread_key_create`/`pthread_once` or `_Thread_local`,
-   - mutex via `pthread_mutex_t` inside the existing 40-byte
-     `native_mutex_`, plus a static assert.
-2. Exclude Windows-only sources from the mulle-sde build:
-   `thread_context_win32.c`, `thread_mutex_win32.c`, `egl_impl.c`,
-   `src/AexGL-DLL/`.
-3. Wire the core sources into the mulle-sde CMake library build
+1. Use mulle-core's portable thread layer instead of raw pthreads:
+   - `struct thread_mutex` wraps `mulle_thread_mutex_t`,
+   - `thread_context.c` uses `mulle_thread_once_t` and
+     `mulle_thread_tss_t`.
+   This replaces both the Win32 and POSIX variants with one implementation.
+2. Exclude non-library sources from the mulle-sde build:
+   `egl_impl.c`, `src/AexGL-DLL/`, `src/tester/`.
+3. Make the imported headers self-contained enough for clang:
+   forward declarations for shared struct tags, and the missing
+   `<limits.h>` / `<stddef.h>` / `<stdint.h>` includes.
+4. Wire the core sources into the mulle-sde CMake library build
    (`mulle-sde reflect` after adding files).
-4. Add a `renderbmp` test executable under `test/` or `demo/` and run it
-   headless.
-5. Capture baseline BMPs for the triangle, mipmap and world demos.
+5. Add the `m` system library for `libm` (`mulle-sde library add
+   --no-header m`).
+6. Add a headless smoke test under `test/` that initializes a context,
+   clears, and reads back a pixel.
 
-Acceptance: `mulle-sde craft` builds on Linux and `renderbmp` produces the
-expected images with no display, no EGL and no GPU.
+Acceptance: `mulle-sde craft` builds `libmulle-aex-gl` and
+`mulle-sde test run` passes the headless clear/readpixels test with no
+display, no EGL and no GPU.
 
 ## Phase 3 - MulleCG integration spike
 
@@ -141,8 +149,8 @@ and an effort estimate for the remaining platforms.
 
 Only after Phase 4 passes:
 
-1. Keep the POSIX shim for Linux, FreeBSD, macOS and Android; keep the
-   Win32 shim for Windows.
+1. Threading is already handled by mulle-core on Linux, FreeBSD, macOS,
+   Windows and Android; validate each target.
 2. Add presentation through an FBO blit into `MulleGLFW`/`MulleSDL`, or
    an EGL surfaceless context.
 3. Add a `softgles2` sourcetree config for `MulleUIOS` and a
@@ -152,6 +160,40 @@ Only after Phase 4 passes:
 
 Acceptance: the same tests pass on every target with no external GL
 runtime.
+
+## Progress (2026-11-02)
+
+Done:
+
+- Phase 0: mulle-sde C library scaffold created; upstream `aex-gl`
+  merged as an unrelated-history fork; `MATCHPLAN.md` and `UPSTREAM.md`
+  added.
+- Phase 1: Carburetta 0.8.29 built once as a host tool; the seven parser
+  `.c/.h` pairs were generated and checked in; `.cbrt` grammars moved to
+  `grammar/` (not built); `project/Aex.vcxproj` no longer calls
+  Carburetta.
+- Phase 2: replaced the Win32/POSIX thread split with one mulle-core
+  implementation (`src/thread_context.c`, `src/thread_mutex.c`); made the
+  imported headers self-contained; excluded `egl_impl.c`,
+  `src/AexGL-DLL/` and `src/tester/`; added the `m` system library.
+- `mulle-sde craft` builds `libmulle-aex-gl.a`.
+- `mulle-sde test run` passes:
+  `test/10-first/gles2-headless` initializes a 16x16 context, clears to
+  blue and reads back `0,0,255,255`.
+
+Known porting compromises:
+
+- `-Wno-incompatible-pointer-types` is set in `CFLAGS` because the
+  imported code mixes `restrict`/`const`-qualified pointer-to-pointer
+  types with unqualified ones. Qualifier-only; revisit before productising.
+- The vendored generated headers carry local forward declarations
+  (`struct pptk`, `struct preprocessor`, `struct situs`,
+  `struct glsl_es1_compiler`) for clang. See `grammar/README.md`.
+
+Next:
+
+- Phase 3: wire `MulleCGNanovgGL` with `MULLE_CG_GLVERSION=MULLE_CG_GLES2`
+  and render a MulleCG/nanovg scene through `mulle-aex-gl`.
 
 ## Risks
 
@@ -173,24 +215,27 @@ runtime.
 - `src/pp/` - preprocessor; generated parsers live here.
 - `src/sl_*`, `src/ir*` - shader IR and execution.
 - `src/rasterizer.c`, `src/sampler_2d.c`, `src/blitter.c` - raster path.
+- `src/thread_context.c`, `src/thread_mutex.c` - mulle-core thread layer.
+- `src/mulle-aex-gl.c`, `src/mulle-aex-gl.h` - mulle-sde envelope.
 - `renderbmp/` - headless demos and aex-to-`gl*` name map.
-- `project/Aex.vcxproj` - upstream build; remove the Carburetta steps.
-- `grammar/` - archived `.cbrt` grammars, not built.
+- `project/Aex.vcxproj` - upstream build; Carburetta steps removed.
+- `grammar/` - archived `.cbrt` grammars plus regeneration notes.
+- `test/10-first/gles2-headless.c` - headless smoke test.
 
 ## Commands
 
+With vibecoding enabled and a `test/` folder present, `mulle-sde craft` is
+intentionally disabled. Use the test project:
+
 ```sh
 cd /home/src/srcO/MulleUI/mulle-aex-gl
-mulle-sde craft
+mulle-sde test craft
+mulle-sde test run
 mulle-sde check
 mulle-sde reflect
 mulle-sde log
 ```
 
-Test project:
-
-```sh
-mulle-sde test init
-mulle-sde test craft
-mulle-sde test run
-```
+The test project is a separate mulle-sde project; `mulle-sde test init` was
+already run. `mulle-sde test run` builds the dependency and runs both the
+scaffold `hello` test and the headless `gles2-headless` test.

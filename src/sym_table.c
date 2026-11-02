@@ -28,6 +28,11 @@
 #include <stdio.h>
 #endif
 
+#ifndef STDINT_H_INCLUDED
+#define STDINT_H_INCLUDED
+#include <stdint.h>
+#endif
+
 #ifndef ASSERT_H_INCLUDED
 #define ASSERT_H_INCLUDED
 #include <assert.h>

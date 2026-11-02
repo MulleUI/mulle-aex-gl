@@ -759,7 +759,7 @@ static void sl_uniform_load_b(size_t num, uint8_t *dst, uint8_t val) {
 }
 
 static void sl_uniform_load_voidp(size_t num, void **dst, void *val) {
-  void **restrict p = (void * restrict * restrict)dst;
+  void **restrict p = (void **)dst;
   while (num--) {
     *p++ = val;
   }

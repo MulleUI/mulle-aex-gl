@@ -35,6 +35,10 @@ extern "C" {
 #endif
 
 struct sl_shader;
+struct sl_execution;
+struct attrib_routing;
+struct attrib_set;
+struct clipping_stage;
 
 /* Number of rows in the primitive assembly buffer. */
 #define PRIMITIVE_ASSEMBLY_MAX_ROWS 256

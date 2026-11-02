@@ -21,6 +21,11 @@
 #include "ref_range_allocator.h"
 #endif
 
+#ifndef STDDEF_H_INCLUDED
+#define STDDEF_H_INCLUDED
+#include <stddef.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

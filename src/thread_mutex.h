@@ -15,31 +15,26 @@
 #ifndef THREAD_MUTEX_H
 #define THREAD_MUTEX_H
 
-#ifndef STDINT_H_INCLUDED
-#define STDINT_H_INCLUDED
-#include <stdint.h>
-#endif
+#include <mulle-core/mulle-core.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct thread_mutex {
-  /* Size here needs to be "sufficient" to get the native mutex primitive to fit.
-   * Compilation will fail on the respective target platform if it's too small.
-   * (Goal here is to avoid bringing in the kitchen sink just for a mutex. */
-  uint64_t native_mutex_[5];
+struct thread_mutex
+{
+   mulle_thread_mutex_t   native_mutex_;
 };
 
-void thread_mutex_init(struct thread_mutex *m);
-void thread_mutex_cleanup(struct thread_mutex *m);
+void   thread_mutex_init( struct thread_mutex *m);
+void   thread_mutex_cleanup( struct thread_mutex *m);
 
 /* Finalize initialization, including any allocation or construction that may fail.
  * Returns non-zero upon failure, zero upon success. */
-int thread_mutex_finish_initialization(struct thread_mutex *m);
+int   thread_mutex_finish_initialization( struct thread_mutex *m);
 
-void thread_mutex_enter(struct thread_mutex *m);
-void thread_mutex_leave(struct thread_mutex *m);
+void   thread_mutex_enter( struct thread_mutex *m);
+void   thread_mutex_leave( struct thread_mutex *m);
 
 #ifdef __cplusplus
 } /* extern "C" */

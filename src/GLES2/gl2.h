@@ -1,0 +1,162 @@
+#ifndef MULLE_AEX_GL_GLES2_GL2_H
+#define MULLE_AEX_GL_GLES2_GL2_H
+
+/*
+ * GLES2 compatibility header for mulle-aex-gl.
+ *
+ * Pull in the standard GLES2 types and constants without prototypes, then
+ * map the standard gl* names onto the aex_gl_es2_* entry points.
+ * This header must be found before the system <GLES2/gl2.h>; the system
+ * header is reached through #include_next.
+ */
+
+#define GL_GLES_PROTOTYPES 0
+#include_next <GLES2/gl2.h>
+#undef GL_GLES_PROTOTYPES
+
+#include <mulle-aex-gl/gl_es2_impl.h>
+
+#define glActiveTexture aex_gl_es2_ActiveTexture
+#define glAttachShader aex_gl_es2_AttachShader
+#define glBindAttribLocation aex_gl_es2_BindAttribLocation
+#define glBindBuffer aex_gl_es2_BindBuffer
+#define glBindFramebuffer aex_gl_es2_BindFramebuffer
+#define glBindRenderbuffer aex_gl_es2_BindRenderbuffer
+#define glBindTexture aex_gl_es2_BindTexture
+#define glBlendColor aex_gl_es2_BlendColor
+#define glBlendEquation aex_gl_es2_BlendEquation
+#define glBlendEquationSeparate aex_gl_es2_BlendEquationSeparate
+#define glBlendFunc aex_gl_es2_BlendFunc
+#define glBlendFuncSeparate aex_gl_es2_BlendFuncSeparate
+#define glBufferData aex_gl_es2_BufferData
+#define glBufferSubData aex_gl_es2_BufferSubData
+#define glCheckFramebufferStatus aex_gl_es2_CheckFramebufferStatus
+#define glClear aex_gl_es2_Clear
+#define glClearColor aex_gl_es2_ClearColor
+#define glClearDepthf aex_gl_es2_ClearDepthf
+#define glClearStencil aex_gl_es2_ClearStencil
+#define glColorMask aex_gl_es2_ColorMask
+#define glCompileShader aex_gl_es2_CompileShader
+#define glCompressedTexImage2D aex_gl_es2_CompressedTexImage2D
+#define glCompressedTexSubImage2D aex_gl_es2_CompressedTexSubImage2D
+#define glCopyTexImage2D aex_gl_es2_CopyTexImage2D
+#define glCopyTexSubImage2D aex_gl_es2_CopyTexSubImage2D
+#define glCreateProgram aex_gl_es2_CreateProgram
+#define glCreateShader aex_gl_es2_CreateShader
+#define glCullFace aex_gl_es2_CullFace
+#define glDeleteBuffers aex_gl_es2_DeleteBuffers
+#define glDeleteFramebuffers aex_gl_es2_DeleteFramebuffers
+#define glDeleteProgram aex_gl_es2_DeleteProgram
+#define glDeleteRenderbuffers aex_gl_es2_DeleteRenderbuffers
+#define glDeleteShader aex_gl_es2_DeleteShader
+#define glDeleteTextures aex_gl_es2_DeleteTextures
+#define glDepthFunc aex_gl_es2_DepthFunc
+#define glDepthMask aex_gl_es2_DepthMask
+#define glDepthRangef aex_gl_es2_DepthRangef
+#define glDetachShader aex_gl_es2_DetachShader
+#define glDisable aex_gl_es2_Disable
+#define glDisableVertexAttribArray aex_gl_es2_DisableVertexAttribArray
+#define glDrawArrays aex_gl_es2_DrawArrays
+#define glDrawElements aex_gl_es2_DrawElements
+#define glEnable aex_gl_es2_Enable
+#define glEnableVertexAttribArray aex_gl_es2_EnableVertexAttribArray
+#define glFinish aex_gl_es2_Finish
+#define glFlush aex_gl_es2_Flush
+#define glFramebufferRenderbuffer aex_gl_es2_FramebufferRenderbuffer
+#define glFramebufferTexture2D aex_gl_es2_FramebufferTexture2D
+#define glFrontFace aex_gl_es2_FrontFace
+#define glGenBuffers aex_gl_es2_GenBuffers
+#define glGenFramebuffers aex_gl_es2_GenFramebuffers
+#define glGenRenderbuffers aex_gl_es2_GenRenderbuffers
+#define glGenTextures aex_gl_es2_GenTextures
+#define glGenerateMipmap aex_gl_es2_GenerateMipmap
+#define glGetActiveAttrib aex_gl_es2_GetActiveAttrib
+#define glGetActiveUniform aex_gl_es2_GetActiveUniform
+#define glGetAttachedShaders aex_gl_es2_GetAttachedShaders
+#define glGetAttribLocation aex_gl_es2_GetAttribLocation
+#define glGetBooleanv aex_gl_es2_GetBooleanv
+#define glGetBufferParameteriv aex_gl_es2_GetBufferParameteriv
+#define glGetError aex_gl_es2_GetError
+#define glGetFloatv aex_gl_es2_GetFloatv
+#define glGetFramebufferAttachmentParameteriv aex_gl_es2_GetFramebufferAttachmentParameteriv
+#define glGetIntegerv aex_gl_es2_GetIntegerv
+#define glGetProgramInfoLog aex_gl_es2_GetProgramInfoLog
+#define glGetProgramiv aex_gl_es2_GetProgramiv
+#define glGetRenderbufferParameteriv aex_gl_es2_GetRenderbufferParameteriv
+#define glGetShaderInfoLog aex_gl_es2_GetShaderInfoLog
+#define glGetShaderPrecisionFormat aex_gl_es2_GetShaderPrecisionFormat
+#define glGetShaderSource aex_gl_es2_GetShaderSource
+#define glGetShaderiv aex_gl_es2_GetShaderiv
+#define glGetString aex_gl_es2_GetString
+#define glGetTexParameterfv aex_gl_es2_GetTexParameterfv
+#define glGetTexParameteriv aex_gl_es2_GetTexParameteriv
+#define glGetUniformLocation aex_gl_es2_GetUniformLocation
+#define glGetUniformfv aex_gl_es2_GetUniformfv
+#define glGetUniformiv aex_gl_es2_GetUniformiv
+#define glGetVertexAttribPointerv aex_gl_es2_GetVertexAttribPointerv
+#define glGetVertexAttribfv aex_gl_es2_GetVertexAttribfv
+#define glGetVertexAttribiv aex_gl_es2_GetVertexAttribiv
+#define glHint aex_gl_es2_Hint
+#define glIsBuffer aex_gl_es2_IsBuffer
+#define glIsEnabled aex_gl_es2_IsEnabled
+#define glIsFramebuffer aex_gl_es2_IsFramebuffer
+#define glIsProgram aex_gl_es2_IsProgram
+#define glIsRenderbuffer aex_gl_es2_IsRenderbuffer
+#define glIsShader aex_gl_es2_IsShader
+#define glIsTexture aex_gl_es2_IsTexture
+#define glLineWidth aex_gl_es2_LineWidth
+#define glLinkProgram aex_gl_es2_LinkProgram
+#define glPixelStorei aex_gl_es2_PixelStorei
+#define glPolygonOffset aex_gl_es2_PolygonOffset
+#define glReadPixels aex_gl_es2_ReadPixels
+#define glReleaseShaderCompiler aex_gl_es2_ReleaseShaderCompiler
+#define glRenderbufferStorage aex_gl_es2_RenderbufferStorage
+#define glSampleCoverage aex_gl_es2_SampleCoverage
+#define glScissor aex_gl_es2_Scissor
+#define glShaderBinary aex_gl_es2_ShaderBinary
+#define glShaderSource aex_gl_es2_ShaderSource
+#define glStencilFunc aex_gl_es2_StencilFunc
+#define glStencilFuncSeparate aex_gl_es2_StencilFuncSeparate
+#define glStencilMask aex_gl_es2_StencilMask
+#define glStencilMaskSeparate aex_gl_es2_StencilMaskSeparate
+#define glStencilOp aex_gl_es2_StencilOp
+#define glStencilOpSeparate aex_gl_es2_StencilOpSeparate
+#define glTexImage2D aex_gl_es2_TexImage2D
+#define glTexParameterf aex_gl_es2_TexParameterf
+#define glTexParameterfv aex_gl_es2_TexParameterfv
+#define glTexParameteri aex_gl_es2_TexParameteri
+#define glTexParameteriv aex_gl_es2_TexParameteriv
+#define glTexSubImage2D aex_gl_es2_TexSubImage2D
+#define glUniform1f aex_gl_es2_Uniform1f
+#define glUniform1fv aex_gl_es2_Uniform1fv
+#define glUniform1i aex_gl_es2_Uniform1i
+#define glUniform1iv aex_gl_es2_Uniform1iv
+#define glUniform2f aex_gl_es2_Uniform2f
+#define glUniform2fv aex_gl_es2_Uniform2fv
+#define glUniform2i aex_gl_es2_Uniform2i
+#define glUniform2iv aex_gl_es2_Uniform2iv
+#define glUniform3f aex_gl_es2_Uniform3f
+#define glUniform3fv aex_gl_es2_Uniform3fv
+#define glUniform3i aex_gl_es2_Uniform3i
+#define glUniform3iv aex_gl_es2_Uniform3iv
+#define glUniform4f aex_gl_es2_Uniform4f
+#define glUniform4fv aex_gl_es2_Uniform4fv
+#define glUniform4i aex_gl_es2_Uniform4i
+#define glUniform4iv aex_gl_es2_Uniform4iv
+#define glUniformMatrix2fv aex_gl_es2_UniformMatrix2fv
+#define glUniformMatrix3fv aex_gl_es2_UniformMatrix3fv
+#define glUniformMatrix4fv aex_gl_es2_UniformMatrix4fv
+#define glUseProgram aex_gl_es2_UseProgram
+#define glValidateProgram aex_gl_es2_ValidateProgram
+#define glVertexAttrib1f aex_gl_es2_VertexAttrib1f
+#define glVertexAttrib1fv aex_gl_es2_VertexAttrib1fv
+#define glVertexAttrib2f aex_gl_es2_VertexAttrib2f
+#define glVertexAttrib2fv aex_gl_es2_VertexAttrib2fv
+#define glVertexAttrib3f aex_gl_es2_VertexAttrib3f
+#define glVertexAttrib3fv aex_gl_es2_VertexAttrib3fv
+#define glVertexAttrib4f aex_gl_es2_VertexAttrib4f
+#define glVertexAttrib4fv aex_gl_es2_VertexAttrib4fv
+#define glVertexAttribPointer aex_gl_es2_VertexAttribPointer
+#define glViewport aex_gl_es2_Viewport
+
+#endif /* MULLE_AEX_GL_GLES2_GL2_H */

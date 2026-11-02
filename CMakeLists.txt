@@ -95,6 +95,10 @@ elseif( "${MULLE_PROJECT_TYPE}" STREQUAL "Library")
       install( FILES ${INSTALL_PRIVATE_HEADERS} DESTINATION "include/${PROJECT_NAME}")
       install( FILES ${INSTALL_CMAKE_INCLUDES}  DESTINATION "include/${PROJECT_NAME}/cmake")
 
+      # GLES2 compatibility shim for the software backend. Installed at the
+      # include root so <GLES2/gl2.h> resolves to it before the system header.
+      install( FILES src/GLES2/gl2.h src/GLES2/gl2ext.h DESTINATION "include/GLES2")
+
       # short cut out
       if( NOT COMPILE_PHASE AND NOT LINK_PHASE)
          return()

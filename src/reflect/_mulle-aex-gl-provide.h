@@ -13,7 +13,8 @@
 #define _mulle__aex__gl__provide_h__
 
 
-// no headers
+#include "gl2.h"
+#include "gl2ext.h"
 
 
 #endif

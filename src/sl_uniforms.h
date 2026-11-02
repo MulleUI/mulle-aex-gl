@@ -30,6 +30,7 @@ extern "C" {
 #endif
 
 struct sl_variable;
+struct sl_execution;
 
 struct sl_uniform {
   /* Tail cyclic chain inside sl_uniform_table::uniforms_. */

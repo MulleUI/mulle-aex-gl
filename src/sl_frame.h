@@ -49,6 +49,9 @@ struct sl_type;
 struct sl_stmt;
 struct sl_frame;
 struct sl_function;
+struct diags;
+struct sym;
+struct sym_table;
 
 struct sl_variable {
   /* Name of the variable, may be NULL if, for some reason, this is an 

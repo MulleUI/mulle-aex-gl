@@ -18,6 +18,11 @@
 #include <stdlib.h>
 #endif
 
+#ifndef LIMITS_H_INCLUDED
+#define LIMITS_H_INCLUDED
+#include <limits.h>
+#endif
+
 #ifndef STDIO_H_INCLUDED
 #define STDIO_H_INCLUDED
 #include <stdio.h>

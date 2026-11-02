@@ -23,6 +23,11 @@
 #include <stdint.h>
 #endif
 
+#ifndef LIMITS_H_INCLUDED
+#define LIMITS_H_INCLUDED
+#include <limits.h>
+#endif
+
 #ifndef ASSERT_H_INCLUDED
 #define ASSERT_H_INCLUDED
 #include <assert.h>
@@ -182,7 +187,7 @@ int ireg_add_instruction(struct ireg_registry *ireg, struct ireg_instr *instr) {
   instr_index = ireg_add_element(instr, 
                                  &ireg->num_instructions_, 
                                  &ireg->num_instructions_allocated_, 
-                                 &ireg->instructions_);
+                                 (void ***) &ireg->instructions_);
   if (!instr_index) return 0;
   instr->instr_index_ = instr_index;
   return instr_index;
@@ -193,7 +198,7 @@ int ireg_set_instruction(struct ireg_registry *ireg, struct ireg_instr *instr) {
   instr_index = ireg_set_element(instr->instr_index_, instr,
                                  &ireg->num_instructions_,
                                  &ireg->num_instructions_allocated_,
-                                 &ireg->instructions_);
+                                 (void ***) &ireg->instructions_);
   return instr_index;
 }
 
@@ -202,7 +207,7 @@ int ireg_add_register(struct ireg_registry *ireg, struct ireg_register *reg) {
   reg_index = ireg_add_element(reg,
                                &ireg->num_registers_,
                                &ireg->num_registers_allocated_,
-                               &ireg->registers_);
+                               (void ***) &ireg->registers_);
   if (!reg_index) return 0;
   reg->register_index_ = reg_index;
   return reg_index;
@@ -213,7 +218,7 @@ int ireg_set_register(struct ireg_registry *ireg, struct ireg_register *reg) {
   reg_index = ireg_set_element(reg->register_index_, reg,
                                &ireg->num_registers_,
                                &ireg->num_registers_allocated_,
-                               &ireg->registers_);
+                               (void ***) &ireg->registers_);
   return reg_index;
 }
 

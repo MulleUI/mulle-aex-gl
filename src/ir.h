@@ -31,6 +31,7 @@ struct ir_instr;
 struct ir_control_flow;
 
 struct lob_sym;
+struct ireg_registry;
 struct source_gen;
 
 enum ir_temp_type {

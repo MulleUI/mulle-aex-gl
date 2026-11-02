@@ -1024,12 +1024,12 @@ static void sl_exec_b_offset_load(uint8_t * restrict chain_column,
 
 static void sl_exec_p_offset_load(uint8_t * restrict chain_column,
                                   uint8_t row,
-                                  void * restrict * restrict dst,
+                                  void ** dst,
                                   void * const restrict * restrict * restrict voidp_regs,
                                   int base_reg,
                                   const int64_t * restrict indices) {
   for (;;) {
-    void * restrict * restrict dst_row = dst + row;
+    void ** dst_row = dst + row;
     void * const restrict * restrict src_row = voidp_regs[base_reg + indices[row]];
     
     *dst_row = *src_row;
@@ -1102,7 +1102,7 @@ static void sl_exec_b_offset_load_strided(uint8_t * restrict chain_column,
 
 static void sl_exec_p_offset_load_strided(uint8_t * restrict chain_column,
                                           uint8_t row,
-                                          void * restrict * restrict dst,
+                                          void ** dst,
                                           void * const restrict * restrict * restrict voidp_regs,
                                           int base_reg,
                                           const int64_t * restrict indices,
@@ -1516,12 +1516,12 @@ static void sl_exec_b_offset_store(uint8_t * restrict chain_column,
 
 static void sl_exec_p_offset_store(uint8_t * restrict chain_column,
                                    uint8_t row,
-                                   void * restrict * restrict * restrict voidp_regs,
+                                   void *** voidp_regs,
                                    int base_reg,
                                    const int64_t * restrict indices,
                                    const void * const restrict * restrict src) {
   for (;;) {
-    void * restrict * restrict dst_row = voidp_regs[base_reg + indices[row] ]; 
+    void ** dst_row = voidp_regs[base_reg + indices[row] ]; 
     void * const restrict * restrict src_row = src + row;
     
     *dst_row = *src_row;
@@ -1595,14 +1595,14 @@ static void sl_exec_b_offset_store_strided(uint8_t * restrict chain_column,
 
 static void sl_exec_p_offset_store_strided(uint8_t * restrict chain_column,
                                            uint8_t row,
-                                           void * restrict * restrict * restrict voidp_regs,
+                                           void *** voidp_regs,
                                            int base_reg,
                                            const int64_t * restrict indices,
                                            int index_stride,
                                            int array_offset,
                                            const void * const restrict * restrict src) {
   for (;;) {
-    void * restrict * restrict dst_row = voidp_regs[base_reg + index_stride * indices[row] + array_offset]; 
+    void ** dst_row = voidp_regs[base_reg + index_stride * indices[row] + array_offset]; 
     void * const restrict * restrict src_row = src + row;
     
     *dst_row = *src_row;

@@ -3665,11 +3665,11 @@ static void sl_reg_move_s2d_reg_to_reg(struct sl_execution *exec,
                                        int dst_reg,
                                        int src_reg) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_2D_regs_;
-  void * restrict * restrict dst = reg_bank[dst_reg];
+  void *** reg_bank = exec->sampler_2D_regs_;
+  void ** dst = reg_bank[dst_reg];
   void * const restrict * restrict src = reg_bank[src_reg];
   for (;;) {
-    void * restrict * restrict dst_row = dst + row;
+    void ** dst_row = dst + row;
     void * const restrict * restrict src_row = src + row;
 
     *dst_row = *src_row;
@@ -3686,11 +3686,11 @@ static void sl_reg_move_s2d_reg_to_indir(struct sl_execution *exec,
                                          int dst_fixed_offset,
                                          int src_reg) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_2D_regs_;
+  void *** reg_bank = exec->sampler_2D_regs_;
   const int64_t * restrict dst_indir = exec->int_regs_[dst_indir_reg];
   void * const restrict * restrict src = reg_bank[src_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_indir[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_indir[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = src + row;
 
     *dst_row = *src_row;
@@ -3709,11 +3709,11 @@ static void sl_reg_move_s2d_reg_to_offset_reg(struct sl_execution *exec,
                                               int dst_offset_stepsize,
                                               int src_reg) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_2D_regs_;
+  void *** reg_bank = exec->sampler_2D_regs_;
   const int64_t * restrict dst_offset = exec->int_regs_[dst_offset_reg];
   void * const restrict * restrict src = reg_bank[src_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_base_reg + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_base_reg + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = src + row;
 
     *dst_row = *src_row;
@@ -3732,12 +3732,12 @@ static void sl_reg_move_s2d_reg_to_indir_offset(struct sl_execution *exec,
                                                 int dst_offset_stepsize,
                                                 int src_reg) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_2D_regs_;
+  void *** reg_bank = exec->sampler_2D_regs_;
   const int64_t * restrict dst_indir = exec->int_regs_[dst_indir_reg];
   const int64_t * restrict dst_offset = exec->int_regs_[dst_offset_reg];
   void * const restrict * restrict src = reg_bank[src_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_indir[row] + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_indir[row] + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = src + row;
 
     *dst_row = *src_row;
@@ -3754,11 +3754,11 @@ static void sl_reg_move_s2d_indir_to_reg(struct sl_execution *exec,
                                          int src_indir_reg,
                                          int src_fixed_offset) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_2D_regs_;
-  void * restrict * restrict dst = reg_bank[dst_reg];
+  void *** reg_bank = exec->sampler_2D_regs_;
+  void ** dst = reg_bank[dst_reg];
   const int64_t * restrict src_indir = exec->int_regs_[src_indir_reg];
   for (;;) {
-    void * restrict * restrict dst_row = dst + row;
+    void ** dst_row = dst + row;
     void * const restrict * restrict src_row = reg_bank[src_indir[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -3776,11 +3776,11 @@ static void sl_reg_move_s2d_indir_to_indir(struct sl_execution *exec,
                                            int src_indir_reg,
                                            int src_fixed_offset) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_2D_regs_;
+  void *** reg_bank = exec->sampler_2D_regs_;
   const int64_t * restrict dst_indir = exec->int_regs_[dst_indir_reg];
   const int64_t * restrict src_indir = exec->int_regs_[src_indir_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_indir[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_indir[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = reg_bank[src_indir[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -3800,11 +3800,11 @@ static void sl_reg_move_s2d_indir_to_offset_reg(struct sl_execution *exec,
                                                 int src_indir_reg,
                                                 int src_fixed_offset) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_2D_regs_;
+  void *** reg_bank = exec->sampler_2D_regs_;
   const int64_t * restrict dst_offset = exec->int_regs_[dst_offset_reg];
   const int64_t * restrict src_indir = exec->int_regs_[src_indir_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_base_reg + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_base_reg + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = reg_bank[src_indir[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -3824,12 +3824,12 @@ static void sl_reg_move_s2d_indir_to_indir_offset(struct sl_execution *exec,
                                                   int src_indir_reg,
                                                   int src_fixed_offset) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_2D_regs_;
+  void *** reg_bank = exec->sampler_2D_regs_;
   const int64_t * restrict dst_indir = exec->int_regs_[dst_indir_reg];
   const int64_t * restrict dst_offset = exec->int_regs_[dst_offset_reg];
   const int64_t * restrict src_indir = exec->int_regs_[src_indir_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_indir[row] + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_indir[row] + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = reg_bank[src_indir[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -3848,11 +3848,11 @@ static void sl_reg_move_s2d_offset_reg_to_reg(struct sl_execution *exec,
                                               int src_fixed_offset,
                                               int src_offset_stepsize) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_2D_regs_;
-  void * restrict * restrict dst = reg_bank[dst_reg];
+  void *** reg_bank = exec->sampler_2D_regs_;
+  void ** dst = reg_bank[dst_reg];
   const int64_t * restrict src_offset = exec->int_regs_[src_offset_reg];
   for (;;) {
-    void * restrict * restrict dst_row = dst + row;
+    void ** dst_row = dst + row;
     void * const restrict * restrict src_row = reg_bank[src_base_reg + src_offset_stepsize * src_offset[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -3872,11 +3872,11 @@ static void sl_reg_move_s2d_offset_reg_to_indir(struct sl_execution *exec,
                                                 int src_fixed_offset,
                                                 int src_offset_stepsize) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_2D_regs_;
+  void *** reg_bank = exec->sampler_2D_regs_;
   const int64_t * restrict dst_indir = exec->int_regs_[dst_indir_reg];
   const int64_t * restrict src_offset = exec->int_regs_[src_offset_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_indir[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_indir[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = reg_bank[src_base_reg + src_offset_stepsize * src_offset[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -3898,11 +3898,11 @@ static void sl_reg_move_s2d_offset_reg_to_offset_reg(struct sl_execution *exec,
                                                      int src_fixed_offset,
                                                      int src_offset_stepsize) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_2D_regs_;
+  void *** reg_bank = exec->sampler_2D_regs_;
   const int64_t * restrict dst_offset = exec->int_regs_[dst_offset_reg];
   const int64_t * restrict src_offset = exec->int_regs_[src_offset_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_base_reg + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_base_reg + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = reg_bank[src_base_reg + src_offset_stepsize * src_offset[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -3924,12 +3924,12 @@ static void sl_reg_move_s2d_offset_reg_to_indir_offset(struct sl_execution *exec
                                                        int src_fixed_offset,
                                                        int src_offset_stepsize) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_2D_regs_;
+  void *** reg_bank = exec->sampler_2D_regs_;
   const int64_t * restrict dst_indir = exec->int_regs_[dst_indir_reg];
   const int64_t * restrict dst_offset = exec->int_regs_[dst_offset_reg];
   const int64_t * restrict src_offset = exec->int_regs_[src_offset_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_indir[row] + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_indir[row] + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = reg_bank[src_base_reg + src_offset_stepsize * src_offset[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -3948,12 +3948,12 @@ static void sl_reg_move_s2d_indir_offset_to_reg(struct sl_execution *exec,
                                                 int src_fixed_offset,
                                                 int src_offset_stepsize) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_2D_regs_;
-  void * restrict * restrict dst = reg_bank[dst_reg];
+  void *** reg_bank = exec->sampler_2D_regs_;
+  void ** dst = reg_bank[dst_reg];
   const int64_t * restrict src_indir = exec->int_regs_[src_indir_reg];
   const int64_t * restrict src_offset = exec->int_regs_[src_offset_reg];
   for (;;) {
-    void * restrict * restrict dst_row = dst + row;
+    void ** dst_row = dst + row;
     void * const restrict * restrict src_row = reg_bank[src_indir[row] + src_offset_stepsize * src_offset[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -3973,12 +3973,12 @@ static void sl_reg_move_s2d_indir_offset_to_indir(struct sl_execution *exec,
                                                   int src_fixed_offset,
                                                   int src_offset_stepsize) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_2D_regs_;
+  void *** reg_bank = exec->sampler_2D_regs_;
   const int64_t * restrict dst_indir = exec->int_regs_[dst_indir_reg];
   const int64_t * restrict src_indir = exec->int_regs_[src_indir_reg];
   const int64_t * restrict src_offset = exec->int_regs_[src_offset_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_indir[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_indir[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = reg_bank[src_indir[row] + src_offset_stepsize * src_offset[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -4000,12 +4000,12 @@ static void sl_reg_move_s2d_indir_offset_to_offset_reg(struct sl_execution *exec
                                                        int src_fixed_offset,
                                                        int src_offset_stepsize) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_2D_regs_;
+  void *** reg_bank = exec->sampler_2D_regs_;
   const int64_t * restrict dst_offset = exec->int_regs_[dst_offset_reg];
   const int64_t * restrict src_indir = exec->int_regs_[src_indir_reg];
   const int64_t * restrict src_offset = exec->int_regs_[src_offset_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_base_reg + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_base_reg + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = reg_bank[src_indir[row] + src_offset_stepsize * src_offset[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -4027,13 +4027,13 @@ static void sl_reg_move_s2d_indir_offset_to_indir_offset(struct sl_execution *ex
                                                          int src_fixed_offset,
                                                          int src_offset_stepsize) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_2D_regs_;
+  void *** reg_bank = exec->sampler_2D_regs_;
   const int64_t * restrict dst_indir = exec->int_regs_[dst_indir_reg];
   const int64_t * restrict dst_offset = exec->int_regs_[dst_offset_reg];
   const int64_t * restrict src_indir = exec->int_regs_[src_indir_reg];
   const int64_t * restrict src_offset = exec->int_regs_[src_offset_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_indir[row] + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_indir[row] + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = reg_bank[src_indir[row] + src_offset_stepsize * src_offset[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -4049,11 +4049,11 @@ static void sl_reg_move_sc_reg_to_reg(struct sl_execution *exec,
                                       int dst_reg,
                                       int src_reg) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_cube_regs_;
-  void * restrict * restrict dst = reg_bank[dst_reg];
+  void *** reg_bank = exec->sampler_cube_regs_;
+  void ** dst = reg_bank[dst_reg];
   void * const restrict * restrict src = reg_bank[src_reg];
   for (;;) {
-    void * restrict * restrict dst_row = dst + row;
+    void ** dst_row = dst + row;
     void * const restrict * restrict src_row = src + row;
 
     *dst_row = *src_row;
@@ -4070,11 +4070,11 @@ static void sl_reg_move_sc_reg_to_indir(struct sl_execution *exec,
                                         int dst_fixed_offset,
                                         int src_reg) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_cube_regs_;
+  void *** reg_bank = exec->sampler_cube_regs_;
   const int64_t * restrict dst_indir = exec->int_regs_[dst_indir_reg];
   void * const restrict * restrict src = reg_bank[src_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_indir[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_indir[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = src + row;
 
     *dst_row = *src_row;
@@ -4093,11 +4093,11 @@ static void sl_reg_move_sc_reg_to_offset_reg(struct sl_execution *exec,
                                              int dst_offset_stepsize,
                                              int src_reg) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_cube_regs_;
+  void *** reg_bank = exec->sampler_cube_regs_;
   const int64_t * restrict dst_offset = exec->int_regs_[dst_offset_reg];
   void * const restrict * restrict src = reg_bank[src_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_base_reg + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_base_reg + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = src + row;
 
     *dst_row = *src_row;
@@ -4116,12 +4116,12 @@ static void sl_reg_move_sc_reg_to_indir_offset(struct sl_execution *exec,
                                                int dst_offset_stepsize,
                                                int src_reg) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_cube_regs_;
+  void *** reg_bank = exec->sampler_cube_regs_;
   const int64_t * restrict dst_indir = exec->int_regs_[dst_indir_reg];
   const int64_t * restrict dst_offset = exec->int_regs_[dst_offset_reg];
   void * const restrict * restrict src = reg_bank[src_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_indir[row] + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_indir[row] + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = src + row;
 
     *dst_row = *src_row;
@@ -4138,11 +4138,11 @@ static void sl_reg_move_sc_indir_to_reg(struct sl_execution *exec,
                                         int src_indir_reg,
                                         int src_fixed_offset) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_cube_regs_;
-  void * restrict * restrict dst = reg_bank[dst_reg];
+  void *** reg_bank = exec->sampler_cube_regs_;
+  void ** dst = reg_bank[dst_reg];
   const int64_t * restrict src_indir = exec->int_regs_[src_indir_reg];
   for (;;) {
-    void * restrict * restrict dst_row = dst + row;
+    void ** dst_row = dst + row;
     void * const restrict * restrict src_row = reg_bank[src_indir[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -4160,11 +4160,11 @@ static void sl_reg_move_sc_indir_to_indir(struct sl_execution *exec,
                                           int src_indir_reg,
                                           int src_fixed_offset) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_cube_regs_;
+  void *** reg_bank = exec->sampler_cube_regs_;
   const int64_t * restrict dst_indir = exec->int_regs_[dst_indir_reg];
   const int64_t * restrict src_indir = exec->int_regs_[src_indir_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_indir[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_indir[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = reg_bank[src_indir[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -4184,11 +4184,11 @@ static void sl_reg_move_sc_indir_to_offset_reg(struct sl_execution *exec,
                                                int src_indir_reg,
                                                int src_fixed_offset) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_cube_regs_;
+  void *** reg_bank = exec->sampler_cube_regs_;
   const int64_t * restrict dst_offset = exec->int_regs_[dst_offset_reg];
   const int64_t * restrict src_indir = exec->int_regs_[src_indir_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_base_reg + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_base_reg + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = reg_bank[src_indir[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -4208,12 +4208,12 @@ static void sl_reg_move_sc_indir_to_indir_offset(struct sl_execution *exec,
                                                  int src_indir_reg,
                                                  int src_fixed_offset) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_cube_regs_;
+  void *** reg_bank = exec->sampler_cube_regs_;
   const int64_t * restrict dst_indir = exec->int_regs_[dst_indir_reg];
   const int64_t * restrict dst_offset = exec->int_regs_[dst_offset_reg];
   const int64_t * restrict src_indir = exec->int_regs_[src_indir_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_indir[row] + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_indir[row] + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = reg_bank[src_indir[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -4232,11 +4232,11 @@ static void sl_reg_move_sc_offset_reg_to_reg(struct sl_execution *exec,
                                              int src_fixed_offset,
                                              int src_offset_stepsize) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_cube_regs_;
-  void * restrict * restrict dst = reg_bank[dst_reg];
+  void *** reg_bank = exec->sampler_cube_regs_;
+  void ** dst = reg_bank[dst_reg];
   const int64_t * restrict src_offset = exec->int_regs_[src_offset_reg];
   for (;;) {
-    void * restrict * restrict dst_row = dst + row;
+    void ** dst_row = dst + row;
     void * const restrict * restrict src_row = reg_bank[src_base_reg + src_offset_stepsize * src_offset[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -4256,11 +4256,11 @@ static void sl_reg_move_sc_offset_reg_to_indir(struct sl_execution *exec,
                                                int src_fixed_offset,
                                                int src_offset_stepsize) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_cube_regs_;
+  void *** reg_bank = exec->sampler_cube_regs_;
   const int64_t * restrict dst_indir = exec->int_regs_[dst_indir_reg];
   const int64_t * restrict src_offset = exec->int_regs_[src_offset_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_indir[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_indir[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = reg_bank[src_base_reg + src_offset_stepsize * src_offset[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -4282,11 +4282,11 @@ static void sl_reg_move_sc_offset_reg_to_offset_reg(struct sl_execution *exec,
                                                     int src_fixed_offset,
                                                     int src_offset_stepsize) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_cube_regs_;
+  void *** reg_bank = exec->sampler_cube_regs_;
   const int64_t * restrict dst_offset = exec->int_regs_[dst_offset_reg];
   const int64_t * restrict src_offset = exec->int_regs_[src_offset_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_base_reg + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_base_reg + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = reg_bank[src_base_reg + src_offset_stepsize * src_offset[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -4308,12 +4308,12 @@ static void sl_reg_move_sc_offset_reg_to_indir_offset(struct sl_execution *exec,
                                                       int src_fixed_offset,
                                                       int src_offset_stepsize) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_cube_regs_;
+  void *** reg_bank = exec->sampler_cube_regs_;
   const int64_t * restrict dst_indir = exec->int_regs_[dst_indir_reg];
   const int64_t * restrict dst_offset = exec->int_regs_[dst_offset_reg];
   const int64_t * restrict src_offset = exec->int_regs_[src_offset_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_indir[row] + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_indir[row] + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = reg_bank[src_base_reg + src_offset_stepsize * src_offset[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -4332,12 +4332,12 @@ static void sl_reg_move_sc_indir_offset_to_reg(struct sl_execution *exec,
                                                int src_fixed_offset,
                                                int src_offset_stepsize) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_cube_regs_;
-  void * restrict * restrict dst = reg_bank[dst_reg];
+  void *** reg_bank = exec->sampler_cube_regs_;
+  void ** dst = reg_bank[dst_reg];
   const int64_t * restrict src_indir = exec->int_regs_[src_indir_reg];
   const int64_t * restrict src_offset = exec->int_regs_[src_offset_reg];
   for (;;) {
-    void * restrict * restrict dst_row = dst + row;
+    void ** dst_row = dst + row;
     void * const restrict * restrict src_row = reg_bank[src_indir[row] + src_offset_stepsize * src_offset[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -4357,12 +4357,12 @@ static void sl_reg_move_sc_indir_offset_to_indir(struct sl_execution *exec,
                                                  int src_fixed_offset,
                                                  int src_offset_stepsize) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_cube_regs_;
+  void *** reg_bank = exec->sampler_cube_regs_;
   const int64_t * restrict dst_indir = exec->int_regs_[dst_indir_reg];
   const int64_t * restrict src_indir = exec->int_regs_[src_indir_reg];
   const int64_t * restrict src_offset = exec->int_regs_[src_offset_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_indir[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_indir[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = reg_bank[src_indir[row] + src_offset_stepsize * src_offset[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -4384,12 +4384,12 @@ static void sl_reg_move_sc_indir_offset_to_offset_reg(struct sl_execution *exec,
                                                       int src_fixed_offset,
                                                       int src_offset_stepsize) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_cube_regs_;
+  void *** reg_bank = exec->sampler_cube_regs_;
   const int64_t * restrict dst_offset = exec->int_regs_[dst_offset_reg];
   const int64_t * restrict src_indir = exec->int_regs_[src_indir_reg];
   const int64_t * restrict src_offset = exec->int_regs_[src_offset_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_base_reg + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_base_reg + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = reg_bank[src_indir[row] + src_offset_stepsize * src_offset[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;
@@ -4411,13 +4411,13 @@ static void sl_reg_move_sc_indir_offset_to_indir_offset(struct sl_execution *exe
                                                         int src_fixed_offset,
                                                         int src_offset_stepsize) {
   uint8_t * restrict chain_column = exec->exec_chain_reg_;
-  void * restrict * restrict * restrict reg_bank = exec->sampler_cube_regs_;
+  void *** reg_bank = exec->sampler_cube_regs_;
   const int64_t * restrict dst_indir = exec->int_regs_[dst_indir_reg];
   const int64_t * restrict dst_offset = exec->int_regs_[dst_offset_reg];
   const int64_t * restrict src_indir = exec->int_regs_[src_indir_reg];
   const int64_t * restrict src_offset = exec->int_regs_[src_offset_reg];
   for (;;) {
-    void * restrict * restrict dst_row = reg_bank[dst_indir[row] + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
+    void ** dst_row = reg_bank[dst_indir[row] + dst_offset_stepsize * dst_offset[row] + dst_fixed_offset] + row;
     void * const restrict * restrict src_row = reg_bank[src_indir[row] + src_offset_stepsize * src_offset[row] + src_fixed_offset] + row;
 
     *dst_row = *src_row;

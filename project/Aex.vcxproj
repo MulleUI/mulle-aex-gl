@@ -207,6 +207,13 @@
     <ClCompile Include="..\src\pp\pp_tokens.c" />
     <ClCompile Include="..\src\pp\scan_helpers.c" />
     <ClCompile Include="..\src\pp\situs.c" />
+    <ClCompile Include="..\src\pp\pp_const_expr.c" />
+    <ClCompile Include="..\src\pp\pp_line_continuations.c" />
+    <ClCompile Include="..\src\pp\pp_line_directives.c" />
+    <ClCompile Include="..\src\pp\pp_macro_expander.c" />
+    <ClCompile Include="..\src\pp\pp_tokenizer.c" />
+    <ClCompile Include="..\src\pp\pp_trigraphs.c" />
+    <ClCompile Include="..\src\glsl_es_1.c" />
     <ClCompile Include="..\src\primitive_assembly.c">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ProgramDatabase</DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ProgramDatabase</DebugInformationFormat>
@@ -243,98 +250,6 @@
     <ClCompile Include="..\src\viewport_transformation.c" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\src\pp\pp_const_expr.cbrt">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_const_expr.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)pp_const_expr.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_const_expr.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)pp_const_expr.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_const_expr.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)pp_const_expr.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_const_expr.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)pp_const_expr.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ClCompile</OutputItemType>
-    </CustomBuild>
-    <CustomBuild Include="..\src\pp\pp_line_continuations.cbrt">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_line_continuations.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)pp_line_continuations.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_line_continuations.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)pp_line_continuations.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_line_continuations.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)pp_line_continuations.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_line_continuations.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)pp_line_continuations.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ClCompile</OutputItemType>
-    </CustomBuild>
-    <CustomBuild Include="..\src\pp\pp_line_directives.cbrt">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_line_directives.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)pp_line_directives.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_line_directives.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)pp_line_directives.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_line_directives.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)pp_line_directives.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_line_directives.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)pp_line_directives.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ClCompile</OutputItemType>
-    </CustomBuild>
-    <CustomBuild Include="..\src\pp\pp_macro_expander.cbrt">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_macro_expander.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)pp_macro_expander.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_macro_expander.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)pp_macro_expander.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_macro_expander.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)pp_macro_expander.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_macro_expander.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)pp_macro_expander.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ClCompile</OutputItemType>
-    </CustomBuild>
-    <CustomBuild Include="..\src\pp\pp_tokenizer.cbrt">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_tokenizer.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)pp_tokenizer.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_tokenizer.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)pp_tokenizer.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_tokenizer.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)pp_tokenizer.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_tokenizer.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)pp_tokenizer.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ClCompile</OutputItemType>
-    </CustomBuild>
-    <CustomBuild Include="..\src\pp\pp_trigraphs.cbrt">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_trigraphs.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)pp_trigraphs.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_trigraphs.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)pp_trigraphs.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_trigraphs.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)pp_trigraphs.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">carburetta.exe "%(FullPath)" --c "$(IntDir)pp_trigraphs.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)pp_trigraphs.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ClCompile</OutputItemType>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="..\src\attrib_binding_table.h" />
     <ClInclude Include="..\src\attrib_routing.h" />
     <ClInclude Include="..\src\attrib_set.h" />
@@ -364,6 +279,13 @@
     <ClInclude Include="..\src\pp\pp_tokens.h" />
     <ClInclude Include="..\src\pp\scan_helpers.h" />
     <ClInclude Include="..\src\pp\situs.h" />
+    <ClInclude Include="..\src\pp\pp_const_expr.h" />
+    <ClInclude Include="..\src\pp\pp_line_continuations.h" />
+    <ClInclude Include="..\src\pp\pp_line_directives.h" />
+    <ClInclude Include="..\src\pp\pp_macro_expander.h" />
+    <ClInclude Include="..\src\pp\pp_tokenizer.h" />
+    <ClInclude Include="..\src\pp\pp_trigraphs.h" />
+    <ClInclude Include="..\src\glsl_es_1.h" />
     <ClInclude Include="..\src\primitive_assembly.h" />
     <ClInclude Include="..\src\rasterizer.h" />
     <ClInclude Include="..\src\rasterizer_core_inc.h" />
@@ -396,23 +318,6 @@
     <ClInclude Include="..\src\thread_context.h" />
     <ClInclude Include="..\src\thread_mutex.h" />
     <ClInclude Include="..\src\viewport_transformation.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="..\src\glsl_es_1.cbrt">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">carburetta.exe "%(FullPath)" --c "$(IntDir)glsl_es_1.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)glsl_es_1.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">carburetta.exe "%(FullPath)" --c "$(IntDir)glsl_es_1.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)glsl_es_1.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">carburetta.exe "%(FullPath)" --c "$(IntDir)glsl_es_1.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)glsl_es_1.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">carburetta.exe "%(FullPath)" --c "$(IntDir)glsl_es_1.c" --h</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)glsl_es_1.c</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ClCompile</OutputItemType>
-    </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

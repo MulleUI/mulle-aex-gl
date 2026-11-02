@@ -14,9 +14,16 @@ and without EGL, X11, Wayland or a GPU.
 
 ## Status
 
-This is a work in progress. The imported upstream sources are still in their
-original layout; the mulle-sde build integration and the Carburetta-generated
-parsers are being added.
+The mulle-sde build integration is in place:
+
+- the Carburetta-generated parsers are vendored; `grammar/` holds the
+  original `.cbrt` files, which are not built,
+- threading uses mulle-core (`mulle-thread`), not raw pthreads or Win32,
+- `mulle-sde craft` builds `libmulle-aex-gl`,
+- `mulle-sde test run` passes the headless GLES2 clear/readpixels test.
+
+The next step is the MulleCG integration spike described in
+[MATCHPLAN.md](MATCHPLAN.md).
 
 Upstream implements:
 
@@ -37,9 +44,13 @@ recursive package management with cross-platform builds via **cmake**:
 
 | Action  | Command                               | Description               |
 |---------|---------------------------------------|---------------------------|
-| Build   | `mulle-sde craft [--release/--debug]` | Builds into local `kitchen` folder |
+| Build   | `mulle-sde test craft`                | Builds the library and test project |
+| Test    | `mulle-sde test run`                  | Runs the headless tests |
 | Check   | `mulle-sde check`                     | Fast syntax check |
 | Reflect | `mulle-sde reflect`                   | Regenerate CMake file lists |
+
+With vibecoding enabled and a `test/` folder present, `mulle-sde craft` is
+intentionally disabled; use `mulle-sde test craft` instead.
 
 The headless smoke test is `renderbmp`, which renders the upstream demos into
 BMP files without a display server.
