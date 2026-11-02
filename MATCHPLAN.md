@@ -177,13 +177,14 @@ Done:
   imported headers self-contained; excluded `egl_impl.c`,
   `src/AexGL-DLL/` and `src/tester/`; added the `m` system library.
 - `mulle-sde craft` builds `libmulle-aex-gl.a`.
-- `mulle-sde test run` passes 5/5:
+- `mulle-sde test run` passes 6/6:
   - `test/10-first/gles2-headless` - context init, clear, readpixels,
   - `test/20-triangle/gles2-triangle` - GLSL ES 1.00 shader compile/link,
     VBO upload, triangle rasterization, pixel check,
   - `test/30-gl2shim/gl2shim` - `<GLES2/gl2.h>` maps to `aex_gl_es2_*`,
   - `test/40-extension/extension` - `#extension` line is accepted and
     `GL_FRAMEBUFFER_BINDING`/`GL_RENDERBUFFER_BINDING` queries work,
+  - `test/50-stencil/stencil` - stencil bits and stencil clear,
   - `test/10-first/hello` - scaffold smoke test.
 - GLES2 compatibility shim installed at `include/GLES2/gl2.h`; it maps 142
   standard `gl*` names to the aex entry points.
@@ -215,10 +216,26 @@ Done:
   The demo enables the modern OpenGL shader path with
   `MULLE_CG_HAVE_MODERN_OPENGL=1`, `MULLE_CG_GLVERSION=2` and
   `-include GLES2/gl2.h`.
+- Stencil strokes work. `MulleUIOS/demo/src/main-softgles2-stroke.m`
+  draws a stroked circle with `UIGraphicsUseStencilStrokes` /
+  `NVG_STENCIL_STROKES`, verifies white stroke pixels and writes
+  `softgles2-stroke.png`. Nanovg's `nvgluCreateFramebuffer` attaches a
+  `GL_STENCIL_INDEX8` renderbuffer, which aex maps to 16-bit stencil;
+  `GL_STENCIL_BITS` reports 16.
+- Fixed a real stencil bug in aex: `glClear(GL_STENCIL_BUFFER_BIT)` was
+  checking the depth attachment's kind before reading the stencil
+  attachment, so a stencil-only FBO raised
+  `GL_INVALID_FRAMEBUFFER_OPERATION` and never cleared. The new
+  `test/50-stencil/stencil.c` covers this.
+- The offscreen `CGContext` does not clear the stencil buffer in
+  `beginRender`; `softgles2-stroke` explicitly does
+  `glClearStencil(0); glClear(GL_STENCIL_BUFFER_BIT)` before drawing.
+  Without that, nanovg's first `GL_EQUAL 0` stencil pass fails.
 - Open items found by the 3D demo:
-  - `CGFramebuffer` currently has only a color attachment, so clearing
-    `GL_DEPTH_BUFFER_BIT`/`GL_STENCIL_BUFFER_BIT` correctly raises
-    `GL_INVALID_FRAMEBUFFER_OPERATION`; the demo clears color only.
+  - `CGFramebuffer` has color + stencil (from `nvgluCreateFramebuffer`)
+    but no depth attachment, so clearing `GL_DEPTH_BUFFER_BIT` correctly
+    raises `GL_INVALID_FRAMEBUFFER_OPERATION`; the 3D demo clears color
+    only.
   - `CAOpenGLLayer -renderInContext:` derives a scissor from the layer
     clipRect, which is bogus for the offscreen adapter
     (`GL_INVALID_VALUE` from `glScissor`). The demo calls
@@ -241,8 +258,11 @@ Known porting compromises:
 
 Next:
 
-- Give `CGFramebuffer` real depth/stencil attachments (or a texture-flag
-  option) so depth testing and combined color/depth/stencil clears work.
+- Clear stencil automatically in offscreen `CGContext -beginRender:` when
+  `_framebufferBits` includes `GL_STENCIL_BUFFER_BIT`, so nanovg stencil
+  strokes work without per-caller setup.
+- Give `CGFramebuffer` a depth attachment (or a texture-flag option) so
+  depth testing and combined color/depth clears work.
 - Make `CAOpenGLLayer -renderInContext:` produce a valid viewport/scissor
   for an offscreen context, so the full layer render path can be used.
 - Promote the demo-local `AexGLOSWindow` into a reusable

@@ -1439,7 +1439,7 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(Clear)(gl_es2_
     size_t stride;
     gl_es2_framebuffer_attachment_raw_ptr(&c->framebuffer_->stencil_attachment_, &bitmap, &stride);
     if (bitmap) {
-      if (c->framebuffer_->depth_attachment_.kind_ == gl_es2_faot_renderbuffer) {
+      if (c->framebuffer_->stencil_attachment_.kind_ == gl_es2_faot_renderbuffer) {
         struct gl_es2_renderbuffer *rb = c->framebuffer_->stencil_attachment_.v_.rb_;
         switch (rb->format_) {
           case gl_es2_renderbuffer_format_stencil16: {
@@ -1451,7 +1451,7 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(Clear)(gl_es2_
           }
         }
       }
-      else if (c->framebuffer_->depth_attachment_.kind_ == gl_es2_faot_texture) {
+      else if (c->framebuffer_->stencil_attachment_.kind_ == gl_es2_faot_texture) {
         /* Not sure how we got a stencil texture given we don't support it yet?
          * (Would expect framebuffer to be incomplete and not get here.) */
         set_gl_err(GL_ES2_INVALID_FRAMEBUFFER_OPERATION);
