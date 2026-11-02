@@ -86,7 +86,12 @@ struct pptk;
 
 
 pp-line: hash ws-opt non-directive newline-opt {
-  dx_error_loc(pp->dx_, &$0->situs_, "Error, non-directive line ignored");
+  /* Aex-GL has no extension support, but GLSL sources may contain
+   * #extension lines; ignore those rather than rejecting the shader. */
+  if (!($2 && $2->tok_ == PPTK_IDENTIFIER && $2->text_len_ == 9 &&
+        !memcmp($2->text_, "extension", 9))) {
+    dx_error_loc(pp->dx_, &$0->situs_, "Error, non-directive line ignored");
+  }
 }
 
 pp-line: hash version pp-tokens newline-opt {

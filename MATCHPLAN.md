@@ -177,9 +177,20 @@ Done:
   imported headers self-contained; excluded `egl_impl.c`,
   `src/AexGL-DLL/` and `src/tester/`; added the `m` system library.
 - `mulle-sde craft` builds `libmulle-aex-gl.a`.
-- `mulle-sde test run` passes:
-  `test/10-first/gles2-headless` initializes a 16x16 context, clears to
-  blue and reads back `0,0,255,255`.
+- `mulle-sde test run` passes 4/4:
+  - `test/10-first/gles2-headless` - context init, clear, readpixels,
+  - `test/20-triangle/gles2-triangle` - GLSL ES 1.00 shader compile/link,
+    VBO upload, triangle rasterization, pixel check,
+  - `test/30-gl2shim/gl2shim` - `<GLES2/gl2.h>` maps to `aex_gl_es2_*`,
+  - `test/10-first/hello` - scaffold smoke test.
+- GLES2 compatibility shim installed at `include/GLES2/gl2.h`; it maps 142
+  standard `gl*` names to the aex entry points.
+- A standalone nanovg GLES2 scene (antialiased rect with
+  `NVG_STENCIL_STROKES`) renders through `mulle-aex-gl` in a manual
+  out-of-tree check.
+- Phase 3 (partial): `MulleCGNanovgGL` has a `softgles2` config and builds
+  with `-DMULLE_CG_GLVERSION=2 -DMULLE_CG_USE_SOFTGLES2=1` against the
+  shim; `libMulleCGNanovgGL.a` carries 102 `aex_gl_es2_*` references.
 
 Known porting compromises:
 
@@ -192,8 +203,10 @@ Known porting compromises:
 
 Next:
 
-- Phase 3: wire `MulleCGNanovgGL` with `MULLE_CG_GLVERSION=MULLE_CG_GLES2`
-  and render a MulleCG/nanovg scene through `mulle-aex-gl`.
+- Phase 3 remainder: add a `softgles2` config/craftinfo to
+  `MulleUIOS/demo`, provide a demo-local `UIOSGraphicsContext` adapter
+  around `aex_gl_es2_context_init`, and render a real `CGContext` /
+  `CGGraphicsLayer` scene through `MulleCGNanovgGL`.
 
 ## Risks
 

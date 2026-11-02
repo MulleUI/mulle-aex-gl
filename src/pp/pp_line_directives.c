@@ -2555,7 +2555,15 @@ if (stack->mute_error_turns_) stack->mute_error_turns_--;
               {
 #line 88 "grammar/pp/pp_line_directives.cbrt"
                 {
-  dx_error_loc(pp->dx_, &(stack->sym_data_[0].v_.uv1_)->situs_, "Error, non-directive line ignored");
+  struct pptk *directive = stack->sym_data_[ 2].v_.uv1_;
+  /* Aex-GL has no extension support, but GLSL sources commonly carry
+   * #extension lines (e.g. from nanovg's GLES2 shaders). Accept and
+   * ignore them instead of failing the whole shader compile. */
+  if( ! (directive &&
+         directive->tok_ == PPTK_IDENT &&
+         directive->text_len_ == 9 &&
+         ! memcmp( directive->text_, "extension", 9)))
+    dx_error_loc(pp->dx_, &(stack->sym_data_[0].v_.uv1_)->situs_, "Error, non-directive line ignored");
 }
 #line 2561 "src/pp/pp_line_directives.c"
               }
