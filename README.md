@@ -4,13 +4,12 @@
 [Aex-GL](https://github.com/kingletbv/aex-gl), a dependency-free software
 implementation of OpenGL ES 2.0.
 
-The purpose of the fork is to provide MulleUI with a self-contained software
-GLES2 backend for headless rendering, without Carburetta at build or run time
+The purpose of the fork is to provide MulleUI with a self-contained GLES2
+backend for headless rendering, without Carburetta at build or run time
 and without EGL, X11, Wayland or a GPU.
 
 - upstream: `kingletbv/aex-gl`, Apache-2.0
 - fork base: see [UPSTREAM.md](UPSTREAM.md)
-- plan: [MATCHPLAN.md](MATCHPLAN.md)
 
 ## Status
 
@@ -21,9 +20,6 @@ The mulle-sde build integration is in place:
 - threading uses mulle-core (`mulle-thread`), not raw pthreads or Win32,
 - `mulle-sde craft` builds `libmulle-aex-gl`,
 - `mulle-sde test run` passes the headless GLES2 clear/readpixels test.
-
-The next step is the MulleCG integration spike described in
-[MATCHPLAN.md](MATCHPLAN.md).
 
 Upstream implements:
 
