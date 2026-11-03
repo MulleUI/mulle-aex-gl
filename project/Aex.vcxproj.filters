@@ -57,7 +57,7 @@
     <ClCompile Include="..\src\gl_es2_context.c" />
     <ClCompile Include="..\src\named_object_table.c" />
     <ClCompile Include="..\src\data_buffer.c" />
-    <ClCompile Include="..\src\egl_impl.c" />
+    <ClCompile Include="..\extras\egl_impl\egl_impl.c" />
     <ClCompile Include="..\src\thread_context_win32.c" />
     <ClCompile Include="..\src\thread_mutex_win32.c" />
     <ClCompile Include="..\src\sl_reg_move.c" />
@@ -138,7 +138,7 @@
     <ClInclude Include="..\src\sl_quadop_snippet_inc.h" />
     <ClInclude Include="..\src\sl_octonop_snippet_inc.h" />
     <ClInclude Include="..\src\sl_senop_snippet_inc.h" />
-    <ClInclude Include="..\src\egl_impl.h" />
+    <ClInclude Include="..\extras\egl_impl\egl_impl.h" />
     <ClInclude Include="..\src\thread_context.h" />
     <ClInclude Include="..\src\thread_mutex.h" />
     <ClInclude Include="..\src\sl_reg_move.h" />

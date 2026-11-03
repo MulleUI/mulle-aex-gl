@@ -48,7 +48,6 @@ src/builtins.h
 src/clipping_stage.h
 src/data_buffer.h
 src/debug_dump.h
-src/egl_impl.h
 src/fragment_buffer.h
 src/gl_es2_context.h
 src/gl_es2_impl.h

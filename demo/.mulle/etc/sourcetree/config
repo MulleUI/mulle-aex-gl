@@ -1,0 +1,4 @@
+mulle-core;${MULLE__CORE_NODETYPE:-tar};no-all-load,no-cmake-loader,no-cmake-searchpath,no-import,no-singlephase;B4EBB623-25EA-40BC-8A0A-56F99D486D05;${MULLE__CORE_URL:-https://github.com/mulle-core/mulle-core/archive/${MULLE_TAG}.tar.gz};${MULLE__CORE_BRANCH};${MULLE__CORE_TAG:-latest};;
+m;none;no-build,no-cmake-inherit,no-delete,no-dependency,no-fs,no-header,no-import,no-share,no-update;D24373BA-C3B7-416A-BD8F-4D78674BC1B6;;;;;
+SDL;${SDL_NODETYPE:-tar};no-all-load,no-cmake-loader,no-cmake-searchpath,no-import;840E766F-31B4-4C42-8D0E-F836A06E6DAB;${SDL_URL:-https://github.com/libsdl-org/SDL/archive/${MULLE_TAG}.tar.gz};${SDL_BRANCH};${SDL_TAG:-release-3.2.0};;base64:YWxpYXNlczpTREwzLFNETDNkO2luY2x1ZGU6U0RMMy9TREwuaAphbGlhc2VzPVNETDMsU0RMM2QKaW5jbHVkZT1TREwzL1NETC5oCg==
+craftinfo/SDL-craftinfo;local;no-delete,no-header,no-link,no-share,no-subproject,no-update;6C3FA6E7-128B-4BDF-927E-30553ACF328B;;;;;

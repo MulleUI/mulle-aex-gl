@@ -19,25 +19,25 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\src\AexGL-DLL\AexGL.def" />
-    <CustomBuild Include="..\src\AexGL-DLL\EGL.def">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)src\AexGL-DLL\build_forwarding_dll.bat %(Identity) "$(IntDir)" $(TargetDir)%(Filename).dll
+    <None Include="..\extras\AexGL-DLL\AexGL.def" />
+    <CustomBuild Include="..\extras\AexGL-DLL\EGL.def">
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)extras\AexGL-DLL\build_forwarding_dll.bat %(Identity) "$(IntDir)" $(TargetDir)%(Filename).dll
  </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(TargetDir)%(Filename).dll</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)src\AexGL-DLL\build_forwarding_dll.bat %(Identity) "$(IntDir)" $(TargetDir)%(Filename).dll
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)extras\AexGL-DLL\build_forwarding_dll.bat %(Identity) "$(IntDir)" $(TargetDir)%(Filename).dll
  </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(TargetDir)%(Filename).dll</Outputs>
     </CustomBuild>
-    <None Include="..\src\AexGL-DLL\build_forwarding_dll.bat" />
-    <CustomBuild Include="..\src\AexGL-DLL\GLESv2.def">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)src\AexGL-DLL\build_forwarding_dll.bat %(Identity) "$(IntDir)" $(TargetDir)%(Filename).dll</Command>
+    <None Include="..\extras\AexGL-DLL\build_forwarding_dll.bat" />
+    <CustomBuild Include="..\extras\AexGL-DLL\GLESv2.def">
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)extras\AexGL-DLL\build_forwarding_dll.bat %(Identity) "$(IntDir)" $(TargetDir)%(Filename).dll</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(TargetDir)%(Filename).dll</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)src\AexGL-DLL\build_forwarding_dll.bat %(Identity) "$(IntDir)" $(TargetDir)%(Filename).dll</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)extras\AexGL-DLL\build_forwarding_dll.bat %(Identity) "$(IntDir)" $(TargetDir)%(Filename).dll</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(TargetDir)%(Filename).dll</Outputs>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\AexGL-DLL\dllmain.c" />
+    <ClCompile Include="..\extras\AexGL-DLL\dllmain.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -130,7 +130,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <ModuleDefinitionFile>$(SolutionDir)\src\AexGL-DLL\AexGL.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>$(SolutionDir)\extras\AexGL-DLL\AexGL.def</ModuleDefinitionFile>
       <AdditionalDependencies>$(SolutionDir)\build\Win_x86\$(Configuration)\Aex.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
     </Link>
@@ -153,7 +153,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <ModuleDefinitionFile>$(SolutionDir)\src\AexGL-DLL\AexGL.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>$(SolutionDir)\extras\AexGL-DLL\AexGL.def</ModuleDefinitionFile>
       <AdditionalDependencies>$(SolutionDir)\build\Win_x86\$(Configuration)\Aex.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
     </Link>
@@ -172,7 +172,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <ModuleDefinitionFile>$(SolutionDir)\src\AexGL-DLL\AexGL.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>$(SolutionDir)\extras\AexGL-DLL\AexGL.def</ModuleDefinitionFile>
       <AdditionalDependencies>$(SolutionDir)\build\Win_amd64\$(Configuration)\Aex.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
     </Link>
@@ -195,7 +195,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <ModuleDefinitionFile>$(SolutionDir)\src\AexGL-DLL\AexGL.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>$(SolutionDir)\extras\AexGL-DLL\AexGL.def</ModuleDefinitionFile>
       <AdditionalDependencies>$(SolutionDir)\build\Win_amd64\$(Configuration)\Aex.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
     </Link>

@@ -25,7 +25,7 @@
 
 #ifndef CLIPPING_STAGE_H_INCLUDED
 #define CLIPPING_STAGE_H_INCLUDED
-#include "../clipping_stage.h"
+#include "clipping_stage.h"
 #endif
 
 #define DEBUG_OUTPUT 1
