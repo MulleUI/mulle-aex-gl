@@ -1,0 +1,18 @@
+constructor-vec3: OK
+struct-constructor: OK
+add-integers: OK
+function-call: OK
+swizzle-single: OK
+swizzle-paren: OK
+array-subscript: OK
+swizzle-reverse-index: OK
+swizzle-assignment: OK
+matrix-index: OK
+matrix3-index: OK
+int-vector: OK
+bool-vector: OK
+loop-sum: OK
+comma-operator: OK
+conditional-operator: OK
+logical-xor-precedence: OK
+17/17 IR tests passed, 0 gaps

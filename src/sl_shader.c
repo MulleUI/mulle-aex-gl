@@ -165,6 +165,8 @@ int sl_shader_compile(struct sl_shader *sh) {
 
   /* Overwrite type-base to be the one from the shader */
   cc.tb_ = &sh->tb_;
+  cc.shader_is_vertex_ = (sh->type_ == SLST_VERTEX_SHADER);
+  cc.shader_is_fragment_ = (sh->type_ == SLST_FRAGMENT_SHADER);
 
   /* Have glsl_es1_compiler use sl_shader's compilation-unit instead of creating its own */
   cc.cu_ = &sh->cu_;
@@ -175,7 +177,14 @@ int sl_shader_compile(struct sl_shader *sh) {
     r = SL_ERR_INVALID_ARG;
     goto cleanup;
   }
-  
+
+  if (cc.shader_is_fragment_) {
+    if (glsl_es1_compiler_define_macro(&cc, "GL_FRAGMENT_PRECISION_HIGH", "1")) {
+      r = SL_ERR_INTERNAL;
+      goto cleanup;
+    }
+  }
+
   /* Declare built-in constants for GLSL v1 shaders */
   /* NOTE: Below are the minimums, see page 61 of GLSL ES Specification 1.00  -- we want to upgrade this to something more sensible. */
   cr = glsl_es1_compile_builtin_prologue(&cc,
@@ -308,6 +317,28 @@ int sl_shader_compile(struct sl_shader *sh) {
   }
   else {
     sh->gl_last_compile_status_ = 1;
+  }
+
+  if ((r == SL_ERR_OK) && (sh->type_ != SLST_DEBUG_SHADER)) {
+    struct sl_function *main_fn;
+    main_fn = sl_compilation_unit_find_function(&sh->cu_, "main");
+    if (!main_fn) {
+      dx_error(cc.dx_, "Error: shader does not have a main function\n");
+      sh->gl_last_compile_status_ = 0;
+      r = SL_ERR_HAD_ERRORS;
+    }
+    else if (main_fn->num_parameters_) {
+      dx_error_loc(cc.dx_, &main_fn->location_,
+                   "Error: shader main() function should not have parameters");
+      sh->gl_last_compile_status_ = 0;
+      r = SL_ERR_HAD_ERRORS;
+    }
+    else if (main_fn->return_type_->kind_ != sltk_void) {
+      dx_error_loc(cc.dx_, &main_fn->location_,
+                   "Error: shader main() function should have 'void' return type");
+      sh->gl_last_compile_status_ = 0;
+      r = SL_ERR_HAD_ERRORS;
+    }
   }
 
 

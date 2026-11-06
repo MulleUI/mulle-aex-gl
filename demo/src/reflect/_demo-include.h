@@ -15,21 +15,6 @@
 #define _demo_include_h__
 
 // To remove the following dependency (headers and library) completely:
-//   `mulle-sde dependency remove mulle-core`
-// (Use B4EBB623-25EA-40BC-8A0A-56F99D486D05 instead of mulle-core, if there are duplicate entries)
-//
-// You can tweak the following #include with these commands:
-//    remove #include: `mulle-sde dependency mark mulle-core no-header`
-//    rename              : `mulle-sde dependency|library set mulle-core include whatever.h`
-//    reorder             : `mulle-sde dependency move mulle-core <up|down>`
-//    toggle objc         : `mulle-sde dependency mark mulle-core [no-]import`
-//    toggle public       : `mulle-sde dependency mark mulle-core [no-]public`
-//    toggle optional     : `mulle-sde dependency mark mulle-core [no-]require`
-//    remove for platform : `mulle-sde dependency mark mulle-core no-platform-<uname>`
-//        (use `mulle-sourcetree-to-c --unames` to list known values)
-#include <mulle-core/mulle-core.h>   // mulle-core
-
-// To remove the following dependency (headers and library) completely:
 //   `mulle-sde dependency remove SDL`
 // (Use 840E766F-31B4-4C42-8D0E-F836A06E6DAB instead of SDL, if there are duplicate entries)
 //
@@ -43,5 +28,50 @@
 //    remove for platform : `mulle-sde dependency mark SDL no-platform-<uname>`
 //        (use `mulle-sourcetree-to-c --unames` to list known values)
 #include <SDL3/SDL.h>   // SDL
+
+// To remove the following dependency (headers and library) completely:
+//   `mulle-sde dependency remove mulle-cpp-engine`
+// (Use 0F7B32E4-8F1A-45E7-A267-66AA35C649E1 instead of mulle-cpp-engine, if there are duplicate entries)
+//
+// You can tweak the following #include with these commands:
+//    remove #include: `mulle-sde dependency mark mulle-cpp-engine no-header`
+//    rename              : `mulle-sde dependency|library set mulle-cpp-engine include whatever.h`
+//    reorder             : `mulle-sde dependency move mulle-cpp-engine <up|down>`
+//    toggle objc         : `mulle-sde dependency mark mulle-cpp-engine [no-]import`
+//    toggle public       : `mulle-sde dependency mark mulle-cpp-engine [no-]public`
+//    toggle optional     : `mulle-sde dependency mark mulle-cpp-engine [no-]require`
+//    remove for platform : `mulle-sde dependency mark mulle-cpp-engine no-platform-<uname>`
+//        (use `mulle-sourcetree-to-c --unames` to list known values)
+#include <mulle-cpp-engine/mulle-cpp-engine.h>   // mulle-cpp-engine
+
+// To remove the following dependency (headers and library) completely:
+//   `mulle-sde dependency remove mulle-cpp-lexer`
+// (Use 6082E0BE-2C8F-4125-9EE7-A9F29097BBD7 instead of mulle-cpp-lexer, if there are duplicate entries)
+//
+// You can tweak the following #include with these commands:
+//    remove #include: `mulle-sde dependency mark mulle-cpp-lexer no-header`
+//    rename              : `mulle-sde dependency|library set mulle-cpp-lexer include whatever.h`
+//    reorder             : `mulle-sde dependency move mulle-cpp-lexer <up|down>`
+//    toggle objc         : `mulle-sde dependency mark mulle-cpp-lexer [no-]import`
+//    toggle public       : `mulle-sde dependency mark mulle-cpp-lexer [no-]public`
+//    toggle optional     : `mulle-sde dependency mark mulle-cpp-lexer [no-]require`
+//    remove for platform : `mulle-sde dependency mark mulle-cpp-lexer no-platform-<uname>`
+//        (use `mulle-sourcetree-to-c --unames` to list known values)
+#include <mulle-cpp-lexer/mulle-cpp-lexer.h>   // mulle-cpp-lexer
+
+// To remove the following dependency (headers and library) completely:
+//   `mulle-sde dependency remove mulle-core`
+// (Use B4EBB623-25EA-40BC-8A0A-56F99D486D05 instead of mulle-core, if there are duplicate entries)
+//
+// You can tweak the following #include with these commands:
+//    remove #include: `mulle-sde dependency mark mulle-core no-header`
+//    rename              : `mulle-sde dependency|library set mulle-core include whatever.h`
+//    reorder             : `mulle-sde dependency move mulle-core <up|down>`
+//    toggle objc         : `mulle-sde dependency mark mulle-core [no-]import`
+//    toggle public       : `mulle-sde dependency mark mulle-core [no-]public`
+//    toggle optional     : `mulle-sde dependency mark mulle-core [no-]require`
+//    remove for platform : `mulle-sde dependency mark mulle-core no-platform-<uname>`
+//        (use `mulle-sourcetree-to-c --unames` to list known values)
+#include <mulle-core/mulle-core.h>   // mulle-core
 
 #endif

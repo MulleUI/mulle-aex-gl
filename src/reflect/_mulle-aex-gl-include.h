@@ -29,4 +29,34 @@
 //        (use `mulle-sourcetree-to-c --unames` to list known values)
 #include <mulle-core/mulle-core.h>   // mulle-core
 
+// To remove the following dependency (headers and library) completely:
+//   `mulle-sde dependency remove mulle-cpp-engine`
+// (Use A34615F1-76D1-4F0F-B72F-7A276B7CDC7E instead of mulle-cpp-engine, if there are duplicate entries)
+//
+// You can tweak the following #include with these commands:
+//    remove #include: `mulle-sde dependency mark mulle-cpp-engine no-header`
+//    rename              : `mulle-sde dependency|library set mulle-cpp-engine include whatever.h`
+//    reorder             : `mulle-sde dependency move mulle-cpp-engine <up|down>`
+//    toggle objc         : `mulle-sde dependency mark mulle-cpp-engine [no-]import`
+//    toggle public       : `mulle-sde dependency mark mulle-cpp-engine [no-]public`
+//    toggle optional     : `mulle-sde dependency mark mulle-cpp-engine [no-]require`
+//    remove for platform : `mulle-sde dependency mark mulle-cpp-engine no-platform-<uname>`
+//        (use `mulle-sourcetree-to-c --unames` to list known values)
+#include <mulle-cpp-engine/mulle-cpp-engine.h>   // mulle-cpp-engine
+
+// To remove the following dependency (headers and library) completely:
+//   `mulle-sde dependency remove mulle-cpp-lexer`
+// (Use 954579CF-8628-4105-A08F-1EC687A91268 instead of mulle-cpp-lexer, if there are duplicate entries)
+//
+// You can tweak the following #include with these commands:
+//    remove #include: `mulle-sde dependency mark mulle-cpp-lexer no-header`
+//    rename              : `mulle-sde dependency|library set mulle-cpp-lexer include whatever.h`
+//    reorder             : `mulle-sde dependency move mulle-cpp-lexer <up|down>`
+//    toggle objc         : `mulle-sde dependency mark mulle-cpp-lexer [no-]import`
+//    toggle public       : `mulle-sde dependency mark mulle-cpp-lexer [no-]public`
+//    toggle optional     : `mulle-sde dependency mark mulle-cpp-lexer [no-]require`
+//    remove for platform : `mulle-sde dependency mark mulle-cpp-lexer no-platform-<uname>`
+//        (use `mulle-sourcetree-to-c --unames` to list known values)
+#include <mulle-cpp-lexer/mulle-cpp-lexer.h>   // mulle-cpp-lexer
+
 #endif

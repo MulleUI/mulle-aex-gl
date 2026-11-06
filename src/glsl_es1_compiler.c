@@ -43,9 +43,9 @@
 #include "glsl_es1_compiler.h"
 #endif
 
-#ifndef GLSL_ES1_TOKENS_H_INCLUDED
-#define GLSL_ES1_TOKENS_H_INCLUDED
-#include "glsl_es1_tokens.h"
+#ifndef PP_TOKENS_H_INCLUDED
+#define PP_TOKENS_H_INCLUDED
+#include "pp/pp_tokens.h"
 #endif
 
 #ifndef PP_INPUT_FILE_H_INCLUDED
@@ -68,6 +68,10 @@
 #include "sampler_2d.h"
 #endif
 
+int glsl_es1_compiler_define_macro(struct glsl_es1_compiler *cc, const char *name, const char *replacement) {
+  return(pp_define_macro(&cc->pp_, name, replacement));
+}
+
 void glsl_es1_compiler_init(struct glsl_es1_compiler *cc) {
   dx_diags_init(&cc->default_dx_);
   cc->dx_ = &cc->default_dx_;
@@ -77,7 +81,9 @@ void glsl_es1_compiler_init(struct glsl_es1_compiler *cc) {
   sl_type_base_init(&cc->cc_tb_);
   cc->tb_ = &cc->cc_tb_;
   cc->all_done_ = 0;
-  cc->is_typename_permitted_ = 1;
+  cc->shader_is_vertex_ = 0;
+  cc->shader_is_fragment_ = 0;
+  cc->fragment_default_float_precision_ = 0;
   cc->last_type_specifier_ = NULL;
   cc->current_function_prototype_ = NULL;
   cc->cu_ = NULL;
@@ -109,14 +115,9 @@ static void glsl_es1_compiler_skip_template_cruft(struct glsl_es1_compiler *cc) 
   }
 }
 
-static void glsl_es1_compiler_next_token(struct glsl_es1_compiler *cc) {
-  aex_pptk_free(aex_pptk_pop_front(&cc->pp_.pp_output_));
-  glsl_es1_compiler_skip_template_cruft(cc);
-}
-
 enum glsl_es1_compiler_result glsl_es1_compiler_stage(struct glsl_es1_compiler *cc) {
   int r;
-final_completion:
+
   if (cc->all_done_) {
     return GLSL_ES1_R_SUCCESS;
   }
@@ -124,108 +125,44 @@ final_completion:
     return GLSL_ES1_R_FAILED;
   }
 
-c_parser_input:
-  if (cc->pp_.pp_output_ || cc->pp_.pp_output_final_) {
-    cc->dx_->input_file_ = cc->pp_.ppme_input_file_;
-    cc->dx_->input_line_ = cc->pp_.ppme_input_line_;
-
-    do {
-      int sym = 0;
-
-      do {
-        if (cc->pp_.pp_output_) {
-          struct pptk *tk = cc->pp_.pp_output_;
-          sym = g_aex_pptk_to_glsl_es1_[tk->tok_];
-          if (sym == GLSL_ES1_IDENTIFIER) {
-            /* Possibly retarget to TYPEDEF_NAME at runtime, depending on:
-              * 1) if a TYPE_NAME is currently accepted by the grammar
-              *    AND
-              * 2) TYPE_NAME is permitted based on the context. If we successfully retarget as TYPEDEF_NAME, we must
-              *    immediately *disable* this permission. It will be re-enabled by the reduction of declaration-specifiers.
-              *    (A second occurrance of a typedef name is actually the declarator's identifier even if it clashes with
-              *    an existing typedef name.)
-              * See also the reduction of declaration-specifiers in particular. */
-            if (cc->is_typename_permitted_ && glsl_es1_stack_accepts(&cc->parser_, GLSL_ES1_TYPE_NAME)) {
-              // Cascade through the scopes to look for a typedef name, if any.
-              struct sym_table *st = cc->current_scope_;
-              struct sl_type *named_type = NULL;
-              while (st) {
-                struct sym *s = aex_st_find(st, tk->text_, tk->text_len_);
-                if (s) {
-                  if (s->kind_ == SK_STRUCT) {
-                    named_type = s->v_.type_;
-                  }
-                  /* Even if we found something other than a struct, we still stop the
-                   * search and let the parser deal with it as an identifier. */
-                  break;
-                }
-                st = st->parent_;
-              }
-              if (named_type) {
-                sym = GLSL_ES1_TYPE_NAME;
-                cc->is_typename_permitted_ = 0;
-                tk->v_type_ = PPVT_TYPE_NAME;
-                tk->v_.type_ = named_type;
-                tk->tok_ = PPTK_TYPEDEF_NAME;
-              }
-            }
-          }
-        }
-        else {
-          if (cc->pp_.pp_output_final_) {
-            sym = GLSL_ES1_INPUT_END;
-          }
-          else {
-            /* Need to get more input */
-            goto preprocessor;
-          }
-        }
-        if (sym == GLSL_ES1_WHITESPACE) {
-          /* Skip whitespace as input -- step to next tk */
-          glsl_es1_compiler_next_token(cc);
-        }
-      } while (sym == GLSL_ES1_WHITESPACE);
-      r = glsl_es1_parse(&cc->parser_, sym, cc, cc->pp_.pp_output_);
-
-      if ((r == _GLSL_ES1_SYNTAX_ERROR) || (r == _GLSL_ES1_FEED_ME)) {
-        if (r == _GLSL_ES1_SYNTAX_ERROR) {
-          if (cc->pp_.pp_output_) {
-            dx_error(cc->dx_, "syntax error at column %d: \"%s\"\n", aex_situs_col(&cc->pp_.pp_output_->situs_), cc->pp_.pp_output_->text_);
-          }
-          else {
-            dx_error(cc->dx_, "syntax error, unexpected end of file\n", cc->dx_->input_file_, cc->dx_->input_line_);
-          }
-          /* keep going */
-          goto c_parser_input;
-        }
-
-        /* Step to next tk */
-        glsl_es1_compiler_next_token(cc);
+  for (;;) {
+    struct pptk *tk = cc->pp_.pp_output_;
+    if (tk) {
+      if ((tk->tok_ == PPTK_TEMPLATE_DOUBLE_CURLY_OPEN) ||
+          (tk->tok_ == PPTK_TEMPLATE_DOUBLE_CURLY_CLOSE) ||
+          ((tk->tok_ == PPTK_TEMPLATE_LIT) && !tk->text_len_)) {
+        tk = aex_pptk_pop_front(&cc->pp_.pp_output_);
+        aex_pptk_free(tk);
+        continue;
       }
-
-      if (r == _GLSL_ES1_FINISH) {
-        cc->all_done_ = 1;
-        goto final_completion;
+      if ((tk->tok_ == PPTK_WHITESPACE) ||
+          (tk->tok_ == PPTK_NEWLINE_WHITESPACE)) {
+        tk = aex_pptk_pop_front(&cc->pp_.pp_output_);
+        aex_pptk_free(tk);
+        continue;
       }
-      else if ((r != _GLSL_ES1_SYNTAX_ERROR) && (r != _GLSL_ES1_FEED_ME)) {
-        if (cc->pp_.pp_output_) {
-          cc->dx_->fatal_error_ = 1;
-          cc->dx_->have_error_ = 1;
-          dx_printf(cc->dx_, "%s(%d): internal error (%d) from cp_parse at column %d: \"%s\"\n", cc->dx_->input_file_, cc->dx_->input_line_, r, aex_situs_col(&cc->pp_.pp_output_->situs_), cc->pp_.pp_output_->text_);
-        }
-        else {
-          cc->dx_->fatal_error_ = 1;
-          cc->dx_->have_error_ = 1;
-          dx_printf(cc->dx_, "%s(%d): internal error (%d) from cp_parse at end of file\n", cc->dx_->input_file_, cc->dx_->input_line_, r);
-        }
+      cc->dx_->input_file_ = aex_situs_filename(&tk->situs_);
+      cc->dx_->input_line_ = aex_situs_line(&tk->situs_);
+      tk = aex_pptk_pop_front(&cc->pp_.pp_output_);
+      r = glsl_es1_parser_push(&cc->parser_, cc, tk);
+      if (r) {
+        aex_pptk_free(tk);
         return GLSL_ES1_R_FAILED;
       }
-    } while (r == _GLSL_ES1_FEED_ME);
+      continue;
+    }
+    if (cc->pp_.pp_output_final_) {
+      r = glsl_es1_parser_finish(&cc->parser_, cc);
+      cc->all_done_ = 1;
+      if (r == _GLSL_ES1_FINISH) {
+        return GLSL_ES1_R_SUCCESS;
+      }
+      return (r == _GLSL_ES1_NO_MEMORY) ? GLSL_ES1_R_FAILED : GLSL_ES1_R_HAVE_ERRORS;
+    }
+    return GLSL_ES1_R_NEED_INPUT;
   }
-
-preprocessor:
-  return GLSL_ES1_R_NEED_INPUT;
 }
+
 
 enum glsl_es1_compiler_result glsl_es1_compile(struct glsl_es1_compiler *cc) {
   enum glsl_es1_compiler_result cr;
@@ -253,6 +190,16 @@ enum glsl_es1_compiler_result glsl_es1_compile(struct glsl_es1_compiler *cc) {
     }
 
     cr = pp_preprocessor_stage(&cc->pp_);
+    if (cr == GLSL_ES1_R_OLD_INCLUDE) {
+      int r = glsl_es1_parser_finish(&cc->parser_, cc);
+      if (r == _GLSL_ES1_NO_MEMORY) {
+        return GLSL_ES1_R_FAILED;
+      }
+      if (r != _GLSL_ES1_FINISH) {
+        return GLSL_ES1_R_HAVE_ERRORS;
+      }
+      return GLSL_ES1_R_OLD_INCLUDE;
+    }
   } while (cr == GLSL_ES1_R_SUCCESS);
 
   return cr;
@@ -309,13 +256,6 @@ enum glsl_es1_compiler_result glsl_es1_compile_builtin_prologue(struct glsl_es1_
 enum glsl_es1_compiler_result glsl_es1_compiler_compile_mem(struct glsl_es1_compiler *cc, const char *glsl_input_filename, const char *glsl_input_text, size_t glsl_input_text_len) {
   enum glsl_es1_compiler_result cr;
 
-  struct pp_input_file *ifile = glsl_es1_compiler_push_input_file_mem(cc, glsl_input_filename, glsl_input_text, glsl_input_text_len);
-  if (!ifile) {
-    dx_no_memory(cc->dx_);
-    return GLSL_ES1_R_FAILED;
-  }
-  ifile->unpoppable_ = 1; /* never pop beyond toplevel input */
-
   /* Parse each of the builtin function prototypes */
   /* Notice that we rely on C string concatenation to append a little space, that space is important, the macro-expander
    * phase of the preprocessor will latch a token as a lookahead, consequently, we would not see the semicolon that ends the
@@ -368,6 +308,13 @@ enum glsl_es1_compiler_result glsl_es1_compiler_compile_mem(struct glsl_es1_comp
     cc->dx_->fatal_error_ = 1;
     return GLSL_ES1_R_FAILED;
   }
+
+  struct pp_input_file *ifile = glsl_es1_compiler_push_input_file_mem(cc, glsl_input_filename, glsl_input_text, glsl_input_text_len);
+  if (!ifile) {
+    dx_no_memory(cc->dx_);
+    return GLSL_ES1_R_FAILED;
+  }
+  ifile->unpoppable_ = 1; /* never pop beyond toplevel input */
 
   cr = glsl_es1_compile(cc);
   if (cr != GLSL_ES1_R_SUCCESS) return cr;

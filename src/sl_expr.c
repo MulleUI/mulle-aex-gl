@@ -2707,6 +2707,36 @@ static int sl_expr_alloc_register_main_pass(struct sl_type_base *tb, struct sl_r
 
     return 0;
   }
+  else if ((x->op_ == exop_constructor) &&
+           (sl_type_unqualified(x->constructor_type_)->kind_ == sltk_struct)) {
+    /* Structure constructors are not swizzles: each argument initializes exactly
+     * one field, in declaration order. Allocate the struct and its fields, then
+     * copy each argument into the matching field. */
+    for (n = 0; n < x->num_children_; ++n) {
+      r = r ? r : sl_expr_alloc_register_main_pass(tb, ract, x->children_[n]);
+    }
+
+    for (n = 0; n < x->num_children_; ++n) {
+      r = r ? r : sl_expr_need_rvalue(tb, ract, x->children_[n]);
+      if (x->children_[n]->rvalue_.kind_ != slrak_void) {
+        r = r ? r : sl_reg_allocator_lock(ract, &x->children_[n]->rvalue_);
+        r = r ? r : sl_expr_regs_unlock(ract, x->children_[n]);
+      }
+    }
+
+    r = r ? r : sl_expr_regs_alloc(ract, x);
+
+    for (n = 0; n < x->num_children_; ++n) {
+      if (x->children_[n]->rvalue_.kind_ != slrak_void) {
+        r = r ? r : sl_reg_allocator_unlock(ract, &x->children_[n]->rvalue_);
+      }
+      else {
+        r = r ? r : sl_expr_regs_unlock(ract, x->children_[n]);
+      }
+    }
+
+    return r;
+  }
   else if ((x->op_ == exop_component_selection) || (x->op_ == exop_constructor)) {
     // XXX: Take care with x->offset_reg_ ; we can only clone registers if the result is entirely in accordance
     //      with a single x->offset_reg_. Language requires that we return this as an lvalue (e.g. vec3 v; v.xy = vec2(1,0) is valid, v.xy needs to be an lvalue.)

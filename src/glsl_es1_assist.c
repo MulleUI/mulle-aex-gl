@@ -320,7 +320,7 @@ struct sl_expr *glsl_es1_field_or_swizzle_selection(struct diags *dx, struct sl_
       uint8_t swizzle = g_swizzle_map[(uint8_t)field_id[n]];
 
       if (!swizzle) {
-        dx_error_loc(dx, &digit_loc, "Invalid component \"%c\", see line %d", field_id[n]);
+        dx_error_loc(dx, &digit_loc, "Invalid component \"%c\"", field_id[n]);
 
         aex_situs_cleanup(&cut_field);
         aex_situs_cleanup(&digit_loc);
@@ -328,7 +328,7 @@ struct sl_expr *glsl_es1_field_or_swizzle_selection(struct diags *dx, struct sl_
         return NULL;
       }
       else if ((swizzle & 0xF) >= num_src_components) {
-        dx_error_loc(dx, &digit_loc, "Type %s is not large enough for component \"%c\", see line %d", t->name_, field_id[n]);
+        dx_error_loc(dx, &digit_loc, "Type %s is not large enough for component \"%c\"", t->name_, field_id[n]);
 
         aex_situs_cleanup(&cut_field);
         aex_situs_cleanup(&digit_loc);
@@ -433,6 +433,15 @@ struct sl_expr *glsl_es1_struct_constructor_realize(struct diags *dx, struct sym
 }
 
 struct sl_expr *glsl_es1_function_call_realize(struct diags *dx, struct sym_table *st, struct sl_type_base *tb, struct glsl_es1_function_call *fs) {
+  size_t n;
+  for (n = 0; n < fs->num_parameters_; ++n) {
+    if (!fs->parameters_[n].expr_) {
+      /* A parameter failed to parse or validate; the error has already been
+       * reported. Do not attempt to deduce a type from a NULL expression. */
+      return NULL;
+    }
+  }
+
   if (fs->constructor_type_) {
     /* Constructor call. */
     sl_type_kind_t scalar_kind = sltk_invalid;
@@ -803,6 +812,10 @@ struct sl_expr *glsl_es1_function_call_realize(struct diags *dx, struct sym_tabl
 
 int glsl_es1_declare_variable(struct glsl_es1_compiler *cc, const char *name, const struct situs *loc, struct sl_type *typ, struct sl_variable **ppvar) {
   struct sym *s = NULL;
+  if (typ && (sl_type_unqualified(typ)->kind_ == sltk_void)) {
+    dx_error_loc(cc->dx_, loc, "variable \"%s\" cannot have type void", name);
+    /* Continue and declare it, so subsequent uses resolve and do not cascade. */
+  }
   sym_table_result_t str = aex_st_find_or_insert(cc->current_scope_, SK_VARIABLE, name, strlen(name), loc, sizeof(struct sym), &s);
   if (str == STR_NOMEM) {
     dx_no_memory(cc->dx_);

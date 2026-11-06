@@ -58,6 +58,21 @@
 #include "attrib_routing.h"
 #endif
 
+
+
+/* ES 2.0 section 2.1.2 converts a fragment shader's floating point color to
+ * normalized fixed point by rounding to the nearest representable value, not
+ * by truncating. Truncation loses a whole step as soon as the shader output
+ * lands a hair under 1.0, which is common for a color that is scaled by an
+ * interpolated attribute (x*x/y style barycentrics do not always sum to
+ * exactly 1.0) - an antialiased edge then writes 254/255 instead of 255/255.
+ * The clamp also keeps out of range colors from wrapping around. */
+static uint8_t aex_float_to_unorm8( float c) {
+  if( c <= 0.f) return( 0);
+  if( c >= 1.f) return( 255);
+  return( (uint8_t) (255.f * c + 0.5f));
+}
+
 #ifndef CLIPPING_STAGE_H_INCLUDED
 #define CLIPPING_STAGE_H_INCLUDED
 #include "clipping_stage.h"
@@ -2387,16 +2402,16 @@ void primitive_assembly_process_fragments(struct primitive_assembly *pa,
 
     do {
       delta = fragment_shader->exec_.exec_chain_reg_[row];
-      ((uint8_t * restrict)fragbuf->column_data_[FB_IDX_FRAG_RED])[row] = (uint8_t)(255.f * red_channel[row]);
-      ((uint8_t * restrict)fragbuf->column_data_[FB_IDX_FRAG_GREEN])[row] = (uint8_t)(255.f * green_channel[row]);
-      ((uint8_t * restrict)fragbuf->column_data_[FB_IDX_FRAG_BLUE])[row] = (uint8_t)(255.f * blue_channel[row]);
-      ((uint8_t * restrict)fragbuf->column_data_[FB_IDX_FRAG_ALPHA])[row] = (uint8_t)(255.f * alpha_channel[row]);
+      ((uint8_t * restrict)fragbuf->column_data_[FB_IDX_FRAG_RED])[row] = aex_float_to_unorm8(red_channel[row]);
+      ((uint8_t * restrict)fragbuf->column_data_[FB_IDX_FRAG_GREEN])[row] = aex_float_to_unorm8(green_channel[row]);
+      ((uint8_t * restrict)fragbuf->column_data_[FB_IDX_FRAG_BLUE])[row] = aex_float_to_unorm8(blue_channel[row]);
+      ((uint8_t * restrict)fragbuf->column_data_[FB_IDX_FRAG_ALPHA])[row] = aex_float_to_unorm8(alpha_channel[row]);
 
       if (dbg_overrule_rgb) {
         ((uint8_t * restrict)fragbuf->column_data_[FB_IDX_FRAG_RED])[row] = dbg_red;
         ((uint8_t * restrict)fragbuf->column_data_[FB_IDX_FRAG_GREEN])[row] = dbg_grn;
         ((uint8_t * restrict)fragbuf->column_data_[FB_IDX_FRAG_BLUE])[row] = dbg_blu;
-        ((uint8_t * restrict)fragbuf->column_data_[FB_IDX_FRAG_ALPHA])[row] = (uint8_t)(255.f * alpha_channel[row]);
+        ((uint8_t * restrict)fragbuf->column_data_[FB_IDX_FRAG_ALPHA])[row] = aex_float_to_unorm8(alpha_channel[row]);
       }
 
       row += delta;

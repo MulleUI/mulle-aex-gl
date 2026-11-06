@@ -27,104 +27,6 @@ else()
 endif()
 
 #
-# Generated from sourcetree: B4EBB623-25EA-40BC-8A0A-56F99D486D05;mulle-core;no-all-load,no-cmake-loader,no-cmake-searchpath,no-import,no-singlephase;
-# Disable with : `mulle-sourcetree mark mulle-core no-link`
-# Disable for this platform: `mulle-sourcetree mark mulle-core no-cmake-platform-${MULLE_UNAME}`
-# Disable for a sdk: `mulle-sourcetree mark mulle-core no-cmake-sdk-<name>`
-#
-if( COLLECT_DEPENDENCY_LIBRARIES_AS_NAMES)
-   list( APPEND DEPENDENCY_LIBRARIES "mulle-core")
-else()
-   if( NOT MULLE__CORE_LIBRARY)
-      foreach( _TMP_MULLE__CORE_LIBRARY_TARGET mulle-core)
-         if( TARGET ${_TMP_MULLE__CORE_LIBRARY_TARGET})
-            set( MULLE__CORE_LIBRARY ${_TMP_MULLE__CORE_LIBRARY_TARGET})
-            break()
-         endif()
-      endforeach()
-      if( NOT MULLE__CORE_LIBRARY)
-         find_library( MULLE__CORE_LIBRARY NAMES
-            ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-core${CMAKE_DEBUG_POSTFIX}${MULLE_PREFERRED_LIBRARY_SUFFIX}
-            ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-core${MULLE_PREFERRED_LIBRARY_SUFFIX}
-            ${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-core${CMAKE_DEBUG_POSTFIX}${MULLE_FALLBACK_LIBRARY_SUFFIX}
-            ${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-core${MULLE_FALLBACK_LIBRARY_SUFFIX}
-            mulle-core
-            NO_CMAKE_SYSTEM_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_FIND_ROOT_PATH
-         )
-         if( NOT MULLE__CORE_LIBRARY AND NOT DEPENDENCY_IGNORE_SYSTEM_LIBRARIES)
-            find_library( MULLE__CORE_LIBRARY NAMES
-               ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-core${CMAKE_DEBUG_POSTFIX}${MULLE_PREFERRED_LIBRARY_SUFFIX}
-               ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-core${MULLE_PREFERRED_LIBRARY_SUFFIX}
-               ${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-core${CMAKE_DEBUG_POSTFIX}${MULLE_FALLBACK_LIBRARY_SUFFIX}
-               ${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-core${MULLE_FALLBACK_LIBRARY_SUFFIX}
-               mulle-core
-            )
-         endif()
-      endif()
-      message( STATUS "MULLE__CORE_LIBRARY is ${MULLE__CORE_LIBRARY}")
-   endif()
-   if( MULLE__CORE_LIBRARY)
-         #
-         # Add MULLE__CORE_LIBRARY to DEPENDENCY_LIBRARIES list.
-         # Disable with: `mulle-sourcetree mark mulle-core no-cmake-add`
-         #
-         if( NOT ${MULLE__CORE_LIBRARY} IN_LIST DEPENDENCY_LIBRARIES)
-            list( APPEND DEPENDENCY_LIBRARIES ${MULLE__CORE_LIBRARY})
-         endif()
-         #
-         # Inherit information from dependency.
-         # Encompasses: no-cmake-searchpath,no-cmake-dependency,no-cmake-loader
-         # Disable with: `mulle-sourcetree mark mulle-core no-cmake-inherit`
-         #
-         # temporarily expand CMAKE_MODULE_PATH
-         get_filename_component( _TMP_MULLE__CORE_ROOT "${MULLE__CORE_LIBRARY}" DIRECTORY)
-         get_filename_component( _TMP_MULLE__CORE_ROOT "${_TMP_MULLE__CORE_ROOT}" DIRECTORY)
-         #
-         #
-         # Search for "Definitions.cmake" and "DependenciesAndLibraries.cmake" to include.
-         # Disable with: `mulle-sourcetree mark mulle-core no-cmake-dependency`
-         #
-         foreach( _TMP_MULLE__CORE_NAME "mulle-core")
-            set( _TMP_MULLE__CORE_DIR "${_TMP_MULLE__CORE_ROOT}/include/${_TMP_MULLE__CORE_NAME}/cmake")
-            # use explicit path to avoid "surprises"
-            if( IS_DIRECTORY "${_TMP_MULLE__CORE_DIR}")
-               list( INSERT CMAKE_MODULE_PATH 0 "${_TMP_MULLE__CORE_DIR}")
-               # we only want top level INHERIT_OBJC_DEPS, so disable them
-               if( NOT NO_INHERIT_OBJC_DEPS)
-                  set( NO_INHERIT_OBJC_DEPS OFF)
-               endif()
-               list( APPEND _TMP_INHERIT_OBJC_DEPS ${NO_INHERIT_OBJC_DEPS})
-               set( NO_INHERIT_OBJC_DEPS ON)
-               #
-               include( "${_TMP_MULLE__CORE_DIR}/DependenciesAndLibraries.cmake" OPTIONAL)
-               #
-               list( GET _TMP_INHERIT_OBJC_DEPS -1 NO_INHERIT_OBJC_DEPS)
-               list( REMOVE_AT _TMP_INHERIT_OBJC_DEPS -1)
-               list( REMOVE_ITEM CMAKE_MODULE_PATH "${_TMP_MULLE__CORE_DIR}")
-               #
-               unset( MULLE__CORE_DEFINITIONS)
-               unset( MULLE__CORE_RENDEZVOUS_GLOBALS)
-               include( "${_TMP_MULLE__CORE_DIR}/Definitions.cmake" OPTIONAL)
-               list( APPEND INHERITED_DEFINITIONS ${MULLE__CORE_DEFINITIONS})
-               include( "${_TMP_MULLE__CORE_DIR}/Definitions.cmake" OPTIONAL)
-               list( APPEND RENDEZVOUS_GLOBALS ${MULLE__CORE_RENDEZVOUS_GLOBALS})
-               break()
-            else()
-               message( STATUS "${_TMP_MULLE__CORE_DIR} not found")
-            endif()
-         endforeach()
-   else()
-      # Disable with: `mulle-sourcetree mark mulle-core no-require-link`
-      message( SEND_ERROR "MULLE__CORE_LIBRARY was not found in ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-core${CMAKE_DEBUG_POSTFIX}${MULLE_PREFERRED_LIBRARY_SUFFIX}
-${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-core${MULLE_PREFERRED_LIBRARY_SUFFIX}
-${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-core${CMAKE_DEBUG_POSTFIX}${MULLE_FALLBACK_LIBRARY_SUFFIX}
-${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-core${MULLE_FALLBACK_LIBRARY_SUFFIX}
-mulle-core")
-   endif()
-endif()
-
-
-#
 # Generated from sourcetree: 840E766F-31B4-4C42-8D0E-F836A06E6DAB;SDL;no-all-load,no-cmake-loader,no-cmake-searchpath,no-import;SDL3,SDL3d
 # Disable with : `mulle-sourcetree mark SDL no-link`
 # Disable for this platform: `mulle-sourcetree mark SDL no-cmake-platform-${MULLE_UNAME}`
@@ -233,5 +135,299 @@ ${MULLE_PREFERRED_LIBRARY_PREFIX}SDL3d${MULLE_PREFERRED_LIBRARY_SUFFIX}
 ${MULLE_FALLBACK_LIBRARY_PREFIX}SDL3d${CMAKE_DEBUG_POSTFIX}${MULLE_FALLBACK_LIBRARY_SUFFIX}
 ${MULLE_FALLBACK_LIBRARY_PREFIX}SDL3d${MULLE_FALLBACK_LIBRARY_SUFFIX}
 SDL3d")
+   endif()
+endif()
+
+
+#
+# Generated from sourcetree: 0F7B32E4-8F1A-45E7-A267-66AA35C649E1;mulle-cpp-engine;no-all-load,no-cmake-loader,no-cmake-searchpath,no-import;
+# Disable with : `mulle-sourcetree mark mulle-cpp-engine no-link`
+# Disable for this platform: `mulle-sourcetree mark mulle-cpp-engine no-cmake-platform-${MULLE_UNAME}`
+# Disable for a sdk: `mulle-sourcetree mark mulle-cpp-engine no-cmake-sdk-<name>`
+#
+if( COLLECT_DEPENDENCY_LIBRARIES_AS_NAMES)
+   list( APPEND DEPENDENCY_LIBRARIES "mulle-cpp-engine")
+else()
+   if( NOT MULLE__CPP__ENGINE_LIBRARY)
+      foreach( _TMP_MULLE__CPP__ENGINE_LIBRARY_TARGET mulle-cpp-engine)
+         if( TARGET ${_TMP_MULLE__CPP__ENGINE_LIBRARY_TARGET})
+            set( MULLE__CPP__ENGINE_LIBRARY ${_TMP_MULLE__CPP__ENGINE_LIBRARY_TARGET})
+            break()
+         endif()
+      endforeach()
+      if( NOT MULLE__CPP__ENGINE_LIBRARY)
+         find_library( MULLE__CPP__ENGINE_LIBRARY NAMES
+            ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-cpp-engine${CMAKE_DEBUG_POSTFIX}${MULLE_PREFERRED_LIBRARY_SUFFIX}
+            ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-cpp-engine${MULLE_PREFERRED_LIBRARY_SUFFIX}
+            ${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-cpp-engine${CMAKE_DEBUG_POSTFIX}${MULLE_FALLBACK_LIBRARY_SUFFIX}
+            ${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-cpp-engine${MULLE_FALLBACK_LIBRARY_SUFFIX}
+            mulle-cpp-engine
+            NO_CMAKE_SYSTEM_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_FIND_ROOT_PATH
+         )
+         if( NOT MULLE__CPP__ENGINE_LIBRARY AND NOT DEPENDENCY_IGNORE_SYSTEM_LIBRARIES)
+            find_library( MULLE__CPP__ENGINE_LIBRARY NAMES
+               ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-cpp-engine${CMAKE_DEBUG_POSTFIX}${MULLE_PREFERRED_LIBRARY_SUFFIX}
+               ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-cpp-engine${MULLE_PREFERRED_LIBRARY_SUFFIX}
+               ${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-cpp-engine${CMAKE_DEBUG_POSTFIX}${MULLE_FALLBACK_LIBRARY_SUFFIX}
+               ${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-cpp-engine${MULLE_FALLBACK_LIBRARY_SUFFIX}
+               mulle-cpp-engine
+            )
+         endif()
+      endif()
+      message( STATUS "MULLE__CPP__ENGINE_LIBRARY is ${MULLE__CPP__ENGINE_LIBRARY}")
+   endif()
+   if( MULLE__CPP__ENGINE_LIBRARY)
+         #
+         # Add MULLE__CPP__ENGINE_LIBRARY to DEPENDENCY_LIBRARIES list.
+         # Disable with: `mulle-sourcetree mark mulle-cpp-engine no-cmake-add`
+         #
+         if( NOT ${MULLE__CPP__ENGINE_LIBRARY} IN_LIST DEPENDENCY_LIBRARIES)
+            list( APPEND DEPENDENCY_LIBRARIES ${MULLE__CPP__ENGINE_LIBRARY})
+         endif()
+         #
+         # Inherit information from dependency.
+         # Encompasses: no-cmake-searchpath,no-cmake-dependency,no-cmake-loader
+         # Disable with: `mulle-sourcetree mark mulle-cpp-engine no-cmake-inherit`
+         #
+         # temporarily expand CMAKE_MODULE_PATH
+         get_filename_component( _TMP_MULLE__CPP__ENGINE_ROOT "${MULLE__CPP__ENGINE_LIBRARY}" DIRECTORY)
+         get_filename_component( _TMP_MULLE__CPP__ENGINE_ROOT "${_TMP_MULLE__CPP__ENGINE_ROOT}" DIRECTORY)
+         #
+         #
+         # Search for "Definitions.cmake" and "DependenciesAndLibraries.cmake" to include.
+         # Disable with: `mulle-sourcetree mark mulle-cpp-engine no-cmake-dependency`
+         #
+         foreach( _TMP_MULLE__CPP__ENGINE_NAME "mulle-cpp-engine")
+            set( _TMP_MULLE__CPP__ENGINE_DIR "${_TMP_MULLE__CPP__ENGINE_ROOT}/include/${_TMP_MULLE__CPP__ENGINE_NAME}/cmake")
+            # use explicit path to avoid "surprises"
+            if( IS_DIRECTORY "${_TMP_MULLE__CPP__ENGINE_DIR}")
+               list( INSERT CMAKE_MODULE_PATH 0 "${_TMP_MULLE__CPP__ENGINE_DIR}")
+               # we only want top level INHERIT_OBJC_DEPS, so disable them
+               if( NOT NO_INHERIT_OBJC_DEPS)
+                  set( NO_INHERIT_OBJC_DEPS OFF)
+               endif()
+               list( APPEND _TMP_INHERIT_OBJC_DEPS ${NO_INHERIT_OBJC_DEPS})
+               set( NO_INHERIT_OBJC_DEPS ON)
+               #
+               include( "${_TMP_MULLE__CPP__ENGINE_DIR}/DependenciesAndLibraries.cmake" OPTIONAL)
+               #
+               list( GET _TMP_INHERIT_OBJC_DEPS -1 NO_INHERIT_OBJC_DEPS)
+               list( REMOVE_AT _TMP_INHERIT_OBJC_DEPS -1)
+               list( REMOVE_ITEM CMAKE_MODULE_PATH "${_TMP_MULLE__CPP__ENGINE_DIR}")
+               #
+               unset( MULLE__CPP__ENGINE_DEFINITIONS)
+               unset( MULLE__CPP__ENGINE_RENDEZVOUS_GLOBALS)
+               include( "${_TMP_MULLE__CPP__ENGINE_DIR}/Definitions.cmake" OPTIONAL)
+               list( APPEND INHERITED_DEFINITIONS ${MULLE__CPP__ENGINE_DEFINITIONS})
+               include( "${_TMP_MULLE__CPP__ENGINE_DIR}/Definitions.cmake" OPTIONAL)
+               list( APPEND RENDEZVOUS_GLOBALS ${MULLE__CPP__ENGINE_RENDEZVOUS_GLOBALS})
+               break()
+            else()
+               message( STATUS "${_TMP_MULLE__CPP__ENGINE_DIR} not found")
+            endif()
+         endforeach()
+   else()
+      # Disable with: `mulle-sourcetree mark mulle-cpp-engine no-require-link`
+      message( SEND_ERROR "MULLE__CPP__ENGINE_LIBRARY was not found in ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-cpp-engine${CMAKE_DEBUG_POSTFIX}${MULLE_PREFERRED_LIBRARY_SUFFIX}
+${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-cpp-engine${MULLE_PREFERRED_LIBRARY_SUFFIX}
+${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-cpp-engine${CMAKE_DEBUG_POSTFIX}${MULLE_FALLBACK_LIBRARY_SUFFIX}
+${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-cpp-engine${MULLE_FALLBACK_LIBRARY_SUFFIX}
+mulle-cpp-engine")
+   endif()
+endif()
+
+
+#
+# Generated from sourcetree: 6082E0BE-2C8F-4125-9EE7-A9F29097BBD7;mulle-cpp-lexer;no-all-load,no-cmake-loader,no-cmake-searchpath,no-import;
+# Disable with : `mulle-sourcetree mark mulle-cpp-lexer no-link`
+# Disable for this platform: `mulle-sourcetree mark mulle-cpp-lexer no-cmake-platform-${MULLE_UNAME}`
+# Disable for a sdk: `mulle-sourcetree mark mulle-cpp-lexer no-cmake-sdk-<name>`
+#
+if( COLLECT_DEPENDENCY_LIBRARIES_AS_NAMES)
+   list( APPEND DEPENDENCY_LIBRARIES "mulle-cpp-lexer")
+else()
+   if( NOT MULLE__CPP__LEXER_LIBRARY)
+      foreach( _TMP_MULLE__CPP__LEXER_LIBRARY_TARGET mulle-cpp-lexer)
+         if( TARGET ${_TMP_MULLE__CPP__LEXER_LIBRARY_TARGET})
+            set( MULLE__CPP__LEXER_LIBRARY ${_TMP_MULLE__CPP__LEXER_LIBRARY_TARGET})
+            break()
+         endif()
+      endforeach()
+      if( NOT MULLE__CPP__LEXER_LIBRARY)
+         find_library( MULLE__CPP__LEXER_LIBRARY NAMES
+            ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-cpp-lexer${CMAKE_DEBUG_POSTFIX}${MULLE_PREFERRED_LIBRARY_SUFFIX}
+            ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-cpp-lexer${MULLE_PREFERRED_LIBRARY_SUFFIX}
+            ${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-cpp-lexer${CMAKE_DEBUG_POSTFIX}${MULLE_FALLBACK_LIBRARY_SUFFIX}
+            ${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-cpp-lexer${MULLE_FALLBACK_LIBRARY_SUFFIX}
+            mulle-cpp-lexer
+            NO_CMAKE_SYSTEM_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_FIND_ROOT_PATH
+         )
+         if( NOT MULLE__CPP__LEXER_LIBRARY AND NOT DEPENDENCY_IGNORE_SYSTEM_LIBRARIES)
+            find_library( MULLE__CPP__LEXER_LIBRARY NAMES
+               ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-cpp-lexer${CMAKE_DEBUG_POSTFIX}${MULLE_PREFERRED_LIBRARY_SUFFIX}
+               ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-cpp-lexer${MULLE_PREFERRED_LIBRARY_SUFFIX}
+               ${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-cpp-lexer${CMAKE_DEBUG_POSTFIX}${MULLE_FALLBACK_LIBRARY_SUFFIX}
+               ${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-cpp-lexer${MULLE_FALLBACK_LIBRARY_SUFFIX}
+               mulle-cpp-lexer
+            )
+         endif()
+      endif()
+      message( STATUS "MULLE__CPP__LEXER_LIBRARY is ${MULLE__CPP__LEXER_LIBRARY}")
+   endif()
+   if( MULLE__CPP__LEXER_LIBRARY)
+         #
+         # Add MULLE__CPP__LEXER_LIBRARY to DEPENDENCY_LIBRARIES list.
+         # Disable with: `mulle-sourcetree mark mulle-cpp-lexer no-cmake-add`
+         #
+         if( NOT ${MULLE__CPP__LEXER_LIBRARY} IN_LIST DEPENDENCY_LIBRARIES)
+            list( APPEND DEPENDENCY_LIBRARIES ${MULLE__CPP__LEXER_LIBRARY})
+         endif()
+         #
+         # Inherit information from dependency.
+         # Encompasses: no-cmake-searchpath,no-cmake-dependency,no-cmake-loader
+         # Disable with: `mulle-sourcetree mark mulle-cpp-lexer no-cmake-inherit`
+         #
+         # temporarily expand CMAKE_MODULE_PATH
+         get_filename_component( _TMP_MULLE__CPP__LEXER_ROOT "${MULLE__CPP__LEXER_LIBRARY}" DIRECTORY)
+         get_filename_component( _TMP_MULLE__CPP__LEXER_ROOT "${_TMP_MULLE__CPP__LEXER_ROOT}" DIRECTORY)
+         #
+         #
+         # Search for "Definitions.cmake" and "DependenciesAndLibraries.cmake" to include.
+         # Disable with: `mulle-sourcetree mark mulle-cpp-lexer no-cmake-dependency`
+         #
+         foreach( _TMP_MULLE__CPP__LEXER_NAME "mulle-cpp-lexer")
+            set( _TMP_MULLE__CPP__LEXER_DIR "${_TMP_MULLE__CPP__LEXER_ROOT}/include/${_TMP_MULLE__CPP__LEXER_NAME}/cmake")
+            # use explicit path to avoid "surprises"
+            if( IS_DIRECTORY "${_TMP_MULLE__CPP__LEXER_DIR}")
+               list( INSERT CMAKE_MODULE_PATH 0 "${_TMP_MULLE__CPP__LEXER_DIR}")
+               # we only want top level INHERIT_OBJC_DEPS, so disable them
+               if( NOT NO_INHERIT_OBJC_DEPS)
+                  set( NO_INHERIT_OBJC_DEPS OFF)
+               endif()
+               list( APPEND _TMP_INHERIT_OBJC_DEPS ${NO_INHERIT_OBJC_DEPS})
+               set( NO_INHERIT_OBJC_DEPS ON)
+               #
+               include( "${_TMP_MULLE__CPP__LEXER_DIR}/DependenciesAndLibraries.cmake" OPTIONAL)
+               #
+               list( GET _TMP_INHERIT_OBJC_DEPS -1 NO_INHERIT_OBJC_DEPS)
+               list( REMOVE_AT _TMP_INHERIT_OBJC_DEPS -1)
+               list( REMOVE_ITEM CMAKE_MODULE_PATH "${_TMP_MULLE__CPP__LEXER_DIR}")
+               #
+               unset( MULLE__CPP__LEXER_DEFINITIONS)
+               unset( MULLE__CPP__LEXER_RENDEZVOUS_GLOBALS)
+               include( "${_TMP_MULLE__CPP__LEXER_DIR}/Definitions.cmake" OPTIONAL)
+               list( APPEND INHERITED_DEFINITIONS ${MULLE__CPP__LEXER_DEFINITIONS})
+               include( "${_TMP_MULLE__CPP__LEXER_DIR}/Definitions.cmake" OPTIONAL)
+               list( APPEND RENDEZVOUS_GLOBALS ${MULLE__CPP__LEXER_RENDEZVOUS_GLOBALS})
+               break()
+            else()
+               message( STATUS "${_TMP_MULLE__CPP__LEXER_DIR} not found")
+            endif()
+         endforeach()
+   else()
+      # Disable with: `mulle-sourcetree mark mulle-cpp-lexer no-require-link`
+      message( SEND_ERROR "MULLE__CPP__LEXER_LIBRARY was not found in ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-cpp-lexer${CMAKE_DEBUG_POSTFIX}${MULLE_PREFERRED_LIBRARY_SUFFIX}
+${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-cpp-lexer${MULLE_PREFERRED_LIBRARY_SUFFIX}
+${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-cpp-lexer${CMAKE_DEBUG_POSTFIX}${MULLE_FALLBACK_LIBRARY_SUFFIX}
+${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-cpp-lexer${MULLE_FALLBACK_LIBRARY_SUFFIX}
+mulle-cpp-lexer")
+   endif()
+endif()
+
+
+#
+# Generated from sourcetree: B4EBB623-25EA-40BC-8A0A-56F99D486D05;mulle-core;no-all-load,no-cmake-loader,no-cmake-searchpath,no-import,no-singlephase;
+# Disable with : `mulle-sourcetree mark mulle-core no-link`
+# Disable for this platform: `mulle-sourcetree mark mulle-core no-cmake-platform-${MULLE_UNAME}`
+# Disable for a sdk: `mulle-sourcetree mark mulle-core no-cmake-sdk-<name>`
+#
+if( COLLECT_DEPENDENCY_LIBRARIES_AS_NAMES)
+   list( APPEND DEPENDENCY_LIBRARIES "mulle-core")
+else()
+   if( NOT MULLE__CORE_LIBRARY)
+      foreach( _TMP_MULLE__CORE_LIBRARY_TARGET mulle-core)
+         if( TARGET ${_TMP_MULLE__CORE_LIBRARY_TARGET})
+            set( MULLE__CORE_LIBRARY ${_TMP_MULLE__CORE_LIBRARY_TARGET})
+            break()
+         endif()
+      endforeach()
+      if( NOT MULLE__CORE_LIBRARY)
+         find_library( MULLE__CORE_LIBRARY NAMES
+            ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-core${CMAKE_DEBUG_POSTFIX}${MULLE_PREFERRED_LIBRARY_SUFFIX}
+            ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-core${MULLE_PREFERRED_LIBRARY_SUFFIX}
+            ${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-core${CMAKE_DEBUG_POSTFIX}${MULLE_FALLBACK_LIBRARY_SUFFIX}
+            ${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-core${MULLE_FALLBACK_LIBRARY_SUFFIX}
+            mulle-core
+            NO_CMAKE_SYSTEM_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_FIND_ROOT_PATH
+         )
+         if( NOT MULLE__CORE_LIBRARY AND NOT DEPENDENCY_IGNORE_SYSTEM_LIBRARIES)
+            find_library( MULLE__CORE_LIBRARY NAMES
+               ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-core${CMAKE_DEBUG_POSTFIX}${MULLE_PREFERRED_LIBRARY_SUFFIX}
+               ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-core${MULLE_PREFERRED_LIBRARY_SUFFIX}
+               ${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-core${CMAKE_DEBUG_POSTFIX}${MULLE_FALLBACK_LIBRARY_SUFFIX}
+               ${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-core${MULLE_FALLBACK_LIBRARY_SUFFIX}
+               mulle-core
+            )
+         endif()
+      endif()
+      message( STATUS "MULLE__CORE_LIBRARY is ${MULLE__CORE_LIBRARY}")
+   endif()
+   if( MULLE__CORE_LIBRARY)
+         #
+         # Add MULLE__CORE_LIBRARY to DEPENDENCY_LIBRARIES list.
+         # Disable with: `mulle-sourcetree mark mulle-core no-cmake-add`
+         #
+         if( NOT ${MULLE__CORE_LIBRARY} IN_LIST DEPENDENCY_LIBRARIES)
+            list( APPEND DEPENDENCY_LIBRARIES ${MULLE__CORE_LIBRARY})
+         endif()
+         #
+         # Inherit information from dependency.
+         # Encompasses: no-cmake-searchpath,no-cmake-dependency,no-cmake-loader
+         # Disable with: `mulle-sourcetree mark mulle-core no-cmake-inherit`
+         #
+         # temporarily expand CMAKE_MODULE_PATH
+         get_filename_component( _TMP_MULLE__CORE_ROOT "${MULLE__CORE_LIBRARY}" DIRECTORY)
+         get_filename_component( _TMP_MULLE__CORE_ROOT "${_TMP_MULLE__CORE_ROOT}" DIRECTORY)
+         #
+         #
+         # Search for "Definitions.cmake" and "DependenciesAndLibraries.cmake" to include.
+         # Disable with: `mulle-sourcetree mark mulle-core no-cmake-dependency`
+         #
+         foreach( _TMP_MULLE__CORE_NAME "mulle-core")
+            set( _TMP_MULLE__CORE_DIR "${_TMP_MULLE__CORE_ROOT}/include/${_TMP_MULLE__CORE_NAME}/cmake")
+            # use explicit path to avoid "surprises"
+            if( IS_DIRECTORY "${_TMP_MULLE__CORE_DIR}")
+               list( INSERT CMAKE_MODULE_PATH 0 "${_TMP_MULLE__CORE_DIR}")
+               # we only want top level INHERIT_OBJC_DEPS, so disable them
+               if( NOT NO_INHERIT_OBJC_DEPS)
+                  set( NO_INHERIT_OBJC_DEPS OFF)
+               endif()
+               list( APPEND _TMP_INHERIT_OBJC_DEPS ${NO_INHERIT_OBJC_DEPS})
+               set( NO_INHERIT_OBJC_DEPS ON)
+               #
+               include( "${_TMP_MULLE__CORE_DIR}/DependenciesAndLibraries.cmake" OPTIONAL)
+               #
+               list( GET _TMP_INHERIT_OBJC_DEPS -1 NO_INHERIT_OBJC_DEPS)
+               list( REMOVE_AT _TMP_INHERIT_OBJC_DEPS -1)
+               list( REMOVE_ITEM CMAKE_MODULE_PATH "${_TMP_MULLE__CORE_DIR}")
+               #
+               unset( MULLE__CORE_DEFINITIONS)
+               unset( MULLE__CORE_RENDEZVOUS_GLOBALS)
+               include( "${_TMP_MULLE__CORE_DIR}/Definitions.cmake" OPTIONAL)
+               list( APPEND INHERITED_DEFINITIONS ${MULLE__CORE_DEFINITIONS})
+               include( "${_TMP_MULLE__CORE_DIR}/Definitions.cmake" OPTIONAL)
+               list( APPEND RENDEZVOUS_GLOBALS ${MULLE__CORE_RENDEZVOUS_GLOBALS})
+               break()
+            else()
+               message( STATUS "${_TMP_MULLE__CORE_DIR} not found")
+            endif()
+         endforeach()
+   else()
+      # Disable with: `mulle-sourcetree mark mulle-core no-require-link`
+      message( SEND_ERROR "MULLE__CORE_LIBRARY was not found in ${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-core${CMAKE_DEBUG_POSTFIX}${MULLE_PREFERRED_LIBRARY_SUFFIX}
+${MULLE_PREFERRED_LIBRARY_PREFIX}mulle-core${MULLE_PREFERRED_LIBRARY_SUFFIX}
+${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-core${CMAKE_DEBUG_POSTFIX}${MULLE_FALLBACK_LIBRARY_SUFFIX}
+${MULLE_FALLBACK_LIBRARY_PREFIX}mulle-core${MULLE_FALLBACK_LIBRARY_SUFFIX}
+mulle-core")
    endif()
 endif()

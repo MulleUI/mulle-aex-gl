@@ -4578,6 +4578,16 @@ int sl_exec_run(struct sl_execution *exec, struct sl_function *f, int exec_chain
             break;
           case exop_constructor: {
             size_t ci; 
+            if (sl_type_unqualified(eps[epi].v_.expr_->constructor_type_)->kind_ == sltk_struct) {
+              for (ci = 0; ci < eps[epi].v_.expr_->num_children_; ++ci) {
+                struct sl_expr *child = eps[epi].v_.expr_->children_[ci];
+                sl_exec_need_rvalue(exec, eps[epi].revisit_chain_, child);
+                sl_reg_move(exec, eps[epi].revisit_chain_,
+                            EXPR_RVALUE(child), NULL,
+                            eps[epi].v_.expr_->base_regs_.v_.comp_.fields_ + ci, NULL);
+              }
+              break;
+            }
             for (ci = 0; ci < eps[epi].v_.expr_->num_components_; ++ci) {
               struct sl_component_selection *cs = eps[epi].v_.expr_->swizzle_ + ci;
               if (cs->parameter_index_ != -1) {

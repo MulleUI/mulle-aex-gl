@@ -80,18 +80,13 @@ struct glsl_es1_compiler {
 
   int all_done_:1;
 
-  /* If true, then the next token could be a typename, provided one is
-   * accepted in the current parser_ state. This is used to disambiguate
-   * between a typename and a variable name in a declaration. E.g. suppose
-   * we have (GLSL):
-   *   struct X { .. }
-   *   X X;
-   * The first "X" should come in as a GLSL_ES1_TYPE_NAME, but if the second
-   * "X" comes in as a GLSL_ES1_TYPE_NAME, then it will give rise to a syntax
-   * error. Therefore, as soon as we see a GLSL_ES1_TYPE_NAME, we set this
-   * flag to false, to prevent the next token from being a GLSL_ES1_TYPE_NAME.
-   */
-  int is_typename_permitted_:1;
+  /* Set by sl_shader_compile(); used for shader-specific semantic checks. */
+  int shader_is_vertex_:1;
+  int shader_is_fragment_:1;
+
+  /* Fragment shaders have no default float precision until a precision
+   * statement for a floating-point type is seen. */
+  int fragment_default_float_precision_:1;
 
   /* The last type specifier parsed and reduced inside the grammar. This is
    * used for declarator lists to assign the type in place of their identifiers.
@@ -124,6 +119,8 @@ struct glsl_es1_compiler {
 
 void glsl_es1_compiler_init(struct glsl_es1_compiler *compiler);
 void glsl_es1_compiler_cleanup(struct glsl_es1_compiler *compiler);
+
+int glsl_es1_compiler_define_macro(struct glsl_es1_compiler *cc, const char *name, const char *replacement);
 
 enum glsl_es1_compiler_result glsl_es1_compile_builtin_prologue(struct glsl_es1_compiler *cc, const char *glsl_input_text);
 

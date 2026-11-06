@@ -27,7 +27,6 @@ src/gl_es2_log.c
 src/glsl_es1_assist.c
 src/glsl_es_1.c
 src/glsl_es1_compiler.c
-src/glsl_es1_tokens.c
 src/ir.c
 src/ir_registry.c
 src/mulle-aex-gl.c
@@ -35,16 +34,7 @@ src/named_object_table.c
 src/perspective_division.c
 src/pp/diags.c
 src/pp/pp.c
-src/pp/pp_const_expr.c
-src/pp/pp_input_file.c
-src/pp/pp_line_continuations.c
-src/pp/pp_line_directives.c
-src/pp/pp_macro_expander.c
-src/pp/pp_macro_table.c
-src/pp/pp_tokenizer.c
 src/pp/pp_tokens.c
-src/pp/pp_trigraphs.c
-src/pp/scan_helpers.c
 src/pp/situs.c
 src/primitive_assembly.c
 src/rasterizer.c

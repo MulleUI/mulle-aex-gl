@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="cache-control" content="no-store">
+<meta http-equiv="expires" content="0">
+<title>mulle-aex-gl / PixiJS filter comparison</title>
+<style>
+   :root
+   {
+      color-scheme: dark;
+   }
+
+   html,
+   body
+   {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: #08080c;
+   }
+
+   body
+   {
+      overflow: hidden;
+      color: #d8d8e8;
+      font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+   }
+
+   #frame
+   {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #000;
+   }
+
+   #frame canvas
+   {
+      display: block;
+      width: 100%;
+      height: 100%;
+   }
+
+   #hud
+   {
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      z-index: 1;
+      padding: 4px 7px;
+      background: rgb(0 0 0 / 70%);
+      border: 1px solid rgb(255 255 255 / 12%);
+      white-space: nowrap;
+      pointer-events: none;
+   }
+</style>
+</head>
+<body>
+<div id="frame">
+   <canvas id="canvas"></canvas>
+   <div id="hud">loading...</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/pixi.js@7/dist/pixi.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pixi-filters@5.3.0/dist/browser/pixi-filters.js"></script>
+<script>
+(async function()
+{
+   const WIDTH = 800;
+   const VERSION = "3";
+   const HEIGHT = 600;
+   const TEXTURE_SIZE = 256;
+
+   const FILTERS = [ "crt", "glitch", "zoom", "shockwave", "ascii" ];
+   const LABELS = {
+      crt: "CRT",
+      glitch: "Glitch",
+      zoom: "Zoom Blur",
+      shockwave: "Shockwave",
+      ascii: "ASCII"
+   };
+
+   const params = new URLSearchParams(location.search);
+   const scenePath = params.get( "scene") || "pixi-scene.bmp";
+   let fixedTime = params.has( "time") ? Number( params.get( "time")) : NaN;
+   let asciiSize = params.has( "size") ? Number( params.get( "size")) : 20;
+
+   if( ! Number.isFinite( asciiSize) || asciiSize < 2 || asciiSize > 64)
+      asciiSize = 20;
+
+   let filterName;
+   let filter;
+   let lastGlitchRefresh;
+
+   function normalizeFilter(value)
+   {
+      const key = String( value || "crt").toLowerCase().replace( /[^a-z]/g, "");
+
+      if( key === "zoomblur")
+         return( "zoom");
+      if( key === "shock")
+         return( "shockwave");
+      return( FILTERS.indexOf( key) >= 0 ? key : "crt");
+   }
+
+   function makeFilter(name)
+   {
+      switch( name)
+      {
+      case "crt" :
+         return( new PIXI.filters.CRTFilter({
+            curvature: 1,
+            lineWidth: 1,
+            lineContrast: 0.25,
+            verticalLine: false,
+            noise: 0.15,
+            noiseSize: 1,
+            vignetting: 0.3,
+            vignettingAlpha: 1,
+            vignettingBlur: 0.3,
+            time: 0,
+            seed: 0
+         }));
+
+      case "glitch" :
+         return( new PIXI.filters.GlitchFilter({
+            slices: 8,
+            offset: 100,
+            fillMode: 0,
+            direction: 0,
+            seed: 0,
+            minSize: 8,
+            sampleSize: 512,
+            red: [ 2, 0 ],
+            green: [ 0, 0 ],
+            blue: [ -2, 0 ]
+         }));
+
+      case "zoom" :
+         return( new PIXI.filters.ZoomBlurFilter({
+            strength: 0.22,
+            center: new PIXI.Point( WIDTH / 2, HEIGHT / 2),
+            innerRadius: 0,
+            radius: -1,
+            maxKernelSize: 8
+         }));
+
+      case "shockwave" :
+         return( new PIXI.filters.ShockwaveFilter(
+            [ WIDTH / 2, HEIGHT / 2 ],
+            {
+               amplitude: 50,
+               wavelength: 80,
+               brightness: 1,
+               speed: 500,
+               radius: -1
+            },
+            0));
+
+      case "ascii" :
+         return( new PIXI.filters.AsciiFilter( asciiSize));
+
+      default :
+         return( null);
+      }
+   }
+
+   const canvas = document.getElementById( "canvas");
+   const hud = document.getElementById( "hud");
+   const app = new PIXI.Application({
+      view: canvas,
+      width: WIDTH,
+      height: HEIGHT,
+      backgroundColor: 0x000000,
+      antialias: false,
+      autoDensity: false,
+      resolution: 1
+   });
+
+   let texture;
+
+   try
+   {
+      texture = PIXI.Texture.from( scenePath);
+   }
+   catch( error)
+   {
+      hud.textContent = "cannot load " + scenePath +
+                        " - run: pixi-filters --dump-scene " + scenePath;
+      console.error( error);
+      return;
+   }
+
+   const sprite = new PIXI.Sprite( texture);
+
+   sprite.width = WIDTH;
+   sprite.height = HEIGHT;
+   app.stage.addChild( sprite);
+
+   function setFilter(name)
+   {
+      filterName = normalizeFilter( name);
+      filter = makeFilter( filterName);
+      sprite.filters = [ filter ];
+      lastGlitchRefresh = -Infinity;
+
+      hud.textContent = LABELS[ filterName] +
+                        ( filterName === "ascii" ? " " + asciiSize : "") +
+                        "  |  keys 1-5  |  " +
+                        ( Number.isFinite( fixedTime) ?
+                          "time " + fixedTime.toFixed( 2) : "live") +
+                        "  |  v" + VERSION;
+   }
+
+   function updateFilter(elapsed)
+   {
+      switch( filterName)
+      {
+      case "crt" :
+         filter.time = elapsed;
+         filter.seed = ( elapsed * 13) % 100;
+         break;
+
+      case "glitch" :
+         filter.seed = ( elapsed * 0.37) % 1;
+         if( ! Number.isFinite( fixedTime) &&
+             elapsed - lastGlitchRefresh > 0.25)
+         {
+            filter.refresh();
+            lastGlitchRefresh = elapsed;
+         }
+         break;
+
+      case "zoom" :
+         filter.strength = 0.22 + 0.06 * Math.sin( elapsed * 1.3);
+         break;
+
+      case "shockwave" :
+         filter.time = ( 0.15 + 0.45 *
+                         ( 0.5 + 0.5 * Math.sin( elapsed * 2.0))) *
+                       WIDTH / 500;
+         break;
+      }
+   }
+
+   if( Number.isFinite( fixedTime) && fixedTime < 0)
+      fixedTime = 0;
+
+   setFilter( params.get( "filter") || "crt");
+
+   const start = performance.now();
+   app.ticker.add(function()
+   {
+      const elapsed = Number.isFinite( fixedTime) ?
+                      fixedTime : ( performance.now() - start) / 1000;
+
+      updateFilter( elapsed);
+   });
+
+   window.addEventListener( "keydown", function(event)
+   {
+      const index = Number( event.key) - 1;
+
+      if( index >= 0 && index < FILTERS.length)
+         setFilter( FILTERS[ index ]);
+   });
+})();
+</script>
+</body>
+</html>

@@ -1510,7 +1510,7 @@ void blitter_blit_apply_mask32(void *bitmap, size_t stride, uint32_t mask, uint3
   size_t width64 = (right_edge_inclusive/2) - x64;
   size_t stride64 = stride / 8;
   blitter_blit_apply_mask_fast64(bitmap, stride64, y, x64, width64, height,
-                                  lmask, imask, rmask, value);
+                                  lmask, imask, rmask, ivalue);
 }
 
 static void blitter_blit_alpha_to_alpha(void *dst, const void *src, size_t dst_stride, size_t dst_x, size_t dst_y, size_t src_stride, size_t src_x, size_t src_y, size_t width, size_t height) {  size_t row, col;

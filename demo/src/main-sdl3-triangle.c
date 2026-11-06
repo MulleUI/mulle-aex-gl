@@ -6,6 +6,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "demo-common.h"
 #include "gl_es2_impl.h"
 
 
@@ -154,55 +155,6 @@ static int   init_gl( gl_es2_uint *program, gl_es2_uint *buffer, gl_es2_int *ang
 }
 
 
-static int   present( SDL_Window *window, unsigned char *pixels)
-{
-   SDL_Surface   *source;
-   SDL_Surface   *destination;
-
-   destination = SDL_GetWindowSurface( window);
-   if( ! destination)
-   {
-      fprintf( stderr, "SDL_GetWindowSurface failed: %s\n", SDL_GetError());
-      return( 1);
-   }
-
-   source = SDL_CreateSurfaceFrom( WINDOW_WIDTH,
-                                   WINDOW_HEIGHT,
-                                   SDL_PIXELFORMAT_RGBA32,
-                                   pixels,
-                                   WINDOW_WIDTH * 4);
-   if( ! source)
-   {
-      fprintf( stderr, "SDL_CreateSurfaceFrom failed: %s\n", SDL_GetError());
-      return( 1);
-   }
-
-   if( ! SDL_FlipSurface( source, SDL_FLIP_VERTICAL))
-   {
-      fprintf( stderr, "SDL_FlipSurface failed: %s\n", SDL_GetError());
-      SDL_DestroySurface( source);
-      return( 1);
-   }
-
-   if( ! SDL_BlitSurface( source, NULL, destination, NULL))
-   {
-      fprintf( stderr, "SDL_BlitSurface failed: %s\n", SDL_GetError());
-      SDL_DestroySurface( source);
-      return( 1);
-   }
-
-   SDL_DestroySurface( source);
-
-   if( ! SDL_UpdateWindowSurface( window))
-   {
-      fprintf( stderr, "SDL_UpdateWindowSurface failed: %s\n", SDL_GetError());
-      return( 1);
-   }
-
-   return( 0);
-}
-
-
 int   main( int argc, char *argv[])
 {
    SDL_Event   event;
@@ -292,7 +244,7 @@ int   main( int argc, char *argv[])
                              GL_ES2_UNSIGNED_BYTE,
                              pixels);
 
-      if( present( window, pixels))
+      if( demo_present( window, pixels))
          running = 0;
 
       SDL_Delay( 16);

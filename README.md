@@ -15,8 +15,11 @@ and without EGL, X11, Wayland or a GPU.
 
 The mulle-sde build integration is in place:
 
-- the Carburetta-generated parsers are vendored; `grammar/` holds the
-  original `.cbrt` files, which are not built,
+- the GLSL parser is hand-written (`src/glsl_es_1.c`); the original
+  `grammar/glsl_es_1.cbrt` is archived and not built,
+- the preprocessor is provided by `mulle-cpp-engine` (`mulle-cpp-lexer` is
+  pulled in with it), so there are no generated preprocessor sources or
+  Carburetta build/runtime dependencies,
 - threading uses mulle-core (`mulle-thread`), not raw pthreads or Win32,
 - `mulle-sde craft` builds `libmulle-aex-gl`,
 - `mulle-sde test run` passes the headless GLES2 clear/readpixels test.

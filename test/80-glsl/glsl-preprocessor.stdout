@@ -1,0 +1,24 @@
+object-macro: OK
+function-macro: OK
+nested-macro: OK
+undef: OK
+if-else: OK
+elif: OK
+ifdef: OK
+ifndef: OK
+defined: OK
+skipped-garbage: OK
+line-directive: OK
+line-directive-syntax: OK
+line-directive-semantic: OK
+error-directive: OK
+pragma: OK
+version-after-comment: OK
+extension: OK
+macro-redefinition: OK
+if-not-integer: OK
+unterminated-if: OK
+variadic-macro: OK
+stringize: OK
+token-paste: OK
+23/23 preprocessor tests passed, 0 gaps

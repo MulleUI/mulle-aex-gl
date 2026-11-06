@@ -13,664 +13,581 @@
  * limitations under the License.
  */
 
-#ifndef STDLIB_H_INCLUDED
-#define STDLIB_H_INCLUDED
-#include <stdlib.h>
-#endif
-
-#ifndef STDIO_H_INCLUDED
-#define STDIO_H_INCLUDED
+#include <stdint.h>
 #include <stdio.h>
-#endif
-
-#ifndef STDARG_H_INCLUDED
-#define STDARG_H_INCLUDED
-#include <stdarg.h>
-#endif
-
-#ifndef STRING_H_INCLUDED
-#define STRING_H_INCLUDED
+#include <stdlib.h>
 #include <string.h>
-#endif
 
-#ifndef ASSERT_H_INCLUDED
-#define ASSERT_H_INCLUDED
-#include <assert.h>
-#endif
+#include <mulle-cpp-engine/mulle-cpp-engine.h>
 
-#ifndef PP_H_INCLUDED
-#define PP_H_INCLUDED
 #include "pp.h"
-#endif
-
-#ifndef PP_MACRO_TABLE_H_INCLUDED
-#define PP_MACRO_TABLE_H_INCLUDED
-#include "pp_macro_table.h"
-#endif
-
-#ifndef PP_TOKENS_H_INCLUDED
-#define PP_TOKENS_H_INCLUDED
-#include "pp_tokens.h"
-#endif
-
-#ifndef PP_TOKENIZER_H_INCLUDED
-#define PP_TOKENIZER_H_INCLUDED
-#include "pp_tokenizer.h"
-#endif
-
-#ifndef PP_LINE_DIRECTIVES_H_INCLUDED
-#define PP_LINE_DIRECTIVES_H_INCLUDED
-#include "pp_line_directives.h"
-#endif
-
-#ifndef PP_MACRO_EXPANDER_H_INCLUDED
-#define PP_MACRO_EXPANDER_H_INCLUDED
-#include "pp_macro_expander.h"
-#endif
-
-#ifndef PP_CONST_EXPR_H_INCLUDED
-#define PP_CONST_EXPR_H_INCLUDED
-#include "pp_const_expr.h"
-#endif
-
-#ifndef PP_LINE_CONTINUATIONS_H_INCLUDED
-#define PP_LINE_CONTINUATIONS_H_INCLUDED
-#include "pp_line_continuations.h"
-#endif
-
-#ifndef PP_TRIGRAPHS_H_INCLUDED
-#define PP_TRIGRAPHS_H_INCLUDED
-#include "pp_trigraphs.h"
-#endif
-
-#ifndef PP_INPUT_FILE_H_INCLUDED
-#define PP_INPUT_FILE_H_INCLUDED
 #include "pp_input_file.h"
-#endif
+#include "pp_tokens.h"
 
-static int pp_stderr_vprintf_handler(void *baton, const char *file, int line_num, const char *fmt, va_list args);
+static void pp_diagnostic_callback(void *baton, const char *file, size_t line,
+                                   size_t column, int severity,
+                                   const char *message) {
+  struct preprocessor *pp;
+  struct situs sit;
 
-struct pp_input_file *pp_push_input_file(struct preprocessor *pp, const char *filename, size_t aux_data) {
-  char *sf = pp_preserve_filename(pp, filename);
-  if (!sf) return NULL;
-  struct pp_input_file *ifile = (struct pp_input_file *)malloc(sizeof(struct pp_input_file) + aux_data);
-  if (!ifile) {
-    free(sf);
-    return NULL;
+  pp = (struct preprocessor *) baton;
+  aex_situs_init(&sit);
+  sit.num_spans_ = 1;
+  sit.u_.one_.filename_ = file ? file : "";
+  sit.u_.one_.start_line_ = sit.u_.one_.end_line_ = (int) line;
+  sit.u_.one_.start_col_ = sit.u_.one_.end_col_ = (int) (column ? column : 1);
+  sit.u_.one_.num_bytes_ = 0;
+
+  if (severity > 1) {
+    dx_error_loc(pp->dx_, &sit, "%s", message);
   }
-  aex_if_init(ifile, pp);
-  ifile->filename_ = sf;
-  ifile->ppld_input_line_ = 0;
-  ifile->ppld_input_line_filename_ = NULL;
-  ifile->pptk_input_line_ = 1;
-  ifile->pptk_input_line_filename_ = sf;
-  return ifile;
+  else {
+    dx_warn_loc(pp->dx_, &sit, "%s", message);
+  }
 }
 
-static void pp_pop_input_file(struct preprocessor *pp) {
-  struct pp_input_file *ifile = pp->input_stack_;
-  if (ifile) {
-    aex_if_cleanup(ifile);
-    free(ifile);
+struct pp_keyword {
+  const char *name_;
+  enum pptoken token_;
+};
+
+static const struct pp_keyword pp_keywords[] = {
+  { "attribute", PPTK_ATTRIBUTE },
+  { "const", PPTK_CONST },
+  { "bool", PPTK_BOOL_ID },
+  { "float", PPTK_FLOAT },
+  { "int", PPTK_INT },
+  { "break", PPTK_BREAK },
+  { "continue", PPTK_CONTINUE },
+  { "do", PPTK_DO },
+  { "else", PPTK_ELSE },
+  { "for", PPTK_FOR },
+  { "if", PPTK_IF },
+  { "discard", PPTK_DISCARD },
+  { "return", PPTK_RETURN },
+  { "in", PPTK_IN },
+  { "out", PPTK_OUT },
+  { "inout", PPTK_INOUT },
+  { "uniform", PPTK_UNIFORM },
+  { "varying", PPTK_VARYING },
+  { "sampler2D", PPTK_SAMPLER2D },
+  { "samplerCube", PPTK_SAMPLERCUBE },
+  { "struct", PPTK_STRUCT },
+  { "void", PPTK_VOID },
+  { "while", PPTK_WHILE },
+  { "precision", PPTK_PRECISION },
+  { "highp", PPTK_HIGH_PRECISION },
+  { "mediump", PPTK_MEDIUM_PRECISION },
+  { "lowp", PPTK_LOW_PRECISION },
+  { "invariant", PPTK_INVARIANT },
+  { "bvec2", PPTK_BVEC2 },
+  { "bvec3", PPTK_BVEC3 },
+  { "bvec4", PPTK_BVEC4 },
+  { "ivec2", PPTK_IVEC2 },
+  { "ivec3", PPTK_IVEC3 },
+  { "ivec4", PPTK_IVEC4 },
+  { "vec2", PPTK_VEC2 },
+  { "vec3", PPTK_VEC3 },
+  { "vec4", PPTK_VEC4 },
+  { "mat2", PPTK_MAT2 },
+  { "mat3", PPTK_MAT3 },
+  { "mat4", PPTK_MAT4 },
+
+  /* Reserved for future GLSL versions. */
+  { "asm", PPTK_ASM },
+  { "class", PPTK_CLASS },
+  { "template", PPTK_TEMPLATE },
+  { "this", PPTK_THIS },
+  { "packed", PPTK_PACKED },
+  { "noinline", PPTK_NOINLINE },
+  { "public", PPTK_PUBLIC },
+  { "external", PPTK_EXTERNAL },
+  { "interface", PPTK_INTERFACE },
+  { "flat", PPTK_FLAT },
+  { "half", PPTK_HALF },
+  { "fixed", PPTK_FIXED },
+  { "superp", PPTK_SUPERP },
+  { "input", PPTK_INPUT },
+  { "output", PPTK_OUTPUT },
+  { "hvec2", PPTK_HVEC2 },
+  { "hvec3", PPTK_HVEC3 },
+  { "hvec4", PPTK_HVEC4 },
+  { "dvec2", PPTK_DVEC2 },
+  { "dvec3", PPTK_DVEC3 },
+  { "dvec4", PPTK_DVEC4 },
+  { "fvec2", PPTK_FVEC2 },
+  { "fvec3", PPTK_FVEC3 },
+  { "fvec4", PPTK_FVEC4 },
+  { "sampler1D", PPTK_SAMPLER1D },
+  { "sampler3D", PPTK_SAMPLER3D },
+  { "sampler1DShadow", PPTK_SAMPLER1DSHADOW },
+  { "sampler2DShadow", PPTK_SAMPLER2DSHADOW },
+  { "sampler2DRect", PPTK_SAMPLER2DRECT },
+  { "sampler3DRect", PPTK_SAMPLER3DRECT },
+  { "sampler2DRectShadow", PPTK_SAMPLER2DRECTSHADOW },
+  { "cast", PPTK_CAST },
+  { "namespace", PPTK_NAMESPACE },
+  { "using", PPTK_USING },
+  { NULL, PPTK_INVALID }
+};
+
+struct pp_operator {
+  const char *text_;
+  enum pptoken token_;
+};
+
+static const struct pp_operator pp_operators[] = {
+  { "(", PPTK_PAR_OPEN },
+  { ")", PPTK_PAR_CLOSE },
+  { "[", PPTK_SQBRACE_OPEN },
+  { "]", PPTK_SQBRACE_CLOSE },
+  { "{", PPTK_CUBRACE_OPEN },
+  { "}", PPTK_CUBRACE_CLOSE },
+  { ".", PPTK_DOT },
+  { "...", PPTK_DOT_DOT_DOT },
+  { ",", PPTK_COMMA },
+  { ":", PPTK_COLON },
+  { ";", PPTK_SEMICOLON },
+  { "?", PPTK_QUESTION_MARK },
+  { "+", PPTK_PLUS },
+  { "-", PPTK_MINUS },
+  { "*", PPTK_ASTERISK },
+  { "/", PPTK_SLASH },
+  { "%", PPTK_PERCENT },
+  { "<<", PPTK_LT_LT },
+  { ">>", PPTK_GT_GT },
+  { "<", PPTK_LT },
+  { ">", PPTK_GT },
+  { "<=", PPTK_LT_EQUALS },
+  { ">=", PPTK_GT_EQUALS },
+  { "==", PPTK_EQUALS_EQUALS },
+  { "!=", PPTK_BANG_EQUALS },
+  { "&", PPTK_AMPERSAND },
+  { "|", PPTK_BAR },
+  { "^", PPTK_CARET },
+  { "&&", PPTK_AMPERSAND_AMPERSAND },
+  { "||", PPTK_BAR_BAR },
+  { "^^", PPTK_CARET_CARET },
+  { "!", PPTK_BANG },
+  { "~", PPTK_TILDE },
+  { "++", PPTK_PLUS_PLUS },
+  { "--", PPTK_MINUS_MINUS },
+  { "=", PPTK_EQUALS },
+  { "+=", PPTK_PLUS_EQUALS },
+  { "-=", PPTK_MINUS_EQUALS },
+  { "*=", PPTK_ASTERISK_EQUALS },
+  { "/=", PPTK_SLASH_EQUALS },
+  { "%=", PPTK_PERCENT_EQUALS },
+  { "<<=", PPTK_LT_LT_EQUALS },
+  { ">>=", PPTK_GT_GT_EQUALS },
+  { "&=", PPTK_AMPERSAND_EQUALS },
+  { "|=", PPTK_BAR_EQUALS },
+  { "^=", PPTK_CARET_EQUALS },
+  { "->", PPTK_ARROW },
+  { "#", PPTK_HASH_MARK },
+  { "##", PPTK_HASH_HASH_MARK },
+  { NULL, PPTK_INVALID }
+};
+
+static int pp_token_column(struct preprocessor *pp,
+                           struct mulle_cpp_token *token) {
+  struct mulle_cpp_lexer_range *range;
+  const char *p;
+
+  if (!pp->source_start_ || !mulle_cpp_token_get_nranges(token)) {
+    return 1;
   }
+  range = mulle_cpp_token_get_range(token, 0);
+  if (!range || !range->start || range->start < pp->source_start_ ||
+      range->start >= pp->source_end_) {
+    return 1;
+  }
+  p = range->start;
+  while (p > pp->source_start_ && p[-1] != '\n') {
+    --p;
+  }
+  return (int) (range->start - p) + 1;
+}
+
+static size_t pp_token_offset(struct preprocessor *pp,
+                              struct mulle_cpp_token *token) {
+  struct mulle_cpp_lexer_range *range;
+
+  if (!pp->source_start_ || !mulle_cpp_token_get_nranges(token)) {
+    return 0;
+  }
+  range = mulle_cpp_token_get_range(token, 0);
+  if (!range || !range->start || range->start < pp->source_start_ ||
+      range->start > pp->source_end_) {
+    return 0;
+  }
+  return (size_t) (range->start - pp->source_start_);
+}
+
+static int pp_number_is_float(const char *text, size_t len) {
+  size_t i;
+
+  if (len > 2 && text[0] == '0' && (text[1] == 'x' || text[1] == 'X')) {
+    return 0;
+  }
+  for (i = 0; i < len; ++i) {
+    if (text[i] == '.' || text[i] == 'e' || text[i] == 'E') {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static size_t pp_number_second_dot(const char *text, size_t len) {
+  size_t i;
+  int dots;
+
+  dots = 0;
+  for (i = 0; i < len; ++i) {
+    if (text[i] == '.') {
+      if (++dots == 2) {
+        return i;
+      }
+    }
+  }
+  return 0;
+}
+
+static struct pptk *pp_convert_token(struct preprocessor *pp,
+                                     struct mulle_cpp_token *token) {
+  struct mulle_cpp_lexer_range *range;
+  struct pptk *out;
+  struct situs sit;
+  char *text;
+  size_t len;
+  size_t offset;
+  int column;
+  int bool_value;
+  int i;
+  enum pptoken tok;
+
+  switch (token->kind) {
+    case mulle_cpp_token_whitespace:
+    case mulle_cpp_token_newline:
+    case mulle_cpp_token_directive:
+    case mulle_cpp_token_eof:
+    case mulle_cpp_token_unknown:
+      return NULL;
+    default:
+      break;
+  }
+
+  len = mulle_cpp_token_get_length(token);
+  text = (char *) malloc(len + 1);
+  if (!text) {
+    dx_no_memory(pp->dx_);
+    return NULL;
+  }
+  mulle_cpp_token_get_bytes(token, text, len);
+  text[len] = '\0';
+
+  tok = PPTK_INVALID;
+  bool_value = 0;
+  switch (token->kind) {
+    case mulle_cpp_token_identifier:
+      tok = PPTK_IDENT;
+      for (i = 0; pp_keywords[i].name_; ++i) {
+        if (!strcmp(text, pp_keywords[i].name_)) {
+          tok = pp_keywords[i].token_;
+          break;
+        }
+      }
+      if (!strcmp(text, "true")) {
+        tok = PPTK_BOOL_CONSTANT;
+        bool_value = 1;
+      }
+      else if (!strcmp(text, "false")) {
+        tok = PPTK_BOOL_CONSTANT;
+        bool_value = 0;
+      }
+      break;
+
+    case mulle_cpp_token_number:
+      if (pp_number_is_float(text, len)) {
+        tok = PPTK_FLOAT_LIT;
+      }
+      else {
+        tok = PPTK_INTEGER_LIT;
+      }
+      break;
+
+    case mulle_cpp_token_string:
+      tok = PPTK_STRING_LIT;
+      break;
+
+    case mulle_cpp_token_characters:
+      tok = PPTK_CHAR_LIT;
+      break;
+
+    case mulle_cpp_token_operator:
+      for (i = 0; pp_operators[i].text_; ++i) {
+        if (!strcmp(text, pp_operators[i].text_)) {
+          tok = pp_operators[i].token_;
+          break;
+        }
+      }
+      break;
+
+    default:
+      break;
+  }
+
+  range = mulle_cpp_token_get_nranges(token) ?
+          mulle_cpp_token_get_range(token, 0) : NULL;
+  offset = pp_token_offset(pp, token);
+
+  column = pp_token_column(pp, token);
+
+  aex_situs_init(&sit);
+  sit.num_spans_ = 1;
+  sit.u_.one_.filename_ = token->file ? token->file :
+                          (pp->input_file_ ? pp->input_file_->filename_ : "");
+  sit.u_.one_.start_ = offset;
+  sit.u_.one_.end_ = offset + len;
+  sit.u_.one_.start_line_ = sit.u_.one_.end_line_ = (int) token->line;
+  sit.u_.one_.start_col_ = column;
+  sit.u_.one_.end_col_ = column + (int) len;
+  sit.u_.one_.is_substitution_ = 0;
+  sit.u_.one_.is_aux_ = 0;
+  sit.u_.one_.num_bytes_ = len;
+  if (!range) {
+    sit.u_.one_.start_ = sit.u_.one_.end_ = 0;
+  }
+
+  if (tok == PPTK_FLOAT_LIT) {
+    size_t split;
+
+    split = pp_number_second_dot(text, len);
+    if (split) {
+      struct situs second_sit;
+      struct pptk *second;
+
+      second_sit = sit;
+      second_sit.u_.one_.start_ += split;
+      second_sit.u_.one_.start_col_ += (int) split;
+      second_sit.u_.one_.num_bytes_ = len - split;
+      second = aex_pptk_alloc_len(pp, NULL, text + split, len - split,
+                                  PPTK_FLOAT_LIT, &second_sit);
+      if (second) {
+        second->v_type_ = PPVT_FLOAT;
+        second->v_.f_ = (float) strtod(second->text_, NULL);
+        if (pp->pending_token_) {
+          aex_pptk_free(pp->pending_token_);
+        }
+        pp->pending_token_ = second;
+      }
+      len = split;
+      sit.u_.one_.end_ = offset + len;
+      sit.u_.one_.end_col_ = column + (int) len;
+      sit.u_.one_.num_bytes_ = len;
+    }
+  }
+
+  out = aex_pptk_alloc_len(pp, &pp->pp_output_, text, len, tok, &sit);
+  free(text);
+  if (!out) {
+    return NULL;
+  }
+  if (token->kind == mulle_cpp_token_operator &&
+      mulle_cpp_lexer_code_is_operator(token->code)) {
+    out->prec_ = mulle_cpp_lexer_code_get_glsl_precedence(token->code);
+  }
+
+  switch (tok) {
+    case PPTK_INTEGER_LIT:
+      out->v_type_ = PPVT_INT;
+      out->v_.i64_ = (int64_t) strtoll(out->text_, NULL, 0);
+      break;
+    case PPTK_FLOAT_LIT:
+      out->v_type_ = PPVT_FLOAT;
+      out->v_.f_ = (float) strtod(out->text_, NULL);
+      break;
+    case PPTK_BOOL_CONSTANT:
+      out->v_type_ = PPVT_UNSIGNED_INT;
+      out->v_.u64_ = (uint64_t) bool_value;
+      break;
+    default:
+      out->v_type_ = PPVT_NO_VALUE;
+      break;
+  }
+
+  return out;
+}
+
+void aex_if_set_input(struct pp_input_file *ifile, const void *input_buf,
+                      size_t input_buf_size, int is_final) {
+  ifile->input_ = input_buf;
+  ifile->input_size_ = input_buf_size;
+  ifile->input_final_ = is_final;
+  ifile->have_input_ = 1;
 }
 
 void pp_init(struct preprocessor *pp) {
+  struct mulle_cpp_config config;
+
+  memset(pp, 0, sizeof(*pp));
   dx_diags_init(&pp->default_dx_);
-  pp->dx_ = &pp->default_dx_; /* caller may set this somewhere else */
+  pp->dx_ = &pp->default_dx_;
 
-  mt_init(&pp->macro_table_);
-  pp->if_section_stack_ = NULL;
-
-  pp->ppme_input_final_ = 0;
-  pp->ppme_input_ = NULL;
-  pp->ppme_input_file_ = NULL;
-  pp->ppme_input_line_ = 0;
-  aex_ppme_stack_init(&pp->ppme_);
-
-  pp->ppld_input_final_ = 0;
-  pp->have_ppld_input_line_ = 0;
-  pp->ppld_input_ = NULL;
-
-  pp->input_stack_ = NULL;
-
-  pp->pp_output_ = NULL;
-  pp->pp_output_final_ = 0;
-
-  pp->filename_buffers_ = NULL;
-
-  pp->bits_per_char_ = 8;
-  pp->bits_per_short_ = 16;
-  pp->bits_per_int_ = 32;
-  pp->bits_per_long_ = 32;
-  pp->bits_per_long_long_ = 64;
-
-  pp->include_is_system_include_ = 0;
-  pp->include_is_template_emit_ = 0;
-  pp->include_file_arg_ = NULL;
-
-  pp->vprintf_handler = pp_stderr_vprintf_handler;
-  pp->vprintf_baton_ = NULL;
+  memset(&config, 0, sizeof(config));
+  mulle_cpp_dialect_init(&config.dialect,
+                         mulle_cpp_dialect_glsl_es_100_strict);
+  config.callbacks.diagnostic = pp_diagnostic_callback;
+  config.callbacks.baton = pp;
+  /* We copy each token into the parser representation immediately, so the
+   * engine can recycle its token arena between calls. */
+  config.reclaim_tokens = 1;
+  pp->cpp_ = mulle_cpp_create(config);
 }
 
 void pp_cleanup(struct preprocessor *pp) {
-  mt_cleanup(&pp->macro_table_);
-
-  while (pp->if_section_stack_) pp_if_pop(pp);
-
-  aex_ppme_stack_cleanup(&pp->ppme_);
-  aex_pptk_free(pp->ppme_input_);
-
-  aex_pptk_free(pp->ppld_input_);
-
-  while (pp->input_stack_) pp_pop_input_file(pp);
-
-  aex_pptk_free(pp->pp_output_);
-
-  while (pp->filename_buffers_) {
-    struct pp_filename_buffer *fb = pp->filename_buffers_;
-    pp->filename_buffers_ = fb->next_;
-    free(fb);
+  if (pp->cpp_) {
+    mulle_cpp_destroy(pp->cpp_);
+    pp->cpp_ = NULL;
   }
-
-  if (pp->include_file_arg_) {
-    free(pp->include_file_arg_);
+  if (pp->pp_output_) {
+    aex_pptk_free(pp->pp_output_);
+    pp->pp_output_ = NULL;
   }
-
+  if (pp->pending_token_) {
+    aex_pptk_free(pp->pending_token_);
+    pp->pending_token_ = NULL;
+  }
+  if (pp->input_file_) {
+    free((void *) pp->input_file_->filename_);
+    free(pp->input_file_);
+    pp->input_file_ = NULL;
+  }
   dx_diags_cleanup(&pp->default_dx_);
 }
 
-struct pp_if_section *pp_if_push(struct preprocessor *pp) {
-  struct pp_if_section *ldifs = (struct pp_if_section *)malloc(sizeof(struct pp_if_section));
-  if (!ldifs) return NULL;
-  ldifs->parent_ = pp->if_section_stack_;
-  pp->if_section_stack_ = ldifs;
-  ldifs->state_ = PP_IFSS_SKIP;
-  return ldifs;
-}
-
-void pp_if_pop(struct preprocessor *pp) {
-  struct pp_if_section *ldifs = pp->if_section_stack_;
-  pp->if_section_stack_ = ldifs->parent_;
-  free(ldifs);
-}
-
-int pp_concat_sub_output(struct preprocessor *pp, struct situs *output_situs, char **output_buf, size_t *output_pos, size_t *output_buf_size, struct situs *span_situs, const char *span_text) {
-  size_t span_text_len = strlen(span_text);
-  return pp_concat_sub_output_b(pp, output_situs, output_buf, output_pos, output_buf_size, span_situs, span_text, span_text_len);
-}
-
-int pp_concat_sub_output_b(struct preprocessor *pp, struct situs *output_situs, char **output_buf, size_t *output_pos, size_t *output_buf_size, struct situs *span_situs, const char *span_text, size_t span_text_len) {
-  size_t buf_size_needed = (*output_pos) + span_text_len;
-  if (buf_size_needed > *output_buf_size) {
-    char *newbuf = (char *)realloc(*output_buf, buf_size_needed + 1);
-    if (!newbuf) {
-      dx_no_memory(pp->dx_);
-      return -1;
-    }
-    *output_buf = newbuf;
-    *output_buf_size = buf_size_needed;
-  }
-  memcpy((*output_buf) + *output_pos, span_text, span_text_len);
-  (*output_buf)[(*output_pos) + span_text_len] = '\0';
-  struct situs substitution;
-  aex_situs_init(&substitution);
-  if (aex_situs_clone(&substitution, span_situs)) {
-    dx_no_memory(pp->dx_);
-    return -1;
-  }
-
-  struct situs_span *sss = (substitution.num_spans_ > 1) ? substitution.u_.many_.spans_ : &substitution.u_.one_;
-  /* Mark all of the situs a substitution */
-  size_t n;
-  sss->is_substitution_ = 1;
-  for (n = 1; n < substitution.num_spans_; ++n) {
-    sss[n].is_aux_ = 1;
-    sss[n].num_bytes_ = 0;
-  }
-  sss[0].num_bytes_ = span_text_len;
-  if (aex_situs_concat(output_situs, &substitution)) {
-    aex_situs_cleanup(&substitution);
-    dx_no_memory(pp->dx_);
-    return -1;
-  }
-  aex_situs_cleanup(&substitution);
-  (*output_pos) += span_text_len;
-  return 0;
-}
-
-int pp_concat_output(struct preprocessor *pp, struct situs *output_situs, char **output_buf, size_t *output_pos, size_t *output_buf_size, struct situs *span_situs, const char *span_text) {
-  size_t span_text_len = aex_situs_len(span_situs);
-  return pp_concat_output_b(pp, output_situs, output_buf, output_pos, output_buf_size, span_situs, span_text, span_text_len);
-}
-
-int pp_concat_output_b(struct preprocessor *pp, struct situs *output_situs, char **output_buf, size_t *output_pos, size_t *output_buf_size, struct situs *span_situs, const char *span_text, size_t span_text_len) {
-  size_t buf_size_needed = (*output_pos) + span_text_len;
-  if (buf_size_needed > *output_buf_size) {
-    char *newbuf = (char *)realloc(*output_buf, buf_size_needed + 1);
-    if (!newbuf) {
-      dx_no_memory(pp->dx_);
-      return -1;
-    }
-    *output_buf = newbuf;
-    *output_buf_size = buf_size_needed;
-  }
-  memcpy((*output_buf) + *output_pos, span_text, span_text_len);
-  (*output_buf)[(*output_pos) + span_text_len] = '\0';
-  if (aex_situs_concat(output_situs, span_situs)) {
-    dx_no_memory(pp->dx_);
-    return -1;
-  }
-  (*output_pos) += span_text_len;
-  return 0;
-}
-
-char *pp_preserve_filename(struct preprocessor *pp, const char *filename) {
-  size_t len = strlen(filename);
-  size_t size_needed = len + sizeof(struct pp_filename_buffer /* includes 1 byte sized array, hence len does not need to include null-terminator */);
-  if (size_needed <= len) {
-    return NULL; /* overflow */
-  }
-  struct pp_filename_buffer *fb = (struct pp_filename_buffer *)malloc(size_needed);
-  if (!fb) return NULL;
-  fb->next_ = pp->filename_buffers_;
-  pp->filename_buffers_ = fb;
-  memcpy(fb->filename_, filename, len);
-  fb->filename_[len] = '\0';
-  return fb->filename_;
-}
-
-
-static int pp_stderr_vprintf_handler(void *baton, const char *file, int line_num, const char *fmt, va_list args) {
-  if (file) {
-    fprintf(stderr, "%s(%d): ", file, line_num);
-  }
-
+int pp_define_macro(struct preprocessor *pp, const char *name,
+                    const char *replacement) {
+  char *definition;
+  size_t name_len;
+  size_t replacement_len;
   int r;
-  r = vfprintf(stderr, fmt, args);
 
-  return r < 0;
+  name_len = strlen(name);
+  replacement_len = replacement ? strlen(replacement) : 0;
+  definition = (char *) malloc(name_len + replacement_len + 2);
+  if (!definition) {
+    dx_no_memory(pp->dx_);
+    return -1;
+  }
+  memcpy(definition, name, name_len);
+  definition[name_len] = '=';
+  if (replacement_len) {
+    memcpy(&definition[name_len + 1], replacement, replacement_len);
+  }
+  definition[name_len + 1 + replacement_len] = '\0';
+
+  r = mulle_cpp_define_macro(pp->cpp_, definition);
+  free(definition);
+  return (r == mulle_cpp_ok) ? 0 : -1;
+}
+
+struct pp_input_file *pp_push_input_file(struct preprocessor *pp,
+                                        const char *filename,
+                                        size_t aux_data) {
+  struct pp_input_file *ifile;
+
+  if (pp->source_started_) {
+    mulle_cpp_pop_source(pp->cpp_);
+    pp->source_started_ = 0;
+  }
+  if (pp->input_file_) {
+    free((void *) pp->input_file_->filename_);
+    free(pp->input_file_);
+  }
+
+  ifile = (struct pp_input_file *) calloc(1, sizeof(*ifile) + aux_data);
+  if (!ifile) {
+    dx_no_memory(pp->dx_);
+    return NULL;
+  }
+  ifile->filename_ = (const char *) malloc(strlen(filename) + 1);
+  if (!ifile->filename_) {
+    free(ifile);
+    dx_no_memory(pp->dx_);
+    return NULL;
+  }
+  strcpy((char *) ifile->filename_, filename);
+  ifile->baton_ = ifile;
+  pp->input_file_ = ifile;
+  return ifile;
 }
 
 enum preprocessor_result pp_preprocessor_stage(struct preprocessor *pp) {
-macro_expander:
-  if (pp->ppme_input_ || pp->ppme_input_final_) {
-    int r;
-    int next_sym;
-    if (pp->ppme_input_) {
-      next_sym = g_aex_pptk_to_ppme_[pp->ppme_input_->tok_];
+  if (pp->pending_token_) {
+    struct pptk *token = pp->pending_token_;
+    pp->pending_token_ = NULL;
+    pp->pp_output_ = aex_pptk_join(pp->pp_output_, token);
+    return PPR_SUCCESS;
+  }
+  if (pp->pp_output_final_) {
+    return PPR_SUCCESS;
+  }
+
+  if (!pp->source_started_) {
+    struct pp_input_file *ifile;
+
+    ifile = pp->input_file_;
+    if (!ifile) {
+      return PPR_NEED_INPUT;
     }
-    else {
-      next_sym = AEX_PPME_INPUT_END;
-    }
-    /* "defined" token (therefore operator) always disabled on body text macro expansion; in other words,
-     * you could #define defined, and that would work everywhere except in an #if clause. */
-    if (next_sym == AEX_PPME_DEFINED) next_sym = AEX_PPME_IDENT;
-
-    if (next_sym == AEX_PPME_IDENT) {
-      struct macro *m = mt_find(&pp->macro_table_, pp->ppme_input_->text_, pp->ppme_input_->text_len_);
-
-      if (m && !m->nested_invocation_) {
-        if (m->is_function_style_) {
-          next_sym = AEX_PPME_FUNCTION;
-        }
-        else {
-          next_sym = AEX_PPME_OBJECT;
-        }
-      }
-    }
-    r = aex_ppme_parse(&pp->ppme_, next_sym, pp, &pp->ppme_input_, pp->ppme_input_final_, &pp->pp_output_, 0);
-    switch (r) {
-      case _AEX_PPME_FINISH:
-        pp->pp_output_final_ = 1;
-        /* Preprocessor is done */
-        return PPR_SUCCESS;
-
-      case _AEX_PPME_FEED_ME:
-        /* Need more input; however, if we have a bit of output ready for the C parser, process that first so
-         * we minimize the number of tokens concurrently in-flight. */
-        if (pp->pp_output_) {
-          return PPR_SUCCESS;
-        }
-        break; /* get more input .. */
-
-      case _AEX_PPME_SYNTAX_ERROR:
-        if (pp->ppme_input_) {
-          dx_error_loc(pp->dx_, &pp->ppme_input_->situs_, "syntax error: \"%s\"\n", pp->ppme_input_->text_);
-        }
-        else {
-          dx_printf(pp->dx_, "%s(%d): syntax error at end of file\n", pp->ppme_input_file_, pp->ppme_input_line_);
-          pp->dx_->have_error_ = 1;
-        }
-        /* keep going */
-        goto macro_expander;
-
-      case _AEX_PPME_MATCH:
-      case _AEX_PPME_OVERFLOW:
-      case _AEX_PPME_NO_MEMORY:
-      case _AEX_PPME_END_OF_INPUT:
-      case _AEX_PPME_LEXICAL_ERROR:
-      case _AEX_PPME_INTERNAL_ERROR:
-      default:
-        if (pp->ppme_input_) {
-          dx_error_loc(pp->dx_, &pp->ppme_input_->situs_, "internal error (%d) from aex_ppme_parse: \"%s\"\n", r, pp->ppme_input_->text_);
-        }
-        else {
-          dx_printf(pp->dx_, "%s(%d): internal error (%d) from aex_ppme_parse at end of file\n", pp->ppme_input_file_, pp->ppme_input_line_, r);
-          pp->dx_->have_error_ = 1;
-        }
+    if (ifile->input_request_fn_) {
+      if (ifile->input_request_fn_(ifile->baton_, ifile)) {
         return PPR_FAILED;
-    }
-  }
-
-line_directives:
-  if (!pp->input_stack_) {
-    pp->ppme_input_final_ = 1;
-    goto macro_expander;
-  }
-
-  if (pp->input_stack_->ppld_end_processed_pop_now_) {
-    /* Current input file has finished; so there is no sense in requesting more input.
-     * Pop to parent if possible. */
-    if (!pp->input_stack_->unpoppable_) {
-      pp->ppld_input_final_ = 0;
-      pp_pop_input_file(pp);
-      return PPR_OLD_INCLUDE;
-    }
-    else {
-      pp->ppme_input_final_ = 1;
-      goto macro_expander;
-    }
-  }
-
-  if (!pp->ppld_input_ && !pp->have_ppld_input_line_ && pp->ppld_input_final_) {
-    pp->input_stack_->ppld_end_processed_pop_now_ = 1;
-    goto macro_expander;
-  }
-
-  if (pp->ppld_input_ || pp->have_ppld_input_line_ || pp->input_stack_->ppld_input_not_finished_) {
-    for (;;) {
-      int ppld_r;
-      /* Single lines are always final from the perspective of the ppld parser (hence we pass 1 for is_final),
-       * whether the total file is final (ppld_input_final_) determines if it is the last line of the file,
-       * this line might be empty. */
-      if (!pp->input_stack_->ppld_input_not_finished_) {
-        struct pptk *pp_current = pp->ppld_input_ ? aex_pptk_pop_front(&pp->ppld_input_) : NULL;
-        ppld_r = aex_ppld_parse(&pp->input_stack_->ppld_, pp_current ? g_aex_pptk_to_ppld_[pp_current->tok_] : /* have_ppld_input_line_ == true */ AEX_PPLD_INPUT_END, pp, &pp_current, &pp->ppld_input_, pp->have_ppld_input_line_, &pp->ppme_input_);
-        if (pp_current) {
-          /* Front (in current) was not processed, recombine */
-          pp->ppld_input_ = aex_pptk_join(pp_current, pp->ppld_input_);
-        }
-      }
-      else {
-        // Finish up last line before processing tokens for a new one.
-        ppld_r = aex_ppld_parse(&pp->input_stack_->ppld_, AEX_PPLD_INPUT_END, pp, NULL, NULL, 0, &pp->ppme_input_);
-        pp->input_stack_->ppld_input_not_finished_ = 0;
-      }
-      switch (ppld_r) {
-        case PPLD_INCLUDE_FILE:
-          pp->input_stack_->ppld_input_not_finished_ = 1;
-          pp->have_ppld_input_line_ = 0;
-          return PPR_NEW_INCLUDE;
-        case _AEX_PPLD_FINISH:
-          pp->ppme_input_file_ = pp->input_stack_->ppld_input_line_filename_;
-          pp->ppme_input_line_ = pp->input_stack_->ppld_input_line_;
-          pp->have_ppld_input_line_ = 0;
-          goto macro_expander;
-        case _AEX_PPLD_SYNTAX_ERROR:
-          if (pp->ppld_input_) {
-            dx_error_loc(pp->dx_, &pp->ppld_input_->situs_, "syntax error: \"%s\"\n", pp->ppld_input_->text_);
-          }
-          else {
-            dx_printf(pp->dx_, "%s(%d): syntax error at end of file\n", pp->input_stack_->ppld_input_line_filename_, pp->input_stack_->ppld_input_line_);
-            pp->dx_->have_error_ = 1;
-          }
-          break;
-        case _AEX_PPLD_MATCH:
-        case _AEX_PPLD_END_OF_INPUT:
-          /* Should not reach here - lexer internal codes */
-          assert(0 && "Should never return lexer internal codes");
-          return PPR_FAILED;
-        case _AEX_PPLD_LEXICAL_ERROR:
-          /* Not lexing, should not return lexer errors */
-          assert(0 && "Should never return lexer codes");
-          return PPR_FAILED;
-        case _AEX_PPLD_FEED_ME:
-          /* Needs more input */
-          /* If we have input for the macro-expander, process it first before creating more tokens */
-          if (pp->ppme_input_) {
-            pp->ppme_input_file_ = pp->input_stack_->ppld_input_line_filename_;
-            pp->ppme_input_line_ = pp->input_stack_->ppld_input_line_;
-            goto macro_expander;
-          }
-          goto tokenizer;
-        case _AEX_PPLD_OVERFLOW:
-          dx_printf(pp->dx_, "Overflow while parsing line directives\n");
-          pp->dx_->have_error_ = 1;
-          return PPR_FAILED;
-        case _AEX_PPLD_NO_MEMORY:
-          dx_printf(pp->dx_, "No memory while parsing line directives\n");
-          pp->dx_->have_error_ = 1;
-          return PPR_FAILED;
-        case _AEX_PPLD_INTERNAL_ERROR:
-          dx_printf(pp->dx_, "Internal error while parsing line directives\n");
-          pp->dx_->have_error_ = 1;
-          return PPR_FAILED;
-        default:
-          dx_printf(pp->dx_, "Unexpected returncode while parsing line directives\n");
-          return PPR_FAILED;
       }
     }
-  }
-
-tokenizer:;
-  int pptk_r;
-  do {
-    int break_out = 0;
-    if (aex_ppld_stack_accepts(&pp->input_stack_->ppld_, AEX_PPLD_HEADER_NAME)) {
-      switch (aex_pptk_mode(&pp->input_stack_->pptk_)) {
-        case M_AEX_PPTK_DEFAULT:
-        case M_AEX_PPTK_HEADER_NAME_POSSIBLE:
-          aex_pptk_set_mode(&pp->input_stack_->pptk_, M_AEX_PPTK_HEADER_NAME_POSSIBLE);
-          break;
-        case M_AEX_PPTK_TEMPLATE_DEFAULT:
-        case M_AEX_PPTK_TEMPLATE_HEADER_NAME_POSSIBLE:
-        case M_AEX_PPTK_TEMPLATE_START:
-          aex_pptk_set_mode(&pp->input_stack_->pptk_, M_AEX_PPTK_TEMPLATE_HEADER_NAME_POSSIBLE);
-          break;
-      }
-
-    }
-    else {
-      switch (aex_pptk_mode(&pp->input_stack_->pptk_)) {
-        case M_AEX_PPTK_DEFAULT:
-        case M_AEX_PPTK_HEADER_NAME_POSSIBLE:
-          aex_pptk_set_mode(&pp->input_stack_->pptk_, M_AEX_PPTK_DEFAULT);
-          break;
-        case M_AEX_PPTK_TEMPLATE_DEFAULT:
-        case M_AEX_PPTK_TEMPLATE_HEADER_NAME_POSSIBLE:
-          aex_pptk_set_mode(&pp->input_stack_->pptk_, M_AEX_PPTK_TEMPLATE_DEFAULT);
-          break;
-        case M_AEX_PPTK_TEMPLATE_START:
-          /* Keep as is; the pptk tokenizer itself will change in due course */
-          break;
-      }
+    if (!ifile->have_input_) {
+      return PPR_NEED_INPUT;
     }
 
-    pptk_r = aex_pptk_scan(&pp->input_stack_->pptk_, pp, &pp->ppld_input_, &pp->input_stack_->post_line_continuation_situs_);
-    switch (pptk_r) {
-      case PPTK_TOKENIZER_LINE_READY:
-        pp->have_ppld_input_line_ = 1;
-        pp->input_stack_->ppld_input_line_ = pp->input_stack_->pptk_input_line_;
-        pp->input_stack_->ppld_input_line_filename_ = pp->input_stack_->pptk_input_line_filename_;
-        int current_line = aex_pptk_endline(&pp->input_stack_->pptk_);
-        pp->input_stack_->pptk_input_line_ += current_line - pp->input_stack_->pptk_true_input_line_number_at_start_;
-        pp->input_stack_->pptk_true_input_line_number_at_start_ = current_line;
-        goto line_directives;
-      case _AEX_PPTK_FINISH:
-        break;
-      case _AEX_PPTK_MATCH:
-      case _AEX_PPTK_END_OF_INPUT:
-        assert(0); /* lexer internal code */
-        break;
-      case _AEX_PPTK_SYNTAX_ERROR: {
-        struct situs *situs = (struct situs *)aex_pptk_token_common_data(&pp->input_stack_->pptk_);
-        if (situs) {
-          dx_error_loc(pp->dx_, situs, "syntax error: \"%s\"\n", aex_pptk_text(&pp->input_stack_->pptk_));
-        }
-        else {
-          dx_printf(pp->dx_, "%s(%d): syntax error at column %d: \"%s\"\n", pp->input_stack_->pptk_input_line_filename_, aex_pptk_line(&pp->input_stack_->pptk_), aex_pptk_column(&pp->input_stack_->pptk_), aex_pptk_text(&pp->input_stack_->pptk_));
-          pp->dx_->have_error_ = 1;
-        }
-        break;
-      }
-      case _AEX_PPTK_LEXICAL_ERROR:
-        dx_printf(pp->dx_, "%s(%d): lexical error at column %d: \"%s\"\n", pp->input_stack_->pptk_input_line_filename_, aex_pptk_line(&pp->input_stack_->pptk_), aex_pptk_column(&pp->input_stack_->pptk_), aex_pptk_text(&pp->input_stack_->pptk_));
-        pp->dx_->have_error_ = 1;
-        break;
-      case _AEX_PPTK_INTERNAL_ERROR:
-        dx_printf(pp->dx_, "%s(%d): internal error at column %d: \"%s\"\n", pp->input_stack_->pptk_input_line_filename_, aex_pptk_line(&pp->input_stack_->pptk_), aex_pptk_column(&pp->input_stack_->pptk_), aex_pptk_text(&pp->input_stack_->pptk_));
-        pp->dx_->have_error_ = 1;
-        break;
-      case PPTK_TOKENIZER_HEADERNAME_CHECK:
-        /* Scanner thinks we should check if a headername is acceptable, this depends on whether the line directive parser can handle it. */
-        /* Go to the line directives parser, parse to the extent input is available, and then come back here (via _AEX_PPLD_FEED_ME) to
-         * check aex_ppld_stack_accepts(AEX_PPLD_HEADER_NAME) and set the pptk mode appropriately. */
-        goto line_directives;
-      case _AEX_PPTK_FEED_ME:
-        if (pp->ppld_input_) {
-          /* Process input first; this is not a complete line but ensures we push as much as possible prior to asking
-           * for more input. */
-          goto line_directives;
-        }
-        break;
+    pp->source_start_ = (const char *) ifile->input_;
+    pp->source_end_ = (const char *) ifile->input_ + ifile->input_size_;
+    pp->source_unpoppable_ = ifile->unpoppable_;
+    if (mulle_cpp_push_source(pp->cpp_, ifile->filename_, ifile->input_,
+                              ifile->input_size_) != mulle_cpp_ok) {
+      return PPR_FAILED;
     }
-  } while ((pptk_r != _AEX_PPTK_FEED_ME) && (pptk_r != _AEX_PPTK_FINISH));
-
-  if ((pptk_r == _AEX_PPTK_FINISH) && !pp->input_stack_->pptk_pushed_final_source_line_) {
-    /* Complete last line directive, the last line never ends with a newline. */
-    pp->have_ppld_input_line_ = 1;
-    pp->input_stack_->ppld_input_line_ = pp->input_stack_->pptk_input_line_;
-    pp->input_stack_->ppld_input_line_filename_ = pp->input_stack_->pptk_input_line_filename_;
-    pp->input_stack_->pptk_pushed_final_source_line_ = 1;
-    goto line_directives;
+    pp->source_started_ = 1;
   }
 
-  if (pp->ppld_input_) {
-    /* Process input first; this is not a complete line but ensures we push as much as possible prior to asking
-     * for more input. */
-    goto line_directives;
-  }
+  for (;;) {
+    struct mulle_cpp_token *token;
+    struct pptk *out;
+    int r;
 
-  if (pptk_r == _AEX_PPTK_FINISH) {
-    /* we only get here if trigraphs has depleted its input (or pptk
-     * would not return _AEX_PPTK_FINISH but _AEX_PPTK_FEED_ME) */
-    /* Cannot pop current input source, we've reached the end; bubble
-     * any remaining input up through the stages until we ultimately
-     * set all_done_ at the top... */
-    pp->ppld_input_final_ = 1;
-    goto line_directives;
-  }
-line_continuations:;
-  int pplc_r;
-  do {
-    pplc_r = aex_pplc_scan(&pp->input_stack_->pplc_, pp, &pp->input_stack_->post_line_continuation_, &pp->input_stack_->post_line_continuation_size_, &pp->input_stack_->post_line_continuation_size_allocated_, &pp->input_stack_->post_line_continuation_situs_, &pp->input_stack_->post_trigraph_situs_);
-    switch (pplc_r) {
-      case _AEX_PPLC_FINISH:
-        break;
-      case _AEX_PPLC_MATCH:
-      case _AEX_PPLC_END_OF_INPUT:
-        assert(0); /* lexer internal code */
-        break;
-      case _AEX_PPLC_SYNTAX_ERROR: {
-        struct situs *situs = (struct situs *)aex_pplc_token_common_data(&pp->input_stack_->pplc_);
-        if (situs) {
-          dx_error_loc(pp->dx_, situs, "syntax error: \"%s\"\n", aex_pplc_text(&pp->input_stack_->pplc_));
-        }
-        else {
-          dx_printf(pp->dx_, "%s(%d): syntax error at column %d: \"%s\"\n", pp->input_stack_->ppld_input_line_filename_, aex_pplc_line(&pp->input_stack_->pplc_), aex_pplc_column(&pp->input_stack_->pplc_), aex_pplc_text(&pp->input_stack_->pplc_));
-          pp->dx_->have_error_ = 1;
-        }
-        break;
+    r = mulle_cpp_next_token(pp->cpp_, &token);
+    if (r == mulle_cpp_ok) {
+      out = pp_convert_token(pp, token);
+      if (out) {
+        return PPR_SUCCESS;
       }
-      case _AEX_PPLC_LEXICAL_ERROR:
-        dx_printf(pp->dx_, "(%d): lexical error at column %d: \"%s\"\n", aex_pplc_line(&pp->input_stack_->pplc_), aex_pplc_column(&pp->input_stack_->pplc_), aex_pplc_text(&pp->input_stack_->pplc_));
-        pp->dx_->have_error_ = 1;
-        break;
-      case _AEX_PPLC_INTERNAL_ERROR:
-        dx_printf(pp->dx_, "(%d): internal error at column %d: \"%s\"\n", aex_pplc_line(&pp->input_stack_->pplc_), aex_pplc_column(&pp->input_stack_->pplc_), aex_pplc_text(&pp->input_stack_->pplc_));
-        pp->dx_->have_error_ = 1;
-        break;
-      case _AEX_PPLC_FEED_ME:
-        break;
+      continue;
     }
-  } while ((pplc_r != _AEX_PPLC_FEED_ME) && (pplc_r != _AEX_PPLC_FINISH));
 
-  if (pp->input_stack_->post_line_continuation_size_ || (pplc_r == _AEX_PPLC_FINISH)) {
-    /* Process output of line continuation translation phase first, to ensure we push as much as possible before asking
-     * more input. */
-    aex_pptk_set_input(&pp->input_stack_->pptk_, pp->input_stack_->post_line_continuation_, pp->input_stack_->post_line_continuation_size_, pplc_r == _AEX_PPLC_FINISH);
-    pp->input_stack_->post_line_continuation_size_ = 0;
-    goto tokenizer;
-  }
-
-trigraphs:;
-  int pptg_r;
-  do {
-    pptg_r = aex_pptg_scan(&pp->input_stack_->pptg_, pp, pp->input_stack_->filename_, &pp->input_stack_->post_trigraph_, &pp->input_stack_->post_trigraph_size_, &pp->input_stack_->post_trigraph_size_allocated_, &pp->input_stack_->post_trigraph_situs_);
-    switch (pptg_r) {
-      case _AEX_PPTG_FINISH:
-        break;
-      case _AEX_PPTG_MATCH:
-      case _AEX_PPTG_END_OF_INPUT:
-        assert(0); /* lexer internal code */
-        break;
-      case _AEX_PPTG_SYNTAX_ERROR: {
-        struct situs *situs = (struct situs *)aex_pptg_token_common_data(&pp->input_stack_->pptg_);
-        if (situs) {
-          dx_error_loc(pp->dx_, situs, "syntax error: \"%s\"\n", aex_pptg_text(&pp->input_stack_->pptg_));
+    if (r == mulle_cpp_need_input || r == mulle_cpp_eof) {
+      if (!pp->source_unpoppable_) {
+        pp->source_started_ = 0;
+        if (pp->input_file_) {
+          free((void *) pp->input_file_->filename_);
+          free(pp->input_file_);
+          pp->input_file_ = NULL;
         }
-        else {
-          dx_printf(pp->dx_, "%s(%d): syntax error at column %d: \"%s\"\n", pp->input_stack_->ppld_input_line_filename_, aex_pptg_line(&pp->input_stack_->pptg_), aex_pptg_column(&pp->input_stack_->pptg_), aex_pptg_text(&pp->input_stack_->pptg_));
-          pp->dx_->have_error_ = 1;
-        }
-        break;
+        return PPR_OLD_INCLUDE;
       }
-      case _AEX_PPTG_LEXICAL_ERROR:
-        dx_printf(pp->dx_, "(%d): lexical error at column %d: \"%s\"\n", aex_pptg_line(&pp->input_stack_->pptg_), aex_pptg_column(&pp->input_stack_->pptg_), aex_pptg_text(&pp->input_stack_->pptg_));
-        pp->dx_->have_error_ = 1;
-        break;
-      case _AEX_PPTG_INTERNAL_ERROR:
-        dx_printf(pp->dx_, "(%d): internal error at column %d: \"%s\"\n", aex_pptg_line(&pp->input_stack_->pptg_), aex_pptg_column(&pp->input_stack_->pptg_), aex_pptg_text(&pp->input_stack_->pptg_));
-        pp->dx_->have_error_ = 1;
-        break;
-      case _AEX_PPTG_FEED_ME:
-        break;
+      pp->pp_output_final_ = 1;
+      return PPR_SUCCESS;
     }
-  } while ((pptg_r != _AEX_PPTG_FEED_ME) && (pptg_r != _AEX_PPTG_FINISH));
 
-  if (pp->input_stack_->post_trigraph_size_ || (pptg_r == _AEX_PPTG_FINISH)) {
-    /* Process output of trigraph translation phase first, to ensure we push as much as possible before asking
-     * more input. */
-    aex_pplc_set_input(&pp->input_stack_->pplc_, pp->input_stack_->post_trigraph_, pp->input_stack_->post_trigraph_size_, pptg_r == _AEX_PPTG_FINISH);
-    pp->input_stack_->post_trigraph_size_ = 0;
-    goto line_continuations;
+    return PPR_FAILED;
   }
-
-  /* Get more input from the current file. */
-  if (!pp->input_stack_->input_request_fn_) {
-    return PPR_NEED_INPUT;
-  }
-
-  /* Call for more input */
-  int ir = pp->input_stack_->input_request_fn_(pp->input_stack_->baton_, pp->input_stack_);
-  if (ir) {
-    return ir;
-  }
-  /* And jump to trigraphs to process what we got. If we got nothing, and the caller or input_request_fn_
-   * did not mark it as the end of the file, then we might loop infinitely here, but that'd be a bug in
-   * the calling code (for not setting is_final() when calling aex_if_set_input(), or not calling aex_if_set_input()
-   * at all.) */
-  goto trigraphs;
-
 }

@@ -47,7 +47,8 @@ struct preprocessor;
 #define PPTK_TOKENIZER_HEADERNAME_CHECK -2
 
 /* xx(PPTK_CONSTANT, PPLD_CONSTANT, PPCE_CONSTANT, PPME_CONSTANT)
- * PPLD_CONSTANTs are from pp_line_directives.h (generated from pp_line_directives.cbrt) */
+ * The extra columns are historical mappings from the old generated
+ * preprocessor. Only the PPTK_* identifier is used now. */
 
 #define PPTK_ENUM_PPTOKENS \
   /* 0 value for invalid is important so array initializers will default to invalid if unspecified.*/ \
@@ -270,6 +271,7 @@ struct sl_type;
 struct pptk {
   struct pptk *next_, *prev_;
   enum pptoken tok_;
+  int prec_;
   size_t text_len_;
   char *text_;
   struct situs situs_;

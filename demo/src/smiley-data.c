@@ -1,0 +1,1 @@
+#include "../../renderbmp/smiley.c"

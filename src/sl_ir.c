@@ -3866,6 +3866,18 @@ struct ir_block *sl_ir_expr(struct ir_block *blk, struct ir_temp *chain_reg, str
     case exop_component_selection: /* e.g. myvec3.xxz */
     case exop_constructor: {
       size_t ci;
+      if ((x->op_ == exop_constructor) &&
+          (sl_type_unqualified(x->constructor_type_)->kind_ == sltk_struct)) {
+        for (ci = 0; ci < x->num_children_; ++ci) {
+          struct sl_expr *child = x->children_[ci];
+          blk = sl_ir_expr(blk, chain_reg, frame, child);
+          sl_ir_need_rvalue(blk, chain_reg, frame, child);
+          sl_reg_emit_move(blk, chain_reg, frame,
+                           EXPR_RVALUE(child), NULL,
+                           x->base_regs_.v_.comp_.fields_ + ci, NULL);
+        }
+        break;
+      }
       for (ci = 0; ci < x->num_components_; ++ci) {
         struct sl_component_selection *cs = x->swizzle_ + ci;
         sl_reg_emit_move_c2c(blk, chain_reg, frame,

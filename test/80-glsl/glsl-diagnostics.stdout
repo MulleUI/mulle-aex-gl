@@ -1,0 +1,32 @@
+missing-semicolon:
+vertex-shader(4): syntax error at column 1: expected ';', found "}"
+
+invalid-number:
+vertex-shader(3): syntax error at column 17: expected ';', found ".3"
+
+swizzle-out-of-range:
+vertex-shader(4): Type vec2 is not large enough for component "z"
+
+ternary-type-mismatch:
+vertex-shader(3): Conditional expression with incompatible types
+
+reserved-class:
+vertex-shader(1): syntax error at column 1: "class"
+
+unterminated-comment:
+vertex-shader(6): unterminated comment
+
+redeclaration:
+vertex-shader(4): Error: duplicate identifier "x" declaration
+vertex-shader(3): See original use of "x"
+
+macro-expansion:
+vertex-shader(4): Error: identifier "foo" not declared
+
+include:
+vertex-shader(1): #include is not supported in GLSL ES 1.00
+
+missing-brace:
+vertex-shader(3): syntax error, unexpected end of file
+
+10/10 diagnostics captured

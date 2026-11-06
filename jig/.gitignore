@@ -1,3 +1,11 @@
 # Don't commit jig test.bmp to git (aside from the initial placeholder one)
 # this prevents contaminating the git status everytime we run an experiment.
 test.bmp
+
+# renderbmp writes these into jig/, index.html displays them
+triangle_coverage.bmp
+z_triangles.bmp
+z_triangles_zbuf.bmp
+sixteen_lines.bmp
+mipmap_triangle.bmp
+world_is_yours.bmp
