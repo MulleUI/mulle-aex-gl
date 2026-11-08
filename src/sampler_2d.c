@@ -496,7 +496,10 @@ static void texture2D(float *prgba, struct sampler_2d *s2d, float s, float t, fl
           break;
         }
         case s2d_repeat: {
-          /* leave as-is, mask will take care of it */
+          /* The linear filter flips T into 1 - tm before addressing the
+           * texel, so wrap here rather than relying on the repeat mask.
+           * Otherwise negative t values clamp to the first row. */
+          tm = tm - floorf( tm);
           break;
         }
         case s2d_mirrored_repeat: {
