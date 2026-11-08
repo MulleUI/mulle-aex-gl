@@ -1,1 +1,1 @@
-#include "../../renderbmp/smiley.c"
+#include "../assets/smiley/smiley.c"

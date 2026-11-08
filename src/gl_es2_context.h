@@ -245,6 +245,13 @@ struct gl_es2_program {
   struct gl_es2_program_shader_attachment fragment_shader_;
   struct gl_es2_program_shader_attachment debug_shader_;
 
+  /* Shaders referenced by the linked executable. Unlike the attachments above,
+   * these survive glDetachShader and are released when the program is deleted
+   * or relinked. */
+  struct gl_es2_shader *linked_vertex_shader_;
+  struct gl_es2_shader *linked_fragment_shader_;
+  struct gl_es2_shader *linked_debug_shader_;
+
   struct sl_program program_;
 };
 
@@ -259,6 +266,9 @@ struct gl_es2_shader {
 
   /* glGetShaderiv(GL_DELETE_STATUS) */
   int flagged_for_deletion_:1;
+
+  /* Number of programs whose linked executable still references this shader. */
+  int num_programs_linked_;
 
   /* glGetShaderiv(GL_COMPILE_STATUS) */
   int compilation_status_:1;

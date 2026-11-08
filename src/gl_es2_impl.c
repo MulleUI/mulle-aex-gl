@@ -103,25 +103,77 @@ static void generic_name_gen(struct ref_range_allocator *rra, gl_es2_sizei n, gl
   }
 }
 
-static void detach_program_shader_with_cascaded_delete(struct gl_es2_program_shader_attachment *psa) {
+static void delete_shader_if_unreferenced(struct gl_es2_shader *shad) {
   struct gl_es2_context *c = gl_es2_ctx_dont_lock();
+  if (shad->flagged_for_deletion_ &&
+      !shad->first_program_attached_to_ &&
+      !shad->num_programs_linked_) {
+    ref_range_mark_range_free(&c->shader_rra_, shad->no_.name_, shad->no_.name_ + 1);
+    not_remove(&c->shader_not_, &shad->no_);
+    gl_es2_shader_cleanup(shad);
+    free(shad);
+  }
+}
+
+static void detach_program_shader_with_cascaded_delete(struct gl_es2_program_shader_attachment *psa) {
   struct gl_es2_shader *shad;
   shad = psa->shader_;
   if (!shad) {
     return;
   }
   gl_es2_program_shader_attachment_detach(psa);
-  if (!shad->first_program_attached_to_ && shad->flagged_for_deletion_) {
-    ref_range_mark_range_free(&c->shader_rra_, shad->no_.name_, shad->no_.name_ + 1);
-    not_remove(&c->shader_not_, &shad->no_);
+  delete_shader_if_unreferenced(shad);
+}
+
+static void release_linked_shader(struct gl_es2_shader *shad) {
+  if (!shad) {
+    return;
   }
+  if (shad->num_programs_linked_) {
+    --shad->num_programs_linked_;
+  }
+  delete_shader_if_unreferenced(shad);
+}
+
+static void release_program_linked_shaders(struct gl_es2_program *prog) {
+  struct gl_es2_shader *shad;
+  shad = prog->linked_vertex_shader_;
+  prog->linked_vertex_shader_ = NULL;
+  release_linked_shader(shad);
+  shad = prog->linked_fragment_shader_;
+  prog->linked_fragment_shader_ = NULL;
+  release_linked_shader(shad);
+  shad = prog->linked_debug_shader_;
+  prog->linked_debug_shader_ = NULL;
+  release_linked_shader(shad);
+}
+
+static void acquire_program_linked_shaders(struct gl_es2_program *prog) {
+  prog->linked_vertex_shader_ = prog->vertex_shader_.shader_;
+  if (prog->linked_vertex_shader_) {
+    ++prog->linked_vertex_shader_->num_programs_linked_;
+  }
+  prog->linked_fragment_shader_ = prog->fragment_shader_.shader_;
+  if (prog->linked_fragment_shader_) {
+    ++prog->linked_fragment_shader_->num_programs_linked_;
+  }
+  prog->linked_debug_shader_ = prog->debug_shader_.shader_;
+  if (prog->linked_debug_shader_) {
+    ++prog->linked_debug_shader_->num_programs_linked_;
+  }
+}
+
+static void delete_program_shaders(struct gl_es2_program *prog) {
+  release_program_linked_shaders(prog);
+  detach_program_shader_with_cascaded_delete(&prog->vertex_shader_);
+  detach_program_shader_with_cascaded_delete(&prog->fragment_shader_);
+  detach_program_shader_with_cascaded_delete(&prog->debug_shader_);
 }
 
 static void check_old_program_for_deletion(struct gl_es2_program *old_prog) {
   struct gl_es2_context *c = gl_es2_ctx_dont_lock();
   if (old_prog && old_prog->flagged_for_deletion_) {
-    detach_program_shader_with_cascaded_delete(&old_prog->vertex_shader_);
-    detach_program_shader_with_cascaded_delete(&old_prog->fragment_shader_);
+    delete_program_shaders(old_prog);
     ref_range_mark_range_free(&c->program_rra_, old_prog->no_.name_, old_prog->no_.name_ + 1);
     not_remove(&c->program_not_, &old_prog->no_);
     gl_es2_program_cleanup(old_prog);
@@ -2175,8 +2227,7 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(DeleteProgram)
         prog->flagged_for_deletion_ = 1;
       }
       else {
-        detach_program_shader_with_cascaded_delete(&prog->vertex_shader_);
-        detach_program_shader_with_cascaded_delete(&prog->fragment_shader_);
+        delete_program_shaders(prog);
         ref_range_mark_range_free(&c->program_rra_, prog_name, prog_name + 1);
         not_remove(&c->program_not_, &prog->no_);
         gl_es2_program_cleanup(prog);
@@ -2237,7 +2288,7 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(DeleteShader)(
     struct gl_es2_shader *shad = NULL;
     shad = (struct gl_es2_shader *)not_find(&c->shader_not_, shad_name);
     if (shad) {
-      if (shad->first_program_attached_to_) {
+      if (shad->first_program_attached_to_ || shad->num_programs_linked_) {
         shad->flagged_for_deletion_ = 1;
       }
       else {
@@ -2615,10 +2666,15 @@ static void perform_draw(primitive_assembly_mode_t mode,
     c->sampler_2D_uniform_loading_table_[n] = &c->active_texture_units_[n].texture_2d_->texture_2d_;
     c->sampler_Cube_uniform_loading_table_[n] = c->active_texture_units_[n].texture_cube_map_->texture_cube_maps_;
   }
+  if (!prog->linked_vertex_shader_ || !prog->linked_fragment_shader_) {
+    /* No successfully linked executable. */
+    return;
+  }
+
   sl_program_load_uniforms_for_execution(prog, GL_ES2_IMPL_MAX_NUM_TEXTURE_UNITS, c->sampler_2D_uniform_loading_table_, c->sampler_Cube_uniform_loading_table_);
 
-  primitive_assembly_draw_elements(&prog->pa_, &c->attribs_, prog->vertex_shader_, &prog->ar_, &prog->cs_, &c->ras_, 
-                                   &prog->fragbuf_, prog->fragment_shader_,
+  primitive_assembly_draw_elements(&prog->pa_, &c->attribs_, prog->linked_vertex_shader_, &prog->ar_, &prog->cs_, &c->ras_, 
+                                   &prog->fragbuf_, prog->linked_fragment_shader_,
                                    vp_x, vp_y, vp_width, vp_height, 
                                    c->near_plane_, c->far_plane_,
                                    (uint32_t)width, (uint32_t)height, 
@@ -5341,6 +5397,8 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(LinkProgram)(g
       gl_es2_ctx_release(c);
       return;
     case SL_ERR_OK:
+      release_program_linked_shaders(prog);
+      acquire_program_linked_shaders(prog);
       break;
   }
   gl_es2_ctx_release(c);
@@ -8672,7 +8730,7 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(run_debug_shad
     return ;
   }
 
-  if (!prog->debug_shader_.shader_) {
+  if (!prog->program_.linked_debug_shader_) {
     set_gl_err(GL_ES2_INVALID_VALUE);
     gl_es2_ctx_release(c);
     return;
@@ -8680,7 +8738,7 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(run_debug_shad
 
   int r;
   struct sl_function *vmain = NULL;
-  struct sl_shader *debug_shader = &prog->debug_shader_.shader_->shader_;
+  struct sl_shader *debug_shader = prog->program_.linked_debug_shader_;
   vmain = sl_compilation_unit_find_function(&debug_shader->cu_, "main");
   if (!vmain) {
     set_gl_err(GL_ES2_INVALID_VALUE);
@@ -8692,7 +8750,7 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(run_debug_shad
   uint8_t *exec_chain = debug_shader->exec_.exec_chain_reg_;
   exec_chain[0] = 0;
 
-  r = sl_exec_run(&prog->debug_shader_.shader_->shader_.exec_, vmain, 0);
+  r = sl_exec_run(&debug_shader->exec_, vmain, 0);
 
   if (r) {
     set_gl_err(GL_ES2_INVALID_OPERATION);

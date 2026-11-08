@@ -67,7 +67,7 @@ but it sure makes for such a great test case.
 
 If you happen to know me, you might recognize this from [firecrest.com](https://firecrest.com/) ; the data is from [naturalearthdata.com](https://naturalearthdata.com)
 and the code is a relatively straight port from the original `.js` (feel free to compare the two, view the source at [firecrest.com](https://firecrest.com/) 
-and compare it with [demo_the_world_is_yours.c](/renderbmp/demo_the_world_is_yours.c)
+and compare it with [main-world.c](demo/src/main-world.c)
 
 ![World is Yours](docs/world_is_yours.png)
 

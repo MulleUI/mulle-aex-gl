@@ -73,3 +73,5 @@ docs/specs/
 
 # Visual studio dir.
 .vs/
+BUGREPORT-*
+bugreport-*

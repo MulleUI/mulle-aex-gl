@@ -70,6 +70,13 @@ struct sl_program {
   struct sl_shader *debug_shader_;
   struct sl_program *next_program_using_debug_shader_, *prev_program_using_debug_shader_;
 
+  /* Shaders that produced the current linked executable. These outlive
+   * detaching the shaders and remain valid until the program is relinked
+   * or deleted. */
+  struct sl_shader *linked_vertex_shader_;
+  struct sl_shader *linked_fragment_shader_;
+  struct sl_shader *linked_debug_shader_;
+
   struct attrib_binding_table abt_;
   struct attrib_routing ar_;
 

@@ -3152,275 +3152,91 @@ void primitive_assembly_process_fragments(struct primitive_assembly *pa,
    * the blend function will not render pixels that were stencilled out. */
 
   if (enable_stencil_test && stencil_mask) {
-    /* FB_IDX_TEMPL_BYTE_0 now holds the result of the stencil function, 0xFF for a pass, 0x00
-     * for a failure */
-    /* Consuming FB_IDX_TEMP_BYTE_2 and FB_IDX_TEMP_BYTE_3 here to hold the result of the first
-     * stencil operator pass -- note how FB_IDX_TEMP_BYTE_2 is a byte size column yet we use it
-     * as a short word, hence FB_IDX_TEMP_BYTE_3 is also taken. */
+    /* FB_IDX_TEMPL_BYTE_0 holds the result of the stencil function, 0xFF for a
+     * pass, 0x00 for a failure. FB_IDX_TEMPL_BYTE_1 holds the result of the
+     * depth test (which already incorporates the stencil function result.)
+     *
+     * The stencil operation has to read-modify-write the stencil buffer one
+     * fragment at a time, in fragment order. A batch of fragments can address
+     * the same stencil value more than once: triangles may overlap, and the
+     * rasterizer emits masked-out padding fragments for mipmapping/dFdx/dFdy
+     * purposes. Computing every result from the values found at the start of
+     * the batch and writing them back afterwards lets the last fragment win
+     * instead of accumulating (or cancelling) the winding number. That showed
+     * up as background-coloured holes and dotted anti-aliased edges in
+     * stencil-filled concave or multi-subpath paths. Re-reading the stencil
+     * value here, per fragment, keeps the sequence correct. */
+    for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
+      uint8_t stencil_pass8 = ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
+      uint8_t depth_pass8 = ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row];
+      primitive_assembly_stencil_op_t op;
+      uint16_t mask;
+      uint16_t new_stencil_value;
+      uint16_t old_stencil_value;
+      uint16_t *restrict stencil_ptr;
 
-    /* sfail: the stencil failed (FB_IDX_TEMP_BYTE_0 is 0) but the pixel is valid (FB_IDX_MASK is 0xFF) */
-    switch (sfail_op) {
-      case PASO_ZERO:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row];
-          uint16_t must_be_clr = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
-          uint16_t mask = must_be_set & (~must_be_clr) & stencil_mask;
-          uint16_t *restrict stencil_ptr = ((uint16_t *restrict *restrict)fragbuf->column_data_[FB_IDX_STENCIL_PTR])[frag_row];
+      /* FB_IDX_MASK is the rasterizer's pixel mask; 0x00 marks fragments that
+       * are only present for mipmapping/dFdx/dFdy purposes. Those must not
+       * touch the stencil buffer. */
+      mask = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row];
+      mask &= (uint16_t)stencil_mask;
 
-          ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row] = 0x0000 | ((*stencil_ptr) & ~mask);
-        }
-        break;
-      case PASO_REPLACE:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row];
-          uint16_t must_be_clr = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
-          uint16_t mask = must_be_set & (~must_be_clr) & stencil_mask;
-          uint16_t *restrict stencil_ptr = ((uint16_t *restrict *restrict)fragbuf->column_data_[FB_IDX_STENCIL_PTR])[frag_row];
+      /* FB_IDX_MASK is reused by blend() to decide which pixels to write. */
+      ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row] = depth_pass8;
 
-          ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row] = (stencil_func_ref & mask) | ((*stencil_ptr) & ~mask);
-        }
-        break;
-      case PASO_INCR:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row];
-          uint16_t must_be_clr = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
-          uint16_t mask = must_be_set & (~must_be_clr) & stencil_mask;
-          uint16_t *restrict stencil_ptr = ((uint16_t *restrict *restrict)fragbuf->column_data_[FB_IDX_STENCIL_PTR])[frag_row];
-          uint16_t old_stencil_value = *stencil_ptr;
-          uint16_t new_stencil_value = (old_stencil_value == 0xFFFF) ? old_stencil_value : old_stencil_value + 1;
-          ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row] = (new_stencil_value & mask) | (old_stencil_value & ~mask);
-        }
-        break;
-      case PASO_DECR:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row];
-          uint16_t must_be_clr = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
-          uint16_t mask = must_be_set & (~must_be_clr) & stencil_mask;
-          uint16_t *restrict stencil_ptr = ((uint16_t *restrict *restrict)fragbuf->column_data_[FB_IDX_STENCIL_PTR])[frag_row];
-          uint16_t old_stencil_value = *stencil_ptr;
-          uint16_t new_stencil_value = (old_stencil_value == 0x0000) ? old_stencil_value : old_stencil_value - 1;
-          ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row] = (new_stencil_value & mask) | (old_stencil_value & ~mask);
-        }
-        break;
-      case PASO_INCR_WRAP:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row];
-          uint16_t must_be_clr = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
-          uint16_t mask = must_be_set & (~must_be_clr) & stencil_mask;
-          uint16_t *restrict stencil_ptr = ((uint16_t *restrict *restrict)fragbuf->column_data_[FB_IDX_STENCIL_PTR])[frag_row];
-          uint16_t old_stencil_value = *stencil_ptr;
-          uint16_t new_stencil_value = old_stencil_value + 1;
-          ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row] = (new_stencil_value & mask) | (old_stencil_value & ~mask);
-        }
-        break;
-      case PASO_DECR_WRAP:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row];
-          uint16_t must_be_clr = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
-          uint16_t mask = must_be_set & (~must_be_clr) & stencil_mask;
-          uint16_t *restrict stencil_ptr = ((uint16_t *restrict *restrict)fragbuf->column_data_[FB_IDX_STENCIL_PTR])[frag_row];
-          uint16_t old_stencil_value = *stencil_ptr;
-          uint16_t new_stencil_value = old_stencil_value - 1;
-          ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row] = (new_stencil_value & mask) | (old_stencil_value & ~mask);
-        }
-        break;
-      case PASO_KEEP:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint16_t stencil_value = *((uint16_t *restrict *restrict)fragbuf->column_data_[FBCT_STENCIL_PTR])[frag_row];
-          ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row] = stencil_value;
-        }
-        break;
-      case PASO_INVERT:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row];
-          uint16_t must_be_clr = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
-          uint16_t mask = must_be_set & (~must_be_clr) & stencil_mask;
-          uint16_t *restrict stencil_ptr = ((uint16_t *restrict *restrict)fragbuf->column_data_[FB_IDX_STENCIL_PTR])[frag_row];
-          uint16_t old_stencil_value = *stencil_ptr;
-          uint16_t new_stencil_value = ~old_stencil_value;
-          ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row] = (new_stencil_value & mask) | (old_stencil_value & ~mask);
-        }
-        break;
-    }
+      if (!mask) {
+        continue;
+      }
 
-    /* zfail: the stencil passed (FB_IDX_TEMP_BYTE_0 is 0xFF) but the zbuffer test failed (FB_IDX_TEMP_BYTE_1 is 0x00) */
-    switch (zfail_op) {
-      case PASO_ZERO:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
-          uint16_t must_be_clr = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row];
-          uint16_t mask = must_be_set & (~must_be_clr) & stencil_mask;
-          uint16_t old_stencil_value = ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row];
+      if (!stencil_pass8) {
+        /* sfail: the stencil function failed. */
+        op = sfail_op;
+      }
+      else if (!depth_pass8) {
+        /* zfail: the stencil function passed, but the depth test failed. */
+        op = zfail_op;
+      }
+      else {
+        /* zpass: both the stencil function and the depth test passed. */
+        op = zpass_op;
+      }
 
-          ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row] = 0x0000 | (old_stencil_value & ~mask);
-        }
-        break;
-      case PASO_REPLACE:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
-          uint16_t must_be_clr = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row];
-          uint16_t mask = must_be_set & (~must_be_clr) & stencil_mask;
-          uint16_t old_stencil_value = ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row];
+      stencil_ptr = ((uint16_t *restrict *restrict)fragbuf->column_data_[FB_IDX_STENCIL_PTR])[frag_row];
+      old_stencil_value = *stencil_ptr;
 
-          ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row] = (stencil_func_ref & mask) | (old_stencil_value & ~mask);
-        }
-        break;
-      case PASO_INCR:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
-          uint16_t must_be_clr = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row];
-          uint16_t mask = must_be_set & (~must_be_clr) & stencil_mask;
-          uint16_t old_stencil_value = ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row];
-          uint16_t new_stencil_value = (old_stencil_value == 0xFFFF) ? old_stencil_value : old_stencil_value + 1;
-          ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row] = (new_stencil_value & mask) | (old_stencil_value & ~mask);
-        }
-        break;
-      case PASO_DECR:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
-          uint16_t must_be_clr = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row];
-          uint16_t mask = must_be_set & (~must_be_clr) & stencil_mask;
-          uint16_t old_stencil_value = ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row];
-          uint16_t new_stencil_value = (old_stencil_value == 0x0000) ? old_stencil_value : old_stencil_value - 1;
-          ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row] = (new_stencil_value & mask) | (old_stencil_value & ~mask);
-        }
-        break;
-      case PASO_INCR_WRAP:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
-          uint16_t must_be_clr = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row];
-          uint16_t mask = must_be_set & (~must_be_clr) & stencil_mask;
-          uint16_t old_stencil_value = ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row];
-          uint16_t new_stencil_value = old_stencil_value + 1;
-          ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row] = (new_stencil_value & mask) | (old_stencil_value & ~mask);
-        }
-        break;
-      case PASO_DECR_WRAP:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
-          uint16_t must_be_clr = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row];
-          uint16_t mask = must_be_set & (~must_be_clr) & stencil_mask;
-          uint16_t old_stencil_value = ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row];
-          uint16_t new_stencil_value = old_stencil_value - 1;
-          ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row] = (new_stencil_value & mask) | (old_stencil_value & ~mask);
-        }
-        break;
-      case PASO_KEEP:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint16_t old_stencil_value = ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row];
-          ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row] = old_stencil_value;
-        }
-        break;
-      case PASO_INVERT:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
-          uint16_t must_be_clr = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row];
-          uint16_t mask = must_be_set & (~must_be_clr) & stencil_mask;
-          uint16_t old_stencil_value = ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row];
-          uint16_t new_stencil_value = ~old_stencil_value;
-          ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row] = (new_stencil_value & mask) | (old_stencil_value & ~mask);
-        }
-        break;
-    }
+      switch (op) {
+        case PASO_ZERO:
+          new_stencil_value = 0x0000 | (old_stencil_value & ~mask);
+          break;
+        case PASO_REPLACE:
+          new_stencil_value = (stencil_func_ref & mask) | (old_stencil_value & ~mask);
+          break;
+        case PASO_INCR:
+          new_stencil_value = (old_stencil_value == 0xFFFF) ? old_stencil_value : old_stencil_value + 1;
+          new_stencil_value = (new_stencil_value & mask) | (old_stencil_value & ~mask);
+          break;
+        case PASO_DECR:
+          new_stencil_value = (old_stencil_value == 0x0000) ? old_stencil_value : old_stencil_value - 1;
+          new_stencil_value = (new_stencil_value & mask) | (old_stencil_value & ~mask);
+          break;
+        case PASO_INCR_WRAP:
+          new_stencil_value = (uint16_t)(old_stencil_value + 1);
+          new_stencil_value = (new_stencil_value & mask) | (old_stencil_value & ~mask);
+          break;
+        case PASO_DECR_WRAP:
+          new_stencil_value = (uint16_t)(old_stencil_value - 1);
+          new_stencil_value = (new_stencil_value & mask) | (old_stencil_value & ~mask);
+          break;
+        case PASO_KEEP:
+          new_stencil_value = old_stencil_value;
+          break;
+        default: /* PASO_INVERT */
+          new_stencil_value = (uint16_t)~old_stencil_value;
+          new_stencil_value = (new_stencil_value & mask) | (old_stencil_value & ~mask);
+          break;
+      }
 
-
-    /* zpass: the stencil passed and the zbuffer test passed (FB_IDX_TEMP_BYTE_1 is 0xFF); this is the same as just testing for FB_IDX_TEMPL_BYTE_1,
-     * Note that we also take the opportunity here to update FB_IDX_MASK to be set for every pixel that passed both the stencil and the zbuffer
-     * tests. Also note that, given zpass is the final pass of three (sfail, zfail, zpass), this is where we write back into the stencil buffer */
-    switch (zpass_op) {
-      case PASO_ZERO:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint8_t must_be_set8 = ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row];
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)must_be_set8;
-          uint16_t mask = must_be_set & stencil_mask;
-          uint16_t *restrict stencil_ptr = ((uint16_t *restrict *restrict)fragbuf->column_data_[FB_IDX_STENCIL_PTR])[frag_row];
-          uint16_t old_stencil_value = ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row];
-
-          *stencil_ptr = 0x0000 | (old_stencil_value & ~mask);
-          ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row] = must_be_set8;
-        }
-        break;
-      case PASO_REPLACE:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint8_t must_be_set8 = ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row];
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)must_be_set8;
-          uint16_t mask = must_be_set & stencil_mask;
-          uint16_t *restrict stencil_ptr = ((uint16_t *restrict *restrict)fragbuf->column_data_[FB_IDX_STENCIL_PTR])[frag_row];
-          uint16_t old_stencil_value = ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row];
-          *stencil_ptr = (stencil_func_ref & mask) | (old_stencil_value & ~mask);
-          ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row] = must_be_set8;
-        }
-        break;
-      case PASO_INCR:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint8_t must_be_set8 = ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row];
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)must_be_set8;
-          uint16_t mask = must_be_set & stencil_mask;
-          uint16_t *restrict stencil_ptr = ((uint16_t *restrict *restrict)fragbuf->column_data_[FB_IDX_STENCIL_PTR])[frag_row];
-          uint16_t old_stencil_value = ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row];
-          uint16_t new_stencil_value = (old_stencil_value == 0xFFFF) ? old_stencil_value : old_stencil_value + 1;
-          *stencil_ptr = (new_stencil_value & mask) | (old_stencil_value & ~mask);
-          ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row] = must_be_set8;
-        }
-        break;
-      case PASO_DECR:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint8_t must_be_set8 = ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row];
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)must_be_set8;
-          uint16_t mask = must_be_set & stencil_mask;
-          uint16_t *restrict stencil_ptr = ((uint16_t *restrict *restrict)fragbuf->column_data_[FB_IDX_STENCIL_PTR])[frag_row];
-          uint16_t old_stencil_value = ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row];
-          uint16_t new_stencil_value = (old_stencil_value == 0x0000) ? old_stencil_value : old_stencil_value - 1;
-          *stencil_ptr = (new_stencil_value & mask) | (old_stencil_value & ~mask);
-          ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row] = must_be_set8;
-        }
-        break;
-      case PASO_INCR_WRAP:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint8_t must_be_set8 = ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row];
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)must_be_set8;
-          uint16_t mask = must_be_set & stencil_mask;
-          uint16_t *restrict stencil_ptr = ((uint16_t *restrict *restrict)fragbuf->column_data_[FB_IDX_STENCIL_PTR])[frag_row];
-          uint16_t old_stencil_value = ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row];
-          uint16_t new_stencil_value = old_stencil_value + 1;
-          *stencil_ptr = (new_stencil_value & mask) | (old_stencil_value & ~mask);
-          ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row] = must_be_set8;
-        }
-        break;
-      case PASO_DECR_WRAP:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint8_t must_be_set8 = ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row];
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)must_be_set8;
-          uint16_t mask = must_be_set & stencil_mask;
-          uint16_t *restrict stencil_ptr = ((uint16_t *restrict *restrict)fragbuf->column_data_[FB_IDX_STENCIL_PTR])[frag_row];
-          uint16_t old_stencil_value = ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row];
-          uint16_t new_stencil_value = old_stencil_value - 1;
-          *stencil_ptr = (new_stencil_value & mask) | (old_stencil_value & ~mask);
-          ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row] = must_be_set8;
-        }
-        break;
-      case PASO_KEEP:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint8_t must_be_set8 = ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row];
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)must_be_set8;
-          uint16_t *restrict stencil_ptr = ((uint16_t *restrict *restrict)fragbuf->column_data_[FB_IDX_STENCIL_PTR])[frag_row];
-          uint16_t old_stencil_value = ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row];
-          *stencil_ptr = old_stencil_value;
-          ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row] = must_be_set8;
-        }
-        break;
-      case PASO_INVERT:
-        for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-          uint8_t must_be_set8 = ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row];
-          uint16_t must_be_set = (uint16_t)(int16_t)(int8_t)must_be_set8;
-          uint16_t mask = must_be_set & stencil_mask;
-          uint16_t *restrict stencil_ptr = ((uint16_t *restrict *restrict)fragbuf->column_data_[FB_IDX_STENCIL_PTR])[frag_row];
-          uint16_t old_stencil_value = ((uint16_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_2])[frag_row];
-          uint16_t new_stencil_value = ~old_stencil_value;
-          *stencil_ptr = (new_stencil_value & mask) | (old_stencil_value & ~mask);
-          ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row] = must_be_set8;
-        }
-        break;
+      *stencil_ptr = new_stencil_value;
     }
   }
   else {

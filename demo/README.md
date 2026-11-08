@@ -58,9 +58,10 @@ Open `http://localhost:8000/pixi-filters.html?filter=crt&time=0.5`. `filter`
 accepts `crt`, `glitch`, `zoom`, `shockwave`, or `ascii`; `time` freezes the
 animation for reproducible screenshots; `size` sets the ASCII cell size and
 defaults to `20`, matching the native demo. Keys `1`–`5` switch filters live.
-The harness loads PixiJS 7 and pixi-filters 5.3.0 from jsDelivr. The native
-demo still samples a 256x256 scene while PixiJS filters an 800x600 sprite, so
-compare the filter character rather than expecting pixel-exact output.
+The harness loads PixiJS 7 and pixi-filters 5.3.0 from jsDelivr; both are
+MIT-licensed. The native demo still samples a 256x256 scene while PixiJS
+filters an 800x600 sprite, so compare the filter character rather than
+expecting pixel-exact output.
 
 The SDL3 dependency is `release-3.2.0` and is built from
 `https://github.com/libsdl-org/SDL/archive/release-3.2.0.tar.gz` with the

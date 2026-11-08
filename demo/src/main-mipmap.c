@@ -8,7 +8,7 @@
 #include "demo-common.h"
 #include "gl_es2_impl.h"
 
-#include "../../renderbmp/smiley.h"
+#include "../assets/smiley/smiley.h"
 
 
 #define WINDOW_WIDTH  800

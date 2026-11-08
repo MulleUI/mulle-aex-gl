@@ -51,8 +51,17 @@ recursive package management with cross-platform builds via **cmake**:
 With vibecoding enabled and a `test/` folder present, `mulle-sde craft` is
 intentionally disabled; use `mulle-sde test craft` instead.
 
-The headless smoke test is `renderbmp`, which renders the upstream demos into
-BMP files without a display server.
+The headless regression suite is `mulle-sde test run`. Visual demos live under
+`demo/` and use SDL; `demo/src/main-pixi-filters.c --dump-scene PATH` renders
+the shared scene to a BMP without opening a window.
+
+## Third-party notices
+
+The PixiJS filter shaders adapted in `demo/src/main-pixi-filters.c` come from
+[pixi-filters](https://github.com/pixijs/filters) and are MIT-licensed; see
+[demo/LICENSES/PixiJS-Filters.txt](demo/LICENSES/PixiJS-Filters.txt). The
+browser comparison harness loads PixiJS and pixi-filters from jsDelivr at
+runtime; both are MIT-licensed.
 
 ## License
 
