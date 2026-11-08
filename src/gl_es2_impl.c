@@ -1408,7 +1408,7 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(Clear)(gl_es2_
           }
           case gl_es2_renderbuffer_format_depth32: {
             uint32_t clear_depth32;
-            uint64_t cd = (uint64_t)floorf(clear_depth_f * 0x10000);
+            uint64_t cd = (uint64_t)floorf(clear_depth_f * 4294967296.0f);
             clear_depth32 = ((uint32_t)cd) - (uint32_t)(cd >> 32);
 
             blitter_blit_apply_mask32(bitmap, stride, c->depth_mask_ ? 0xFFFFFFFF : 0x00000000, clear_depth32,
