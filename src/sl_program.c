@@ -74,6 +74,9 @@ void sl_program_init(struct sl_program *prog) {
   prog->next_program_using_debug_shader_ = NULL;
   prog->prev_program_using_debug_shader_ = NULL;
   prog->debug_shader_ = NULL;
+  prog->linked_vertex_shader_ = NULL;
+  prog->linked_fragment_shader_ = NULL;
+  prog->linked_debug_shader_ = NULL;
   abt_init(&prog->abt_);
   attrib_routing_init(&prog->ar_);
   sl_uniform_table_init(&prog->uniforms_);
@@ -88,6 +91,9 @@ void sl_program_cleanup(struct sl_program *prog) {
   sl_program_detach_shader(prog, prog->fragment_shader_);
   sl_program_detach_shader(prog, prog->vertex_shader_);
   sl_program_detach_shader(prog, prog->debug_shader_);
+  prog->linked_vertex_shader_ = NULL;
+  prog->linked_fragment_shader_ = NULL;
+  prog->linked_debug_shader_ = NULL;
   abt_cleanup(&prog->abt_);
   attrib_routing_cleanup(&prog->ar_);
   sl_uniform_table_cleanup(&prog->uniforms_);
@@ -561,6 +567,12 @@ int sl_program_link(struct sl_program *prog) {
   /* Done with allocator for attribute indices, clean up */
   ref_range_allocator_cleanup(&rra);
 
+  /* The linked executable now refers to these shaders, independent of whether
+   * they remain attached to the program. */
+  prog->linked_vertex_shader_ = prog->vertex_shader_;
+  prog->linked_fragment_shader_ = prog->fragment_shader_;
+  prog->linked_debug_shader_ = prog->debug_shader_;
+
   prog->gl_last_link_status_ = 1;
 
   return 0;
@@ -573,8 +585,8 @@ int sl_program_load_uniform_for_execution(struct sl_program *prog, struct sl_uni
   struct { struct sl_variable *v_;
            struct sl_shader *s_;
   } vs[] = {
-    { u->vertex_variable_, prog->vertex_shader_ },
-    { u->fragment_variable_, prog->fragment_shader_ }
+    { u->vertex_variable_, prog->linked_vertex_shader_ },
+    { u->fragment_variable_, prog->linked_fragment_shader_ }
   };
   size_t n;
   int r;

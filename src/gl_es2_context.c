@@ -380,6 +380,10 @@ void gl_es2_program_shader_attachment_detach(struct gl_es2_program_shader_attach
     }
     psa->shader_ = NULL;
     psa->next_ = psa->prev_ = NULL;
+
+    /* Keep the backend attachment in sync; the linked shader reference (if any)
+     * remains unaffected. */
+    sl_program_detach_shader(&psa->program_->program_, &shad->shader_);
   }
 }
 
@@ -560,6 +564,9 @@ void gl_es2_program_init(struct gl_es2_program *prog) {
   gl_es2_program_shader_attachment_init(prog, &prog->vertex_shader_);
   gl_es2_program_shader_attachment_init(prog, &prog->fragment_shader_);
   gl_es2_program_shader_attachment_init(prog, &prog->debug_shader_);
+  prog->linked_vertex_shader_ = NULL;
+  prog->linked_fragment_shader_ = NULL;
+  prog->linked_debug_shader_ = NULL;
   sl_program_init(&prog->program_);
 }
 
@@ -574,6 +581,7 @@ void gl_es2_shader_init(struct gl_es2_shader *shad) {
   shad->flagged_for_deletion_ = 0;
   shad->first_program_attached_to_ = NULL;
 
+  shad->num_programs_linked_ = 0;
   shad->compilation_status_ = 0;
 
   sl_shader_init(&shad->shader_);
