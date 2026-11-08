@@ -464,7 +464,7 @@ void blend(size_t num_fragments, uint8_t *maskp,
           if (ired < 0) ired = 0;
           ired = (ired + 1 + (ired >> 8)) >> 8;
           uint8_t mask = maskpr[frag];
-          rgba_dstppr[frag][0] = (((uint8_t)ired) & mask) | (src_redp[frag] & ~mask);
+          rgba_dstppr[frag][0] = (((uint8_t)ired) & mask) | (rgba_dstppr[frag][0] & ~mask);
         }
       }
 
@@ -474,7 +474,7 @@ void blend(size_t num_fragments, uint8_t *maskp,
           if (igrn < 0) igrn = 0;
           igrn = (igrn + 1 + (igrn >> 8)) >> 8;
           uint8_t mask = maskpr[frag];
-          rgba_dstppr[frag][1] = (((uint8_t)igrn) & mask) | (src_grnp[frag] & ~mask);
+          rgba_dstppr[frag][1] = (((uint8_t)igrn) & mask) | (rgba_dstppr[frag][1] & ~mask);
         }
       }
 
@@ -484,7 +484,7 @@ void blend(size_t num_fragments, uint8_t *maskp,
           if (iblu < 0) iblu = 0;
           iblu = (iblu + 1 + (iblu >> 8)) >> 8;
           uint8_t mask = maskpr[frag];
-          rgba_dstppr[frag][2] = (((uint8_t)iblu) & mask) | (src_blup[frag] & ~mask);
+          rgba_dstppr[frag][2] = (((uint8_t)iblu) & mask) | (rgba_dstppr[frag][2] & ~mask);
         }
       }
       break;
@@ -496,7 +496,7 @@ void blend(size_t num_fragments, uint8_t *maskp,
           if (ired < 0) ired = 0;
           ired = (ired + 1 + (ired >> 8)) >> 8;
           uint8_t mask = maskpr[frag];
-          rgba_dstppr[frag][0] = (((uint8_t)ired) & mask) | (src_redp[frag] & ~mask);
+          rgba_dstppr[frag][0] = (((uint8_t)ired) & mask) | (rgba_dstppr[frag][0] & ~mask);
         }
       }
 
@@ -506,7 +506,7 @@ void blend(size_t num_fragments, uint8_t *maskp,
           if (igrn < 0) igrn = 0;
           igrn = (igrn + 1 + (igrn >> 8)) >> 8;
           uint8_t mask = maskpr[frag];
-          rgba_dstppr[frag][1] = (((uint8_t)igrn) & mask) | (src_grnp[frag] & ~mask);
+          rgba_dstppr[frag][1] = (((uint8_t)igrn) & mask) | (rgba_dstppr[frag][1] & ~mask);
         }
       }
 
@@ -516,7 +516,7 @@ void blend(size_t num_fragments, uint8_t *maskp,
           if (iblu < 0) iblu = 0;
           iblu = (iblu + 1 + (iblu >> 8)) >> 8;
           uint8_t mask = maskpr[frag];
-          rgba_dstppr[frag][2] = (((uint8_t)iblu) & mask) | (src_blup[frag] & ~mask);
+          rgba_dstppr[frag][2] = (((uint8_t)iblu) & mask) | (rgba_dstppr[frag][2] & ~mask);
         }
       }
       break;
@@ -533,7 +533,7 @@ void blend(size_t num_fragments, uint8_t *maskp,
           /* Saturation */
           ialp = (ialp > 255) ? 255 : ialp;
           uint8_t mask = maskpr[frag];
-          rgba_dstppr[frag][3] = (((uint8_t)ialp) & mask) | (src_alpp[frag] & ~mask);
+          rgba_dstppr[frag][3] = (((uint8_t)ialp) & mask) | (rgba_dstppr[frag][3] & ~mask);
         }
       }
       break;
@@ -545,7 +545,7 @@ void blend(size_t num_fragments, uint8_t *maskp,
           if (ialp < 0) ialp = 0;
           ialp = (ialp + 1 + (ialp >> 8)) >> 8;
           uint8_t mask = maskpr[frag];
-          rgba_dstppr[frag][3] = (((uint8_t)ialp) & mask) | (src_alpp[frag] & ~mask);
+          rgba_dstppr[frag][3] = (((uint8_t)ialp) & mask) | (rgba_dstppr[frag][3] & ~mask);
         }
       }
       break;
@@ -553,11 +553,11 @@ void blend(size_t num_fragments, uint8_t *maskp,
     case BEQ_FUNC_REVERSE_SUBTRACT: {
       if (enable_alpha) {
         for (frag = 0; frag < num_fragments; ++frag) {
-          int32_t ialp = ((int32_t)rgba_dstppr[frag][3]) * rgba_dstppr[frag][3] - ((int32_t)src_alpp[frag]) * src_wgh_alpp[frag];
+          int32_t ialp = ((int32_t)rgba_dstppr[frag][3]) * dst_wgh_alpp[frag] - ((int32_t)src_alpp[frag]) * src_wgh_alpp[frag];
           if (ialp < 0) ialp = 0;
           ialp = (ialp + 1 + (ialp >> 8)) >> 8;
           uint8_t mask = maskpr[frag];
-          rgba_dstppr[frag][3] = (((uint8_t)ialp) & mask) | (src_alpp[frag] & ~mask);
+          rgba_dstppr[frag][3] = (((uint8_t)ialp) & mask) | (rgba_dstppr[frag][3] & ~mask);
         }
       }
       break;
