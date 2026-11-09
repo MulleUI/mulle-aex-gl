@@ -1,4 +1,4 @@
-# mulle-aex-gl
+# 🪂 mulle-aex-gl
 
 `mulle-aex-gl` is a [mulle-sde](//github.com/mulle-sde) C library fork of
 [Aex-GL](https://github.com/kingletbv/aex-gl), a dependency-free software
