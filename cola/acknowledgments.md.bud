@@ -1,0 +1,12 @@
+## Third-party notices
+
+The PixiJS filter shaders adapted in `demo/src/main-pixi-filters.c` come from
+[pixi-filters](https://github.com/pixijs/filters) and are MIT-licensed; see
+[demo/LICENSES/PixiJS-Filters.txt](demo/LICENSES/PixiJS-Filters.txt). The
+browser comparison harness loads PixiJS and pixi-filters from jsDelivr at
+runtime; both are MIT-licensed.
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE). This fork preserves the upstream
+license and attribution.

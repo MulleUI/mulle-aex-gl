@@ -10,7 +10,7 @@
  *
  *  version:  major, minor, patch
  */
-#define MULLE__AEX__GL_VERSION  ((0UL << 20) | (7 << 8) | 56)
+#define MULLE__AEX__GL_VERSION  ((0UL << 20) | (0 << 8) | 1)
 
 
 static inline unsigned int   mulle_aex_gl_get_version_major( void)

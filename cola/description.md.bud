@@ -1,0 +1,10 @@
+`mulle-aex-gl` is a [mulle-sde](//github.com/mulle-sde) C library fork of
+[Aex-GL](https://github.com/kingletbv/aex-gl), a dependency-free software
+implementation of OpenGL ES 2.0.
+
+The purpose of the fork is to provide MulleUI with a self-contained GLES2
+backend for headless rendering, without Carburetta at build or run time
+and without EGL, X11, Wayland or a GPU and with some bug fixes.
+
+- upstream: `kingletbv/aex-gl`, Apache-2.0
+- fork base: see [UPSTREAM.md](UPSTREAM.md)
