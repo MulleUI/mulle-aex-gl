@@ -20,6 +20,18 @@
 #include "blend.h"
 #endif
 
+/* Building with -DAEX_SHOW_ORIGINAL_BUG reproduces the pre-fix masked blend
+ * store: the masked-out channel bits came from the source colour instead of
+ * preserving the destination. The regressions demo renders that bug when the
+ * library is rebuilt with the switch. */
+#if defined( AEX_SHOW_ORIGINAL_BUG)
+#define AEX_MASKED_KEEP( dst, src)   ( src)
+#define AEX_BLEND_DST_WGH( dst, wgh) ( dst)
+#else
+#define AEX_MASKED_KEEP( dst, src)   ( dst)
+#define AEX_BLEND_DST_WGH( dst, wgh) ( wgh)
+#endif
+
 void blend(size_t num_fragments, uint8_t *maskp, 
            uint8_t *rgba_src_red, uint8_t *rgba_src_green, uint8_t *rgba_src_blue, uint8_t *rgba_src_alpha,
            uint8_t **rgba_dstpp, 
@@ -464,7 +476,7 @@ void blend(size_t num_fragments, uint8_t *maskp,
           if (ired < 0) ired = 0;
           ired = (ired + 1 + (ired >> 8)) >> 8;
           uint8_t mask = maskpr[frag];
-          rgba_dstppr[frag][0] = (((uint8_t)ired) & mask) | (rgba_dstppr[frag][0] & ~mask);
+          rgba_dstppr[frag][0] = (((uint8_t)ired) & mask) | (AEX_MASKED_KEEP(rgba_dstppr[frag][0], src_redp[frag]) & ~mask);
         }
       }
 
@@ -474,7 +486,7 @@ void blend(size_t num_fragments, uint8_t *maskp,
           if (igrn < 0) igrn = 0;
           igrn = (igrn + 1 + (igrn >> 8)) >> 8;
           uint8_t mask = maskpr[frag];
-          rgba_dstppr[frag][1] = (((uint8_t)igrn) & mask) | (rgba_dstppr[frag][1] & ~mask);
+          rgba_dstppr[frag][1] = (((uint8_t)igrn) & mask) | (AEX_MASKED_KEEP(rgba_dstppr[frag][1], src_grnp[frag]) & ~mask);
         }
       }
 
@@ -484,7 +496,7 @@ void blend(size_t num_fragments, uint8_t *maskp,
           if (iblu < 0) iblu = 0;
           iblu = (iblu + 1 + (iblu >> 8)) >> 8;
           uint8_t mask = maskpr[frag];
-          rgba_dstppr[frag][2] = (((uint8_t)iblu) & mask) | (rgba_dstppr[frag][2] & ~mask);
+          rgba_dstppr[frag][2] = (((uint8_t)iblu) & mask) | (AEX_MASKED_KEEP(rgba_dstppr[frag][2], src_blup[frag]) & ~mask);
         }
       }
       break;
@@ -496,7 +508,7 @@ void blend(size_t num_fragments, uint8_t *maskp,
           if (ired < 0) ired = 0;
           ired = (ired + 1 + (ired >> 8)) >> 8;
           uint8_t mask = maskpr[frag];
-          rgba_dstppr[frag][0] = (((uint8_t)ired) & mask) | (rgba_dstppr[frag][0] & ~mask);
+          rgba_dstppr[frag][0] = (((uint8_t)ired) & mask) | (AEX_MASKED_KEEP(rgba_dstppr[frag][0], src_redp[frag]) & ~mask);
         }
       }
 
@@ -506,7 +518,7 @@ void blend(size_t num_fragments, uint8_t *maskp,
           if (igrn < 0) igrn = 0;
           igrn = (igrn + 1 + (igrn >> 8)) >> 8;
           uint8_t mask = maskpr[frag];
-          rgba_dstppr[frag][1] = (((uint8_t)igrn) & mask) | (rgba_dstppr[frag][1] & ~mask);
+          rgba_dstppr[frag][1] = (((uint8_t)igrn) & mask) | (AEX_MASKED_KEEP(rgba_dstppr[frag][1], src_grnp[frag]) & ~mask);
         }
       }
 
@@ -516,7 +528,7 @@ void blend(size_t num_fragments, uint8_t *maskp,
           if (iblu < 0) iblu = 0;
           iblu = (iblu + 1 + (iblu >> 8)) >> 8;
           uint8_t mask = maskpr[frag];
-          rgba_dstppr[frag][2] = (((uint8_t)iblu) & mask) | (rgba_dstppr[frag][2] & ~mask);
+          rgba_dstppr[frag][2] = (((uint8_t)iblu) & mask) | (AEX_MASKED_KEEP(rgba_dstppr[frag][2], src_blup[frag]) & ~mask);
         }
       }
       break;
@@ -545,7 +557,7 @@ void blend(size_t num_fragments, uint8_t *maskp,
           if (ialp < 0) ialp = 0;
           ialp = (ialp + 1 + (ialp >> 8)) >> 8;
           uint8_t mask = maskpr[frag];
-          rgba_dstppr[frag][3] = (((uint8_t)ialp) & mask) | (rgba_dstppr[frag][3] & ~mask);
+          rgba_dstppr[frag][3] = (((uint8_t)ialp) & mask) | (AEX_MASKED_KEEP(rgba_dstppr[frag][3], src_alpp[frag]) & ~mask);
         }
       }
       break;
@@ -553,11 +565,11 @@ void blend(size_t num_fragments, uint8_t *maskp,
     case BEQ_FUNC_REVERSE_SUBTRACT: {
       if (enable_alpha) {
         for (frag = 0; frag < num_fragments; ++frag) {
-          int32_t ialp = ((int32_t)rgba_dstppr[frag][3]) * dst_wgh_alpp[frag] - ((int32_t)src_alpp[frag]) * src_wgh_alpp[frag];
+          int32_t ialp = ((int32_t)rgba_dstppr[frag][3]) * AEX_BLEND_DST_WGH(rgba_dstppr[frag][3], dst_wgh_alpp[frag]) - ((int32_t)src_alpp[frag]) * src_wgh_alpp[frag];
           if (ialp < 0) ialp = 0;
           ialp = (ialp + 1 + (ialp >> 8)) >> 8;
           uint8_t mask = maskpr[frag];
-          rgba_dstppr[frag][3] = (((uint8_t)ialp) & mask) | (rgba_dstppr[frag][3] & ~mask);
+          rgba_dstppr[frag][3] = (((uint8_t)ialp) & mask) | (AEX_MASKED_KEEP(rgba_dstppr[frag][3], src_alpp[frag]) & ~mask);
         }
       }
       break;

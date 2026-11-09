@@ -100,6 +100,7 @@ static int st_sanity(struct sym_table *st) {
   return st_recurse_linkages(NULL, st->root_) || failed_balance;
 }
 
+#if 0 /* st_recurse_parent_child_linkages: unused dead code, kept for reference */
 static int st_recurse_parent_child_linkages(struct sym *parent, struct sym *s) {
   if (s) {
     if (s->parent_ != parent) {
@@ -113,10 +114,13 @@ static int st_recurse_parent_child_linkages(struct sym *parent, struct sym *s) {
   }
   return 0;
 }
+#endif
 
+#if 0 /* st_sanity_only_parents: unused dead code, kept for reference */
 static int st_sanity_only_parents(struct sym_table *st) {
   return st_recurse_parent_child_linkages(NULL, st->root_);
 }
+#endif
 
 void sym_init(struct sym *s) {
   s->is_red_ = 0;
@@ -772,10 +776,6 @@ int st_test(void) {
 
   size_t num_names = sizeof(g_testnames_)/sizeof(*g_testnames_);
   size_t n;
-  for (n = 0; n < num_names; ++n) {
-    struct testname *tn = g_testnames_ + n;
-    //printf("#%2d : %s\n", (int)n, tn->name_);
-  }
 
   srand(1233);
   for (n = 0; n < 100000; ++n) {

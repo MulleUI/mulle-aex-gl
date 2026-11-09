@@ -10731,6 +10731,12 @@ void builtin_dFdx_v4_runtime(struct sl_execution *exec, int exec_chain, struct s
           float dFdx_2 = Fx_dx_2 - Fx_2;
           result2[n] = dFdx_2;
           result2[n + 1] = dFdx_2;
+
+          float Fx_dx_3 = opd3[n + 1];
+          float Fx_3 = opd3[n];
+          float dFdx_3 = Fx_dx_3 - Fx_3;
+          result3[n] = dFdx_3;
+          result3[n + 1] = dFdx_3;
         }
 
         delta = (chain & 0xFF00000000000000) >> 56;

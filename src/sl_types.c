@@ -84,12 +84,14 @@ static int sl_type_hash(struct sl_type *t) {
   return (int)(v % SL_TYPE_BASE_HASH_SIZE);
 }
 
+#if 0 /* sl_type_field_init: unused dead code, kept for reference */
 static void sl_type_field_init(struct sl_type_field *field) {
   field->chain_ = NULL;
   field->ident_ = NULL;
   aex_situs_init(&field->ident_loc_);
   field->type_ = NULL;
 }
+#endif
 
 static void sl_type_field_cleanup(struct sl_type_field *field) {
   if (field->ident_) free(field->ident_);
@@ -219,7 +221,6 @@ struct sl_type *sl_type_base_qualified_type(struct sl_type_base *tb, struct sl_t
   struct sl_type *t;
   t = tb->hash_table_[hash];
   if (t) {
-    struct sl_type *next = t->hash_chain_;
     do {
       t = t->hash_chain_;
 
@@ -260,7 +261,6 @@ struct sl_type *sl_type_base_array_type(struct sl_type_base *tb, struct sl_type 
   struct sl_type *t;
   t = tb->hash_table_[hash];
   if (t) {
-    struct sl_type *next = t->hash_chain_;
     do {
       t = t->hash_chain_;
 

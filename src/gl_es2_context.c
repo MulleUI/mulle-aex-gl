@@ -381,9 +381,14 @@ void gl_es2_program_shader_attachment_detach(struct gl_es2_program_shader_attach
     psa->shader_ = NULL;
     psa->next_ = psa->prev_ = NULL;
 
+#if ! defined( AEX_SHOW_ORIGINAL_BUG)
     /* Keep the backend attachment in sync; the linked shader reference (if any)
      * remains unaffected. */
     sl_program_detach_shader(&psa->program_->program_, &shad->shader_);
+#else
+    /* Pre-fix: only the GL-side attachment was dropped, leaving the backend
+     * program with a dangling shader pointer. */
+#endif
   }
 }
 

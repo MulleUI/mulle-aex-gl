@@ -274,7 +274,15 @@ static void texture2D(float *prgba, struct sampler_2d *s2d, float s, float t, fl
           break;
         }
         case s2d_repeat: {
-          /* leave as-is, mask will take care of it */
+#if ! defined( AEX_SHOW_ORIGINAL_BUG)
+          /* Wrap negative values into [0,1) before converting to an unsigned
+           * texel index. The mask only folds indices that are already
+           * non-negative, and converting a negative float to uint32_t is
+           * undefined behavior. */
+          sm = sm - floorf( sm);
+#else
+          /* Pre-fix: leave as-is, the repeat mask "took care of it". */
+#endif
           break;
         }
         case s2d_mirrored_repeat: {
@@ -294,7 +302,7 @@ static void texture2D(float *prgba, struct sampler_2d *s2d, float s, float t, fl
           break;
         }
         case s2d_repeat: {
-          /* leave as-is, mask will take care of it */
+          tm = tm - floorf( tm);
           break;
         }
         case s2d_mirrored_repeat: {
@@ -465,7 +473,11 @@ static void texture2D(float *prgba, struct sampler_2d *s2d, float s, float t, fl
           break;
         }
         case s2d_repeat: {
-          /* leave as-is, mask will take care of it */
+          /* Wrap negative values into [0,1) before the fp8 conversion. The
+           * repeat mask is applied afterwards and only folds non-negative
+           * indices; a negative s_fp8 would otherwise clamp to the first
+           * column. */
+          sm = sm - floorf( sm);
           break;
         }
         case s2d_mirrored_repeat: {
@@ -496,10 +508,14 @@ static void texture2D(float *prgba, struct sampler_2d *s2d, float s, float t, fl
           break;
         }
         case s2d_repeat: {
+#if ! defined( AEX_SHOW_ORIGINAL_BUG)
           /* The linear filter flips T into 1 - tm before addressing the
            * texel, so wrap here rather than relying on the repeat mask.
            * Otherwise negative t values clamp to the first row. */
           tm = tm - floorf( tm);
+#else
+          /* Pre-fix: leave as-is, the repeat mask "took care of it". */
+#endif
           break;
         }
         case s2d_mirrored_repeat: {
@@ -1655,8 +1671,6 @@ static void texture_2D_lod_lookup_impl(struct sampler_2d *sampler_chain,
            * the bit pattern above to find the differentials based on the appropriate neighbouring
            * pixels. */
           row = s2d->runtime_rows_;
-          float l0_width = (float)s2d->mipmaps_[0].width_;
-          float l0_height = (float)s2d->mipmaps_[0].height_;
           for (;;) {
             uint64_t chain;
             uint8_t delta;
@@ -1861,7 +1875,6 @@ static void texture_2D_lod_lookup_impl(struct sampler_2d *sampler_chain,
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void builtin_texture2D_runtime(struct sl_execution *exec, int exec_chain, struct sl_expr *x) {
-  uint8_t *restrict chain_column = exec->exec_chain_reg_;
   float *restrict red_column = FLOAT_REG_PTR_NRV(&x->base_regs_, 0);
   float *restrict green_column = FLOAT_REG_PTR_NRV(&x->base_regs_, 1);
   float *restrict blue_column = FLOAT_REG_PTR_NRV(&x->base_regs_, 2);
@@ -1876,7 +1889,6 @@ void builtin_texture2D_runtime(struct sl_execution *exec, int exec_chain, struct
 }
 
 void builtin_texture2D_bias_runtime(struct sl_execution *exec, int exec_chain, struct sl_expr *x) {
-  uint8_t *restrict chain_column = exec->exec_chain_reg_;
   float *restrict red_column = FLOAT_REG_PTR_NRV(&x->base_regs_, 0);
   float *restrict green_column = FLOAT_REG_PTR_NRV(&x->base_regs_, 1);
   float *restrict blue_column = FLOAT_REG_PTR_NRV(&x->base_regs_, 2);
@@ -2146,7 +2158,6 @@ void builtin_texture2DProj_v4_bias_runtime(struct sl_execution *exec, int exec_c
 }
 
 void builtin_texture2DLod_v2_runtime(struct sl_execution *exec, int exec_chain, struct sl_expr *x) {
-  uint8_t *restrict chain_column = exec->exec_chain_reg_;
   float *restrict red_column = FLOAT_REG_PTR_NRV(&x->base_regs_, 0);
   float *restrict green_column = FLOAT_REG_PTR_NRV(&x->base_regs_, 1);
   float *restrict blue_column = FLOAT_REG_PTR_NRV(&x->base_regs_, 2);
@@ -2291,7 +2302,6 @@ void builtin_texture2DProjLod_v4_runtime(struct sl_execution *exec, int exec_cha
 
 
 void builtin_textureCube_v3_runtime(struct sl_execution *exec, int exec_chain, struct sl_expr *x) {
-  uint8_t *restrict chain_column = exec->exec_chain_reg_;
   float *restrict red_column = FLOAT_REG_PTR_NRV(&x->base_regs_, 0);
   float *restrict green_column = FLOAT_REG_PTR_NRV(&x->base_regs_, 1);
   float *restrict blue_column = FLOAT_REG_PTR_NRV(&x->base_regs_, 2);
@@ -2312,7 +2322,6 @@ void builtin_textureCube_v3_runtime(struct sl_execution *exec, int exec_chain, s
 }
 
 void builtin_textureCube_v3_bias_runtime(struct sl_execution *exec, int exec_chain, struct sl_expr *x) {
-  uint8_t *restrict chain_column = exec->exec_chain_reg_;
   float *restrict red_column = FLOAT_REG_PTR_NRV(&x->base_regs_, 0);
   float *restrict green_column = FLOAT_REG_PTR_NRV(&x->base_regs_, 1);
   float *restrict blue_column = FLOAT_REG_PTR_NRV(&x->base_regs_, 2);
@@ -2334,7 +2343,6 @@ void builtin_textureCube_v3_bias_runtime(struct sl_execution *exec, int exec_cha
 }
 
 void builtin_textureCubeLod_v3_runtime(struct sl_execution *exec, int exec_chain, struct sl_expr *x) {
-  uint8_t *restrict chain_column = exec->exec_chain_reg_;
   float *restrict red_column = FLOAT_REG_PTR_NRV(&x->base_regs_, 0);
   float *restrict green_column = FLOAT_REG_PTR_NRV(&x->base_regs_, 1);
   float *restrict blue_column = FLOAT_REG_PTR_NRV(&x->base_regs_, 2);

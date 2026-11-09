@@ -60,6 +60,7 @@ extern "C" {
 
 struct sl_stmt;
 struct sl_expr;
+struct sl_reg_alloc;
 struct sl_reg_allocator;
 struct ir_temp;
 
@@ -258,13 +259,13 @@ size_t sl_exec_dump(struct sl_execution *exec, char *output_str,
  * index field. When not dumping elements inside arrays, it should be set to 0.
  * For ease of use, the sl_exec_dump() function performs the same function for the common case of no
  * deep array introspection. */
-static size_t sl_exec_offset_dump_strided(struct sl_execution *exec, 
-                                          char *output_str,
-                                          uint8_t single_row, 
-                                          const struct sl_reg_alloc *arr,
-                                          const struct sl_reg_alloc *index,
-                                          int index_stride,
-                                          int array_offset);
+size_t sl_exec_offset_dump_strided(struct sl_execution *exec,
+                                   char *output_str,
+                                   uint8_t single_row,
+                                   const struct sl_reg_alloc *arr,
+                                   const struct sl_reg_alloc *index,
+                                   int index_stride,
+                                   int array_offset);
 
 /* Convenience wrapper around sl_exec_offset_dump_strided that writes to FILE pointer fp instead
  * of memory. */

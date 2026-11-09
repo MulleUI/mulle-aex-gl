@@ -85,7 +85,6 @@ static int sl_info_log_dx_printf(void *log_ptr, const char *fmt, ...) {
 
 static int sl_info_log_dx_cb(void *log_ptr, const char *file, int line_num, const char *fmt, va_list args) {
   int r;
-  struct sl_info_log *log = (struct sl_info_log *)log_ptr;
   
   if (file) {
     sl_info_log_dx_printf(log_ptr, "%s(%d): ", file, line_num);

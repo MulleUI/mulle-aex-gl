@@ -928,7 +928,6 @@ int sl_expr_validate(struct diags *dx, struct sl_type_base *tb, const struct sl_
       for (n = 0; n < x->num_children_; ++n) {
         struct sl_type *t = sl_expr_type(tb, x->children_[n]);
         if (!t) return r | SLXV_INVALID;
-        int qualifiers = sl_type_qualifiers(t);
         t = sl_type_unqualified(t);
         struct sl_parameter *p = &f->parameters_[n];
         int param_qualifiers = sl_type_qualifiers(p->type_);
@@ -2405,6 +2404,7 @@ struct sl_expr *sl_expr_alloc_ternop(expr_op_t op,const struct situs *loc,struct
   return x;
 }
 
+#if 0 /* sl_expr_is_assignment: unused dead code, kept for reference */
 static int sl_expr_is_assignment(struct sl_expr *x) {
   static const int is_assign[] = {
     [exop_assign] = 1,
@@ -2416,6 +2416,7 @@ static int sl_expr_is_assignment(struct sl_expr *x) {
   if (x->op_ >= (sizeof(is_assign)/sizeof(*is_assign))) return 0;
   return is_assign[x->op_];
 }
+#endif
 
 static int sl_expr_force_rvalue(struct sl_type_base *tb, struct sl_reg_allocator *ract, struct sl_expr *x) {
   struct sl_type *t = sl_expr_type(tb, x);
@@ -2624,7 +2625,6 @@ static int sl_expr_alloc_register_main_pass(struct sl_type_base *tb, struct sl_r
   else if (x->op_ == exop_array_subscript) {
     /* Allocate both array and subscript, leaving both locked */
     for (n = 0; n < 2; ++n) {
-      struct sl_expr *child = x->children_[n];
       r = r ? r : sl_expr_alloc_register_main_pass(tb, ract, x->children_[n]);
       if (r) return r;
     }

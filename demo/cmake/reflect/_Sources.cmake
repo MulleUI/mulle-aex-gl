@@ -34,6 +34,7 @@ src/main-coverage.c
 src/main-lines.c
 src/main-mipmap.c
 src/main-pixi-filters.c
+src/main-regressions.c
 src/main-sdl3-triangle.c
 src/main-world.c
 src/main-z-triangles.c

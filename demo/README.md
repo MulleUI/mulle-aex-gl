@@ -29,6 +29,46 @@ Available scenes:
 | `mipmap`        | `src/main-mipmap.c`          | Trilinear mipmapped smiley triangle        |
 | `world`         | `src/main-world.c`           | Rotating “World is Yours” line globe       |
 | `pixi-filters`  | `src/main-pixi-filters.c`    | CRT, glitch, zoom blur, shockwave, ASCII   |
+| `regressions`   | `src/main-regressions.c`     | Pass/fail checks for the fixed GLES bugs   |
+
+`regressions` runs one check per reviewed fix and prints a PASS/FAIL line for
+each. The same checks are shared with `test/88-regressions` through
+`src/regression-checks-private.h`; pass `--exit` to run them without waiting
+for the window to close. On a pre-fix tree the scene reports the original
+failures.
+
+## Showing the original bugs
+
+Each reviewed fix stays behind the `AEX_SHOW_ORIGINAL_BUG` switch, so the same
+tree can be rebuilt to run the pre-fix code. The switch is honoured in
+`src/blend.c`, `src/blitter.c`, `src/gl_es2_context.c`, `src/gl_es2_impl.c`,
+`src/primitive_assembly.c` and `src/sampler_2d.c`; without it the fixes are
+compiled in and nothing changes.
+
+Craft the library with the define added to `CFLAGS` (turn vibecoding off first,
+crafting is refused while it is on), then run the regressions scene:
+
+``` sh
+mulle-sde craft --clean -- -DCFLAGS=-DAEX_SHOW_ORIGINAL_BUG
+mulle-sde -d demo craft --clean
+xvfb-run -a mulle-sde -d demo run --exit regressions
+```
+
+The scene then reports the original failures instead of PASS: truncated unorm8
+colors (`254` instead of `255`), masked subtract clobbering the destination,
+the 32-bit depth clear writing `0x00008000`, the binding queries returning
+`-1`, negative repeat sampling landing on the first column, the stencil-only
+clear raising an error, and the detach-after-link draw crashing. Rebuild without the define to get the fixed behaviour back.
+
+Verified against a standalone build of the sources with the define: seven of
+the eight checks fail. The stencil read-modify-write check cannot discriminate:
+the engine starts a new fragment batch for each primitive, so both overlapping
+triangles invert from a value the previous triangle already wrote either way.
+Reproducing that failure needs overlapping fragments inside a single batch,
+which this engine does not produce, so the extra per-fragment stencil
+re-evaluation from `fix/stencil-fragment-rmw` is commented out in
+`src/primitive_assembly.c` and the branch is dropped as a non-bug. The check
+stays as coverage for the stencil operation sequence.
 
 Close with Escape or the window close button. Every demo shows an FPS counter
 in the top-left corner, updated every 500 ms. `pixi-filters` cycles through its

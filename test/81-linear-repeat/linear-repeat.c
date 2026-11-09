@@ -37,6 +37,33 @@ static int   check_program( gl_es2_uint program)
 }
 
 
+static int   check_equal( const char *what,
+                          const unsigned char *left,
+                          const unsigned char *right)
+{
+   if( !(left[ 0] | left[ 1] | left[ 2]))
+   {
+      fprintf( stderr, "%s sampled the background color\n", what);
+      return( 1);
+   }
+
+   if( left[ 0] == right[ 0] &&
+       left[ 1] == right[ 1] &&
+       left[ 2] == right[ 2])
+      return( 0);
+
+   fprintf( stderr, "%s gave %u,%u,%u but %u,%u,%u\n",
+            what,
+            (unsigned int) left[ 0],
+            (unsigned int) left[ 1],
+            (unsigned int) left[ 2],
+            (unsigned int) right[ 0],
+            (unsigned int) right[ 1],
+            (unsigned int) right[ 2]);
+   return( 1);
+}
+
+
 int   main( int argc, char *argv[])
 {
    static const char   *vertex_source =
@@ -64,9 +91,12 @@ int   main( int argc, char *argv[])
    static const float   uvs[ 16] =
       { 0.5f, 0.5f,   0.5f, 0.5f,   0.5f, 0.5f,   0.5f, 0.5f,
         0.5f, 1.5f,   0.5f, 1.5f,   0.5f, 1.5f,   0.5f, 1.5f };
+   static const float   uvs_negative[ 16] =
+      { -0.5f, -0.5f,  -0.5f, -0.5f,  -0.5f, -0.5f,  -0.5f, -0.5f,
+         0.5f,  0.5f,   0.5f,  0.5f,   0.5f,  0.5f,   0.5f,  0.5f };
    static const unsigned char   level0[ 2 * 2 * 3] =
-      { 255, 0, 0,   255, 0, 0,
-        0, 255, 0,   0, 255, 0 };
+      { 255, 0, 0,     0, 255, 0,
+          0, 0, 255,   255, 255, 255 };
    unsigned char   left[ 4];
    unsigned char   right[ 4];
    gl_es2_int      sampler_location;
@@ -154,22 +184,46 @@ int   main( int argc, char *argv[])
    aex_gl_es2_DrawArrays( GL_ES2_TRIANGLE_STRIP, 4, 4);
 
    aex_gl_es2_ReadPixels( 4, 8, 1, 1, GL_ES2_RGBA, GL_ES2_UNSIGNED_BYTE,
-                          left);
+                           left);
    aex_gl_es2_ReadPixels( 12, 8, 1, 1, GL_ES2_RGBA, GL_ES2_UNSIGNED_BYTE,
-                          right);
-   if( left[ 0] != right[ 0] ||
-       left[ 1] != right[ 1] ||
-       left[ 2] != right[ 2])
-   {
-      fprintf( stderr, "t=0.5 gave %u,%u,%u but t=1.5 gave %u,%u,%u\n",
-               (unsigned int) left[ 0],
-               (unsigned int) left[ 1],
-               (unsigned int) left[ 2],
-               (unsigned int) right[ 0],
-               (unsigned int) right[ 1],
-               (unsigned int) right[ 2]);
+                           right);
+   if( check_equal( "t=0.5 vs t=1.5", left, right))
       return( 1);
-   }
+
+   /* Negative texture coordinates repeat just like coordinates above 1. */
+   aex_gl_es2_VertexAttribPointer( 1,
+                                   2,
+                                   GL_ES2_FLOAT,
+                                   GL_ES2_FALSE,
+                                   0,
+                                   uvs_negative);
+   aex_gl_es2_Clear( GL_ES2_COLOR_BUFFER_BIT);
+   aex_gl_es2_DrawArrays( GL_ES2_TRIANGLE_STRIP, 0, 4);
+   aex_gl_es2_DrawArrays( GL_ES2_TRIANGLE_STRIP, 4, 4);
+
+   aex_gl_es2_ReadPixels( 4, 8, 1, 1, GL_ES2_RGBA, GL_ES2_UNSIGNED_BYTE,
+                           left);
+   aex_gl_es2_ReadPixels( 12, 8, 1, 1, GL_ES2_RGBA, GL_ES2_UNSIGNED_BYTE,
+                           right);
+   if( check_equal( "negative uv with linear filter", left, right))
+      return( 1);
+
+   aex_gl_es2_TexParameteri( GL_ES2_TEXTURE_2D,
+                             GL_ES2_TEXTURE_MIN_FILTER,
+                             GL_ES2_NEAREST);
+   aex_gl_es2_TexParameteri( GL_ES2_TEXTURE_2D,
+                             GL_ES2_TEXTURE_MAG_FILTER,
+                             GL_ES2_NEAREST);
+   aex_gl_es2_Clear( GL_ES2_COLOR_BUFFER_BIT);
+   aex_gl_es2_DrawArrays( GL_ES2_TRIANGLE_STRIP, 0, 4);
+   aex_gl_es2_DrawArrays( GL_ES2_TRIANGLE_STRIP, 4, 4);
+
+   aex_gl_es2_ReadPixels( 4, 8, 1, 1, GL_ES2_RGBA, GL_ES2_UNSIGNED_BYTE,
+                           left);
+   aex_gl_es2_ReadPixels( 12, 8, 1, 1, GL_ES2_RGBA, GL_ES2_UNSIGNED_BYTE,
+                           right);
+   if( check_equal( "negative uv with nearest filter", left, right))
+      return( 1);
 
    if( aex_gl_es2_GetError() != GL_ES2_NO_ERROR)
    {

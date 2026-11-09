@@ -63,8 +63,10 @@ static void sl_uniform_init(struct sl_uniform *u) {
   u->slab_[0] = 0;
 }
 
+#if 0 /* sl_uniform_free: unused dead code, kept for reference */
 static void sl_uniform_free(struct sl_uniform *u) {
 }
+#endif
 
 void sl_uniform_table_init(struct sl_uniform_table *ut) {
   ut->uniforms_ = NULL;
@@ -442,7 +444,6 @@ static int sl_uniform_get_ra_named_location(struct sl_reg_alloc *ra, const char 
         /* Let's roll a manual atoi() so we know when it overflows and always fit the type size */
         size_t index = (size_t)((*cp) - '0');
 
-        const char *start_of_digits = cp;
         cp++;
         while (((*cp) >= '0') && ((*cp) <= '9')) {
           if ((SIZE_MAX / 10) < index) {
@@ -459,7 +460,6 @@ static int sl_uniform_get_ra_named_location(struct sl_reg_alloc *ra, const char 
           }
           cp++;
         }
-        const char *end_of_digits = cp;
         if ((*cp) != ']') {
           return SL_ERR_INVALID_ARG;
         }
@@ -772,7 +772,6 @@ int sl_uniform_load_ra_for_execution(struct sl_execution *exec, void *base_mem, 
   int r;
   if (ra->kind_ == slrak_array) {
     size_t n;
-    size_t num_elements = ra->v_.array_.num_elements_;
     size_t original_offset = offset;
     for (n = 0; n < ra->v_.array_.num_elements_; ++n) {
       size_t num_bytes_consumed;

@@ -156,7 +156,7 @@ int sl_reg_alloc_set_type(struct sl_reg_alloc *ra, const struct sl_type *t, int 
     ra->local_frame_ = !!local_frame;
     return 0;
   }
-  struct sl_type *tunq = sl_type_unqualified(t);
+  const struct sl_type *tunq = sl_type_unqualified(t);
   sl_reg_alloc_kind_t ra_kind = slrak_void;
 
   switch (tunq->kind_) {
@@ -285,7 +285,7 @@ int sl_reg_alloc_set_type(struct sl_reg_alloc *ra, const struct sl_type *t, int 
         ++field_index;
       } while (field != tunq->fields_);
     }
-    ra->v_.comp_.struct_type_ = tunq;
+    ra->v_.comp_.struct_type_ = (struct sl_type *) tunq;
   }
   else {
     memset(ra->v_.regs_, 0, sizeof(ra->v_.regs_));
@@ -755,7 +755,6 @@ static int sl_reg_check_appears_before_point(const struct sl_reg_alloc *ra, int 
   else {
     int cardinality = sl_reg_alloc_get_cardinality(ra->kind_);
     int n;
-    enum sl_reg_alloc_kind ra_scalar_kind = slrak_void;
     sl_reg_category_t ra_cat = sl_reg_alloc_get_category(ra);
     if ((reg_cat == ra_cat) && (ra->local_frame_ == reg_is_local_frame)) {
       for (n = 0; n < cardinality; ++n) {

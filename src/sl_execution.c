@@ -1351,6 +1351,7 @@ static void sl_exec_offset_load(struct sl_execution *exec, uint8_t row,
   }
 }
 
+#if 0 /* sl_exec_indirect_load: unused dead code, kept for reference */
 static void sl_exec_indirect_load(struct sl_execution *exec, uint8_t row, 
                                   struct sl_reg_alloc *dst,
                                   const struct sl_reg_alloc *indir,
@@ -1452,13 +1453,16 @@ static void sl_exec_indirect_load(struct sl_execution *exec, uint8_t row,
     }
   }
 }
+#endif
 
+#if 0 /* sl_exec_indirect_offset_load: unused dead code, kept for reference */
 static void sl_exec_indirect_offset_load(struct sl_execution *exec, uint8_t row, 
                                          struct sl_reg_alloc *dst,
                                          const struct sl_reg_alloc *indir,
                                          const struct sl_reg_alloc *index) {
   // XXX: Implement
 }
+#endif
 
 static void sl_exec_f_offset_store(uint8_t * restrict chain_column,
                                    uint8_t row,
@@ -3198,7 +3202,6 @@ int sl_exec_allocate_registers_by_slab(struct sl_execution *exec, size_t max_num
   uint8_t *bool_bank = NULL;
   void **sampler2D_bank = NULL;
   void **samplerCube_bank = NULL;
-  uint8_t *chain_bank = NULL;
 
   size_t num_rows = max_num_rows;
 
@@ -3224,7 +3227,6 @@ int sl_exec_allocate_registers_by_slab(struct sl_execution *exec, size_t max_num
   if (exec->num_bool_regs_) { bool_bank = (uint8_t *)pslab; pslab += sizeof(uint8_t) * num_rows * exec->num_bool_regs_; }
   if (exec->num_sampler_2D_regs_) { sampler2D_bank = (void **)pslab; pslab += sizeof(void *) * num_rows * exec->num_sampler_2D_regs_; }
   if (exec->num_sampler_cube_regs_) { samplerCube_bank = (void **)pslab; pslab += sizeof(void *) * num_rows * exec->num_sampler_cube_regs_; }
-  chain_bank = (uint8_t *)pslab;
 
   if (exec->float_regs_) exec->float_regs_[0] = float_bank;
   if (exec->int_regs_) exec->int_regs_[0] = int_bank;
@@ -3401,7 +3403,7 @@ void sl_exec_call_graph_results_init(struct sl_exec_call_graph_results *cgr) {
 }
 
 void sl_exec_call_graph_results_cleanup(struct sl_exec_call_graph_results *cgr) {
-  cgr;
+  (void) cgr;
 }
 
 static int sl_exec_cga_expr(struct sl_exec_call_graph_results *cgr, struct sl_expr *x);
@@ -3665,7 +3667,6 @@ int sl_exec_run(struct sl_execution *exec, struct sl_function *f, int exec_chain
             size_t condition_eval_index = exec->num_execution_points_;
             r = sl_exec_push_expr(exec, eps[epi].v_.stmt_->condition_, SL_EXEC_NO_CHAIN, CHAIN_REF(eps[epi].revisit_chain_));
             if (r) return r;
-            size_t condition_prep_stmt_index = exec->num_execution_points_;
             /* Check if we have a preparatory statement for the condition (an initializer) and execute it prior to the condition expression,
              * if so. Otherwise wire the enter_chain_ to directly go into the expression. */
             if (eps[epi].v_.stmt_->prep_cond_) {
@@ -4117,7 +4118,6 @@ int sl_exec_run(struct sl_execution *exec, struct sl_function *f, int exec_chain
 
           case exop_sequence: {
             /* The sequence is implied in the evaluation of its children */
-            size_t our_continue_ptr = eps[epi].continue_chain_ptr_;
             struct sl_expr *seq_expr = eps[epi].v_.expr_;
             uint32_t enter_chain = eps[epi].enter_chain_;
             eps[epi].enter_chain_ = SL_EXEC_NO_CHAIN;
@@ -4539,7 +4539,6 @@ int sl_exec_run(struct sl_execution *exec, struct sl_function *f, int exec_chain
             /* Field selection should be a no-op, however, if a parent of the field selection has determined
              * a destination register, then it still needs a move. That's an edge case, in the common case
              * this move will degrade into a no-op. */
-            size_t field_index = 0;
             struct sl_expr *x = eps[epi].v_.expr_;
             struct sl_expr *sx = eps[epi].v_.expr_->children_[0];
             struct sl_reg_alloc *child_field = &sx->base_regs_.v_.comp_.fields_[x->field_index_];

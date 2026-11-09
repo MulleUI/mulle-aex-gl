@@ -3168,7 +3168,7 @@ static void sl_ir_inc(struct ir_block *blk, struct ir_temp *chain_reg, struct sl
       }
       size_t n;
       for (n = 0; n < num_components; ++n) {
-        sl_ir_f_inc(blk, chain_reg, 
+        sl_ir_i_inc(blk, chain_reg, 
                     dst_ra->local_frame_ ? frame->local_int_offset_ + dst_ra->v_.regs_[n] : dst_ra->v_.regs_[n],
                     EXPR_RVALUE(opd)->local_frame_ ? frame->local_int_offset_ + EXPR_RVALUE(opd)->v_.regs_[n] : EXPR_RVALUE(opd)->v_.regs_[n]);
       }
@@ -3232,7 +3232,7 @@ static void sl_ir_dec(struct ir_block *blk, struct ir_temp *chain_reg, struct sl
       }
       size_t n;
       for (n = 0; n < num_components; ++n) {
-        sl_ir_f_dec(blk, chain_reg, 
+        sl_ir_i_dec(blk, chain_reg, 
                     dst_ra->local_frame_ ? frame->local_int_offset_ + dst_ra->v_.regs_[n] : dst_ra->v_.regs_[n],
                     EXPR_RVALUE(opd)->local_frame_ ? frame->local_int_offset_ + EXPR_RVALUE(opd)->v_.regs_[n] : EXPR_RVALUE(opd)->v_.regs_[n]);
       }
@@ -3990,7 +3990,6 @@ struct ir_block *sl_ir_expr(struct ir_block *blk, struct ir_temp *chain_reg, str
           int param_qualifiers = sl_type_qualifiers(param->type_);
           struct sl_reg_alloc *param_ra = &param->reg_alloc_;
           sl_ir_need_rvalue(blk, chain_reg, frame, x->children_[n]);
-          struct sl_reg_alloc *call_arg_ra = EXPR_RVALUE(x->children_[n]);
 
           if ((param_qualifiers & SL_PARAMETER_QUALIFIER_IN) ||
               (param_qualifiers & SL_PARAMETER_QUALIFIER_INOUT) ||
@@ -4021,7 +4020,6 @@ struct ir_block *sl_ir_expr(struct ir_block *blk, struct ir_temp *chain_reg, str
           int param_qualifiers = sl_type_qualifiers(param->type_);
           struct sl_reg_alloc *param_ra = &param->reg_alloc_;
           sl_ir_need_rvalue(blk, chain_reg, frame, x->children_[n]);
-          struct sl_reg_alloc *call_arg_ra = EXPR_RVALUE(x->children_[n]);
 
           if ((param_qualifiers & SL_PARAMETER_QUALIFIER_OUT) ||
               (param_qualifiers & SL_PARAMETER_QUALIFIER_INOUT)) {

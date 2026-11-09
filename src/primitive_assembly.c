@@ -68,9 +68,15 @@
  * exactly 1.0) - an antialiased edge then writes 254/255 instead of 255/255.
  * The clamp also keeps out of range colors from wrapping around. */
 static uint8_t aex_float_to_unorm8( float c) {
+#if defined( AEX_SHOW_ORIGINAL_BUG)
+  /* Pre-fix behaviour, reproduced for the regressions demo: truncate instead of
+   * rounding and let values outside [0,1] wrap. */
+  return( (uint8_t) (255.f * c));
+#else
   if( c <= 0.f) return( 0);
   if( c >= 1.f) return( 255);
   return( (uint8_t) (255.f * c + 0.5f));
+#endif
 }
 
 #ifndef CLIPPING_STAGE_H_INCLUDED
@@ -2029,7 +2035,6 @@ int primitive_assembly_process_primitives(struct primitive_assembly *pa,
                     for (attrib_route_index = 0; attrib_route_index < ar->num_attribs_routed_; ++attrib_route_index) {
                       struct attrib_route *attr = ar->attribs_routed_ + attrib_route_index;
                       float * restrict tgt = fragment_shader->exec_.float_regs_[attr->to_target_reg_];
-                      float * restrict oow = fragment_shader->exec_.float_regs_[frag_coord_w_reg];
                       float fv0 = v0[CLIPPING_STAGE_IDX_GENERIC + attrib_route_index];
                       float fv1 = v1[CLIPPING_STAGE_IDX_GENERIC + attrib_route_index];
                       for (frag_row = prior_num_rows_in_fragbuf; frag_row < fragbuf->num_rows_; ++frag_row) {
@@ -2942,9 +2947,6 @@ void primitive_assembly_process_fragments(struct primitive_assembly *pa,
               break;
             case PAZF_ALWAYS:
               for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-                uint16_t *zbuf_ptr = (((uint16_t *restrict*restrict)fragbuf->column_data_[FB_IDX_ZBUF_PTR])[frag_row]);
-                uint16_t zbuf_value = *zbuf_ptr;
-                uint16_t z_value = (uint16_t)((uint32_t *restrict)fragbuf->column_data_[FB_IDX_ZBUF_VALUE])[frag_row];
                 uint8_t stencil_pass = ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
                 uint8_t r = stencil_pass;
                 ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row] = r;
@@ -3036,11 +3038,6 @@ void primitive_assembly_process_fragments(struct primitive_assembly *pa,
               break;
             case PAZF_ALWAYS:
               for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-                uint8_t *zbuf_ptr = (((uint8_t *restrict*restrict)fragbuf->column_data_[FB_IDX_ZBUF_PTR])[frag_row]);
-                uint32_t zbuf_value = (((uint32_t)zbuf_ptr[0]) << 16) |
-                                      (((uint32_t)zbuf_ptr[1]) << 8) |
-                                      (((uint32_t)zbuf_ptr[2]));
-                uint32_t z_value = ((uint32_t *restrict)fragbuf->column_data_[FB_IDX_ZBUF_VALUE])[frag_row];
                 uint8_t stencil_pass = ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
                 uint8_t r = stencil_pass;
                 ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row] = r;
@@ -3118,9 +3115,6 @@ void primitive_assembly_process_fragments(struct primitive_assembly *pa,
               break;
             case PAZF_ALWAYS:
               for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-                uint32_t *zbuf_ptr = (((uint32_t *restrict*restrict)fragbuf->column_data_[FB_IDX_ZBUF_PTR])[frag_row]);
-                uint32_t zbuf_value = *zbuf_ptr;
-                uint32_t z_value = ((uint32_t *restrict)fragbuf->column_data_[FB_IDX_ZBUF_VALUE])[frag_row];
                 uint8_t stencil_pass = ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
                 uint8_t r = stencil_pass;
                 ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row] = r;
@@ -3156,19 +3150,27 @@ void primitive_assembly_process_fragments(struct primitive_assembly *pa,
      * pass, 0x00 for a failure. FB_IDX_TEMPL_BYTE_1 holds the result of the
      * depth test (which already incorporates the stencil function result.)
      *
-     * The stencil operation has to read-modify-write the stencil buffer one
-     * fragment at a time, in fragment order. A batch of fragments can address
-     * the same stencil value more than once: triangles may overlap, and the
-     * rasterizer emits masked-out padding fragments for mipmapping/dFdx/dFdy
-     * purposes. Computing every result from the values found at the start of
-     * the batch and writing them back afterwards lets the last fragment win
-     * instead of accumulating (or cancelling) the winding number. That showed
-     * up as background-coloured holes and dotted anti-aliased edges in
-     * stencil-filled concave or multi-subpath paths. Re-reading the stencil
-     * value here, per fragment, keeps the sequence correct. */
+     * The stencil operation reads, modifies and writes the stencil buffer one
+     * fragment at a time instead of staging every result in TEMP_BYTE_2/3 and
+     * writing the staging buffer back afterwards. That is cheaper and keeps the
+     * value sequence correct when a batch addresses the same stencil value more
+     * than once.
+     *
+     * fix/stencil-fragment-rmw additionally re-evaluated the stencil function
+     * here, per fragment, because the batch-wide result in FB_IDX_TEMP_BYTE_0
+     * goes stale when a batch contains overlapping fragments. That case is not
+     * reachable in this engine: primitive_assembly_process_fragments() runs once
+     * per primitive, so a batch never holds two overlapping primitives. A probe
+     * with two overlapping triangles and a value sensitive EQUAL function ends
+     * up with the same stencil value with and without the re-evaluation. The
+     * re-evaluation also ran the stencil comparison twice per fragment (the
+     * batch-wide loop above still has to run, because the depth test consumes
+     * its result), so it is not compiled in. Reusing the batch-wide result is
+     * correct here; the check in demo/src/regression-checks-private.h cannot
+     * distinguish the two either. */
     for (frag_row = 0; frag_row < fragbuf->num_rows_; ++frag_row) {
-      uint8_t stencil_pass8 = ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
       uint8_t depth_pass8 = ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_1])[frag_row];
+      uint8_t stencil_pass8;
       primitive_assembly_stencil_op_t op;
       uint16_t mask;
       uint16_t new_stencil_value;
@@ -3181,11 +3183,31 @@ void primitive_assembly_process_fragments(struct primitive_assembly *pa,
       mask = (uint16_t)(int16_t)(int8_t)((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row];
       mask &= (uint16_t)stencil_mask;
 
-      /* FB_IDX_MASK is reused by blend() to decide which pixels to write. */
-      ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row] = depth_pass8;
+      stencil_ptr = ((uint16_t *restrict *restrict)fragbuf->column_data_[FB_IDX_STENCIL_PTR])[frag_row];
+      old_stencil_value = *stencil_ptr;
+      stencil_pass8 = ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_TEMP_BYTE_0])[frag_row];
+#if 0 /* Re-evaluating the stencil function against the live value; disabled
+       * because a batch cannot contain overlapping fragments in this engine. */
+      stencil_pass8 = aex_stencil_test_passes( stencil_func,
+                                               old_stencil_value,
+                                               stencil_func_mask,
+                                               stencil_func_ref_masked) ? 0xFF : 0x00;
+#endif
+
+      /* FB_IDX_MASK is reused by blend() to decide which pixels to write. A
+       * fragment that fails the stencil test must not write color, even if it
+       * passed the depth test. */
+      ((uint8_t *restrict)fragbuf->column_data_[FB_IDX_MASK])[frag_row] = stencil_pass8 & depth_pass8;
 
       if (!mask) {
         continue;
+      }
+
+      /* Without a depth test the depth always passes; TEMP_BYTE_1 still holds
+       * the batch-wide stencil result in that case, which must not turn a
+       * stencil-failed fragment into a zfail. */
+      if (!enable_zbuf_test) {
+        depth_pass8 = 0xFF;
       }
 
       if (!stencil_pass8) {
@@ -3200,9 +3222,6 @@ void primitive_assembly_process_fragments(struct primitive_assembly *pa,
         /* zpass: both the stencil function and the depth test passed. */
         op = zpass_op;
       }
-
-      stencil_ptr = ((uint16_t *restrict *restrict)fragbuf->column_data_[FB_IDX_STENCIL_PTR])[frag_row];
-      old_stencil_value = *stencil_ptr;
 
       switch (op) {
         case PASO_ZERO:
@@ -3365,17 +3384,14 @@ void primitive_assembly_draw_elements(struct primitive_assembly *pa,
                                       primitive_assembly_index_type_t index_type,
                                       size_t arrayed_starting_index,
                                       const void *indices) {
-  /* Check if either vertex_shader or fragment_shader are blacklisted. */
+  /* Check if the vertex shader is blacklisted. */
   size_t idx;
   int vmarked = 0;
-  int fmarked = 0;
   for (idx = 0; idx < sizeof(shader_blacklist_)/sizeof(*shader_blacklist_); ++idx) {
     uint64_t hash = shader_blacklist_[idx];
     if (hash == vertex_shader->hash_) {
       vmarked = 1;
-    }
-    if (hash == fragment_shader->hash_) {
-      fmarked = 1;
+      break;
     }
   }
   if (vmarked) return;

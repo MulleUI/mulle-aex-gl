@@ -69,7 +69,6 @@ static void set_gl_err(gl_es2_enum error_code) {
 }
 
 static void generic_name_gen(struct ref_range_allocator *rra, gl_es2_sizei n, gl_es2_uint *names) {
-  struct gl_es2_context *c = gl_es2_ctx_dont_lock();
   int r;
   if (n < 0) {
     set_gl_err(GL_ES2_INVALID_VALUE);
@@ -150,17 +149,23 @@ static void release_program_linked_shaders(struct gl_es2_program *prog) {
 
 static void acquire_program_linked_shaders(struct gl_es2_program *prog) {
   prog->linked_vertex_shader_ = prog->vertex_shader_.shader_;
+  prog->linked_fragment_shader_ = prog->fragment_shader_.shader_;
+  prog->linked_debug_shader_ = prog->debug_shader_.shader_;
+#if defined( AEX_SHOW_ORIGINAL_BUG)
+  /* Pre-fix: the linked executable did not keep its shaders alive, so deleting a
+   * detached shader left the program with a dangling pointer. The regressions
+   * demo re-execs each check, so the resulting crash stays contained. */
+#else
   if (prog->linked_vertex_shader_) {
     ++prog->linked_vertex_shader_->num_programs_linked_;
   }
-  prog->linked_fragment_shader_ = prog->fragment_shader_.shader_;
   if (prog->linked_fragment_shader_) {
     ++prog->linked_fragment_shader_->num_programs_linked_;
   }
-  prog->linked_debug_shader_ = prog->debug_shader_.shader_;
   if (prog->linked_debug_shader_) {
     ++prog->linked_debug_shader_->num_programs_linked_;
   }
+#endif
 }
 
 static void delete_program_shaders(struct gl_es2_program *prog) {
@@ -269,7 +274,6 @@ static int get_active_tex_target(gl_es2_enum target, struct gl_es2_texture **pte
   struct gl_es2_context *c = gl_es2_ctx_dont_lock();
   struct gl_es2_texture_unit *tu = &c->active_texture_units_[c->current_active_texture_unit_];
   struct gl_es2_texture *tex = NULL;
-  struct sampler_2d *s2d = NULL;
   switch (target) {
     case GL_ES2_TEXTURE_2D:
       tex = tu->texture_2d_;
@@ -1460,7 +1464,12 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(Clear)(gl_es2_
           }
           case gl_es2_renderbuffer_format_depth32: {
             uint32_t clear_depth32;
+#if defined( AEX_SHOW_ORIGINAL_BUG)
+            /* Pre-fix: used the 16-bit scale, leaving the upper depth word unset. */
+            uint64_t cd = (uint64_t)floorf(clear_depth_f * 0x10000);
+#else
             uint64_t cd = (uint64_t)floorf(clear_depth_f * 4294967296.0f);
+#endif
             clear_depth32 = ((uint32_t)cd) - (uint32_t)(cd >> 32);
 
             blitter_blit_apply_mask32(bitmap, stride, c->depth_mask_ ? 0xFFFFFFFF : 0x00000000, clear_depth32,
@@ -1491,7 +1500,13 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(Clear)(gl_es2_
     size_t stride;
     gl_es2_framebuffer_attachment_raw_ptr(&c->framebuffer_->stencil_attachment_, &bitmap, &stride);
     if (bitmap) {
+#if defined( AEX_SHOW_ORIGINAL_BUG)
+      /* Pre-fix: consulted the depth attachment instead of the stencil one, so a
+       * stencil-only framebuffer never got cleared. */
+      if (c->framebuffer_->depth_attachment_.kind_ == gl_es2_faot_renderbuffer) {
+#else
       if (c->framebuffer_->stencil_attachment_.kind_ == gl_es2_faot_renderbuffer) {
+#endif
         struct gl_es2_renderbuffer *rb = c->framebuffer_->stencil_attachment_.v_.rb_;
         switch (rb->format_) {
           case gl_es2_renderbuffer_format_stencil16: {
@@ -1503,7 +1518,11 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(Clear)(gl_es2_
           }
         }
       }
+#if defined( AEX_SHOW_ORIGINAL_BUG)
+      else if (c->framebuffer_->depth_attachment_.kind_ == gl_es2_faot_texture) {
+#else
       else if (c->framebuffer_->stencil_attachment_.kind_ == gl_es2_faot_texture) {
+#endif
         /* Not sure how we got a stencil texture given we don't support it yet?
          * (Would expect framebuffer to be incomplete and not get here.) */
         set_gl_err(GL_ES2_INVALID_FRAMEBUFFER_OPERATION);
@@ -1627,7 +1646,6 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(CopyTexImage2D
   gl_es2_log_CopyTexImage2D(c, target, level, internalformat, x, y, width, height, border);
   struct gl_es2_texture *tex = NULL;
   struct sampler_2d *s2d = NULL;;
-  struct gl_es2_texture_unit *tu = &c->active_texture_units_[c->current_active_texture_unit_];
   if ((level < 0) || (level >= SAMPLER_2D_MAX_NUM_MIPMAPS)) {
     /* level is not in range */
     set_gl_err(GL_ES2_INVALID_VALUE);
@@ -2537,7 +2555,6 @@ static void perform_draw(primitive_assembly_mode_t mode,
    * is the depth buffer attachment's bit depth */
   uint32_t max_z = 0xFFFFFFFF;
   size_t zbuf_step = 0;
-  int have_zbuf = 0;
   if (c->framebuffer_->depth_attachment_.kind_ == gl_es2_faot_none) {
   }
   else if (c->framebuffer_->depth_attachment_.kind_ == gl_es2_faot_renderbuffer) {
@@ -2547,12 +2564,10 @@ static void perform_draw(primitive_assembly_mode_t mode,
         case gl_es2_renderbuffer_format_depth16:
           max_z = 0xFFFF;
           zbuf_step = 2;
-          have_zbuf = 1;
           break;
         case gl_es2_renderbuffer_format_depth32:
           max_z = 0xFFFFFFFF;
           zbuf_step = 4;
-          have_zbuf =1;
           break;
       }
     }
@@ -3999,12 +4014,14 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(GetIntegerv)(g
     case GL_ES2_CURRENT_PROGRAM:
       data[0] = (gl_es2_int)(c->current_program_ ? c->current_program_->no_.name_ : 0);
       break;
+#if ! defined( AEX_SHOW_ORIGINAL_BUG)
     case GL_ES2_FRAMEBUFFER_BINDING:
       data[0] = (gl_es2_int)(c->framebuffer_ ? c->framebuffer_->no_.name_ : 0);
       break;
     case GL_ES2_RENDERBUFFER_BINDING:
       data[0] = (gl_es2_int)(c->renderbuffer_ ? c->renderbuffer_->no_.name_ : 0);
       break;
+#endif
     case GL_ES2_IMPLEMENTATION_COLOR_READ_FORMAT:
       /* We support more, but this is one of them */
       data[0] = (gl_es2_int)GL_ES2_RGBA;
@@ -5492,8 +5509,6 @@ GL_ES2_DECL_SPEC void GL_ES2_DECLARATOR_ATTRIB GL_ES2_FUNCTION_ID(ReadPixels)(gl
     size_t db_stride = 0;
 
     gl_es2_framebuffer_attachment_raw_ptr(&c->framebuffer_->depth_attachment_, &db_data, &db_stride);
-
-    int bottom_row = gl_es2_framebuffer_get_bitmap_row_num(c->framebuffer_, y);
 
     /* framebuffer pointer to last row, stride negative (so increasing Y goes back in memory) */
     void *db_data_bottom_left = ((char *)db_data) + ((size_t)(height - 1)) * db_stride;

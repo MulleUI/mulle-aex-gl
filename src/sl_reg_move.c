@@ -7219,7 +7219,6 @@ void sl_reg_move_crossframe_c2c(struct sl_execution *exec,
                               int to_frame, struct sl_reg_alloc *to_ra, struct sl_reg_alloc *to_ra_offset, int to_component,
                               int from_offset_step_size, int to_offset_step_size,
                               int array_quantity) {
-  size_t num_components = 0;
   int scalar_to_scalar_conversion = 0;
   int k;
   switch (from_ra->kind_) {
@@ -11976,7 +11975,6 @@ void sl_reg_emit_move_crossframe_c2c(struct ir_block *blk,
                                      struct sl_execution_frame *to_frame, struct sl_reg_alloc *to_ra, struct sl_reg_alloc *to_ra_offset, int to_component,
                                      int from_offset_step_size, int to_offset_step_size,
                                      int array_quantity) {
-  size_t num_components = 0;
   int scalar_to_scalar_conversion = 0;
   int k;
   switch (from_ra->kind_) {

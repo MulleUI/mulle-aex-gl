@@ -616,7 +616,6 @@ struct sl_expr *glsl_es1_function_call_realize(struct diags *dx, struct sym_tabl
         sl_component_conversion_t conv = glsl_es1_sl_type_component_conversion(pt, t);
         /* This also implies only 1 parameter as parameters with 0
          * components are an error */
-        struct glsl_es1_function_call_parameter *p = fs->parameters_;
         switch (t->kind_) {
           case sltk_float:
           case sltk_int:
@@ -1063,7 +1062,6 @@ int glsl_es1_process_function_prototype(struct glsl_es1_compiler *cc, struct sl_
         if (r) return r;
 
         /* Keep the function prototype declaration; add the definition to the existing chain */
-        struct sl_function *old_fn = existing_sym->v_.function_;
         existing_sym->v_.function_ = f;
 
         f->overload_chain_ = existing_sym->v_.function_->overload_chain_;

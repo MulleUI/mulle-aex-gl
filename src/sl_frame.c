@@ -280,8 +280,6 @@ int sl_function_match(struct sl_function *fa, struct sl_function *fb) {
   for (n = 0; n < fa->num_parameters_; ++n) {
     struct sl_parameter *pa = fa->parameters_ + n;
     struct sl_parameter *pb = fb->parameters_ + n;
-    struct sl_type *ta = sl_type_unqualified(pa->type_);
-    struct sl_type *tb = sl_type_unqualified(pb->type_);
     if (pa->type_ != pb->type_) {
       return 0;
     }

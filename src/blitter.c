@@ -136,8 +136,6 @@ void blitter_blit(void *dst, const void *src, size_t dst_stride, size_t src_stri
   if (src_width_byte_alignment < alignment) alignment = src_width_byte_alignment;
   if (dst_width_byte_alignment < alignment) alignment = dst_width_byte_alignment;
 
-  uint32_t max_width_cluster = check_alignment((uint32_t)width);
-
   /* alignment now holds the byte alignment value when source, destination, and both their strides,
    * and the width to be processed in source and destination pixel formats, are taken into account. */
 
@@ -537,9 +535,7 @@ void blitter_blit(void *dst, const void *src, size_t dst_stride, size_t src_stri
   else if (alignment >= 2) {
     /* 2-byte aligned, can go 16-bits at a time */
     uint8_t *restrict dp = (uint8_t * restrict)dst;
-    uint8_t *restrict sp = (uint8_t * restrict)src;
     uint8_t *restrict dpc = dp;
-    uint8_t *restrict spc = sp;
 
     /* per-byte access necessary; this takes care of any misaligned memory access CPU architectures but
      * is slow. */
@@ -909,6 +905,7 @@ void blitter_blit(void *dst, const void *src, size_t dst_stride, size_t src_stri
   }
 }
 
+#if 0 /* blitter_alignment: unused dead code, kept for reference */
 static int blitter_alignment(void *bitmap, size_t stride, int width, size_t bytes_per_pixel) {
   uintptr_t bmp_uint = (uintptr_t)bitmap;
   /* Check alignment */
@@ -925,9 +922,8 @@ static int blitter_alignment(void *bitmap, size_t stride, int width, size_t byte
 
   if (width_byte_alignment < alignment) alignment = width_byte_alignment;
 
-  uint32_t max_width_cluster = check_alignment((uint32_t)width);
-
 }
+#endif
 
 static void blitter_blit_apply_mask_fast64(uint64_t * restrict bitmap, size_t stride64,
                                            size_t y, size_t x64,
@@ -1082,7 +1078,8 @@ void blitter_blit_apply_mask8(void *bitmap, size_t stride, uint8_t mask, uint8_t
 
   size_t right_edge_inclusive = (x + width - 1);
   uint64_t lmask, imask, rmask;
-  imask = mask | (((uint64_t)imask) << 8);
+  imask = mask;
+  imask |= imask << 8;
   imask |= imask << 16;
   imask |= imask << 32;
   lmask = (imask >> (8 * (x & 7)));
@@ -1491,8 +1488,14 @@ void blitter_blit_apply_mask32(void *bitmap, size_t stride, uint32_t mask, uint3
 
   uint64_t imask;
   uint64_t ivalue;
+#if defined( AEX_SHOW_ORIGINAL_BUG)
+  /* Pre-fix: handed the un-replicated 32-bit value to the 64-bit fast path, so
+   * only one of the two pixels in a 64-bit word got the mask value. */
+  ivalue = ((uint64_t)value);
+#else
   ivalue = (((uint64_t)value) << 32)
          | ((uint64_t)value);
+#endif
   imask = (((uint64_t)mask) << 32)
         | ((uint64_t)mask);
 
@@ -2514,14 +2517,7 @@ static void blitter_blit_565_to_alpha(void *dst, const void *src, size_t dst_str
     pdst = pdst_row;
     pdst_row += dst_stride;
     for (col = 0; col < width; ++col) {
-      union {
-        uint16_t u16;
-        uint8_t u8[2];
-      } source_word;
-      source_word.u8[0] = psrc[0];
-      source_word.u8[1] = psrc[1];
-      uint8_t alpha = 0xFF;
-      pdst[0] = alpha;
+      pdst[0] = 0xFF;
       psrc += 2;
       pdst += 1;
     }

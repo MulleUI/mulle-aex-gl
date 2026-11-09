@@ -225,7 +225,6 @@ int sl_expr_temp_init_array(struct sl_expr_temp *slet, struct sl_type *array_typ
     /* conversion from uint64_t to size_t failed (overflowed) */
     return -1;
   }
-  size_t mem_needed = sizeof(struct sl_expr_temp) * slet->v_.comp_.num_elements_;
   if ((SIZE_MAX / sizeof(struct sl_expr_temp)) < slet->v_.comp_.num_elements_) {
     /* overflow */
     return -1;

@@ -243,8 +243,7 @@ static struct pp_input_file *glsl_es1_compiler_push_input_file_mem_snippet(struc
 
 enum glsl_es1_compiler_result glsl_es1_compile_builtin_prologue(struct glsl_es1_compiler *cc, const char *glsl_input_text) {
   enum glsl_es1_compiler_result cr;
-  struct pp_input_file *prologue_snippet;
-  prologue_snippet = glsl_es1_compiler_push_input_file_mem_snippet(cc, "(builtins)", glsl_input_text, strlen(glsl_input_text));
+  (void) glsl_es1_compiler_push_input_file_mem_snippet(cc, "(builtins)", glsl_input_text, strlen(glsl_input_text));
   cr = glsl_es1_compile(cc);
   if (cr != GLSL_ES1_R_OLD_INCLUDE) {
     dx_error(cc->dx_, "Failed parsing builtin: %s\n", glsl_input_text);
@@ -274,11 +273,10 @@ enum glsl_es1_compiler_result glsl_es1_compiler_compile_mem(struct glsl_es1_comp
   };
 #undef xx
 
-  struct pp_input_file *snippet;
   size_t builtin_idx;
   int error_initializing = 0;;
   for (builtin_idx = 1; builtin_idx < (sizeof(proto_snippets)/sizeof(*proto_snippets)); ++builtin_idx) {
-    snippet = glsl_es1_compiler_push_input_file_mem_snippet(cc, "(builtins)", proto_snippets[builtin_idx].prototype_, strlen(proto_snippets[builtin_idx].prototype_));
+    (void) glsl_es1_compiler_push_input_file_mem_snippet(cc, "(builtins)", proto_snippets[builtin_idx].prototype_, strlen(proto_snippets[builtin_idx].prototype_));
     cr = glsl_es1_compile(cc);
     if (cr != GLSL_ES1_R_OLD_INCLUDE) {
       dx_error(cc->dx_, "Failed parsing builtin: %s\n", proto_snippets[builtin_idx]);

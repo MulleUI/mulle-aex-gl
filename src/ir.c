@@ -72,13 +72,21 @@ static void ir_instr_free(struct ir_instr *instr);
 static void ir_instr_append_to_block(struct ir_instr *instr, struct ir_block *block);
 static void ir_instr_detach_from_block(struct ir_instr *instr);
 
+#if 0 /* ir_control_flow_edge_init: unused dead code, kept for reference */
 static void ir_control_flow_edge_init(struct ir_control_flow_edge *edge);
+#endif
 static void ir_control_flow_edge_cleanup(struct ir_control_flow_edge *edge);
+#if 0 /* ir_control_flow_edge_alloc: unused dead code, kept for reference */
 static struct ir_control_flow_edge *ir_control_flow_edge_alloc();
+#endif
 static void ir_control_flow_edge_free(struct ir_control_flow_edge *edge);
+#if 0 /* ir_control_flow_edge_attach_to_block: unused dead code, kept for reference */
 static void ir_control_flow_edge_attach_to_block(struct ir_control_flow_edge *edge, struct ir_block *block);
+#endif
 static void ir_control_flow_edge_detach_to_block(struct ir_control_flow_edge *edge);
+#if 0 /* ir_control_flow_edge_attach_from_block: unused dead code, kept for reference */
 static void ir_control_flow_edge_attach_from_block(struct ir_control_flow_edge *edge, struct ir_block *block);
+#endif
 static void ir_control_flow_edge_detach_from_block(struct ir_control_flow_edge *edge);
 
 static void ir_block_detach_from_body(struct ir_block *blk) {
@@ -400,18 +408,21 @@ static void ir_instr_detach_from_block(struct ir_instr *instr) {
   instr->next_in_block_ = instr->prev_in_block_ = NULL;
 }
 
+#if 0 /* ir_control_flow_edge_init: unused dead code, kept for reference */
 static void ir_control_flow_edge_init(struct ir_control_flow_edge *edge) {
   edge->from_ = edge->to_ = NULL;
   edge->next_in_from_ = edge->prev_in_from_ = NULL;
   edge->next_in_to_ = edge->prev_in_to_ = NULL;
 
 }
+#endif
 
 static void ir_control_flow_edge_cleanup(struct ir_control_flow_edge *edge) {
   ir_control_flow_edge_detach_to_block(edge);
   ir_control_flow_edge_detach_from_block(edge);
 }
 
+#if 0 /* ir_control_flow_edge_alloc: unused dead code, kept for reference */
 static struct ir_control_flow_edge *ir_control_flow_edge_alloc() {
   struct ir_control_flow_edge *edge = (struct ir_control_flow_edge *)malloc(sizeof(struct ir_control_flow_edge));
   if (edge) {
@@ -419,6 +430,7 @@ static struct ir_control_flow_edge *ir_control_flow_edge_alloc() {
   }
   return edge;
 }
+#endif
 
 static void ir_control_flow_edge_free(struct ir_control_flow_edge *edge) {
   if (!edge) return;
@@ -426,6 +438,7 @@ static void ir_control_flow_edge_free(struct ir_control_flow_edge *edge) {
   free(edge);
 }
 
+#if 0 /* ir_control_flow_edge_attach_to_block: unused dead code, kept for reference */
 static void ir_control_flow_edge_attach_to_block(struct ir_control_flow_edge *edge, struct ir_block *block) {
   ir_control_flow_edge_detach_to_block(edge);
   edge->to_ = block;
@@ -440,6 +453,7 @@ static void ir_control_flow_edge_attach_to_block(struct ir_control_flow_edge *ed
     block->predecessors_ = edge;
   }
 }
+#endif
 
 static void ir_control_flow_edge_detach_to_block(struct ir_control_flow_edge *edge) {
   struct ir_block *block = edge->to_;
@@ -460,6 +474,7 @@ static void ir_control_flow_edge_detach_to_block(struct ir_control_flow_edge *ed
   edge->next_in_to_ = edge->prev_in_to_ = NULL;
 }
 
+#if 0 /* ir_control_flow_edge_attach_from_block: unused dead code, kept for reference */
 static void ir_control_flow_edge_attach_from_block(struct ir_control_flow_edge *edge, struct ir_block *block) {
   ir_control_flow_edge_detach_from_block(edge);
   edge->from_ = block;
@@ -474,6 +489,7 @@ static void ir_control_flow_edge_attach_from_block(struct ir_control_flow_edge *
     block->successors_ = edge;
   }
 }
+#endif
 
 static void ir_control_flow_edge_detach_from_block(struct ir_control_flow_edge *edge) {
   struct ir_block *block = edge->from_;
@@ -833,11 +849,7 @@ void ir_print_instr(struct source_gen *sg, struct ireg_registry *ireg, int mnemo
       else {
         p += 2;
       }
-      struct ireg_operand *opd = NULL;
       struct ir_arg *arg = NULL;
-      if (arg_num < ireg_instr->num_operands_) {
-        opd = ireg_instr->operands_ + arg_num;
-      }
       if (arg_num < instr->num_args_) {
         arg = instr->args_[arg_num];
       }

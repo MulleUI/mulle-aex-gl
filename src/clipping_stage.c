@@ -144,7 +144,6 @@ static size_t clipping_stage_process_triangle_plane(struct clipping_stage *cs,
         memcpy(output_v, c12, sizeof(float) * cs->num_varyings_);
         output_v += cs->num_varyings_;
 
-        float *d20 = output_v;
         float ood20 = 1.f / (d0 - d2);
         for (varying_index = CLIPPING_STAGE_IDX_X; varying_index < cs->num_varyings_; ++varying_index) {
           output_v[varying_index] = (-d2 * v0[varying_index] + d0 * v2[varying_index]) * ood20;
@@ -187,7 +186,6 @@ static size_t clipping_stage_process_triangle_plane(struct clipping_stage *cs,
         memcpy(output_v, v0, sizeof(float) * cs->num_varyings_);
         output_v += cs->num_varyings_;
         float ood01 = 1.f / (d0 - d1);
-        float *c01 = output_v;
         for (varying_index = CLIPPING_STAGE_IDX_X; varying_index < cs->num_varyings_; ++varying_index) {
           output_v[varying_index] = (-d1 * v0[varying_index] + d0 * v1[varying_index]) * ood01;
         }
@@ -278,7 +276,6 @@ static size_t clipping_stage_process_triangle_plane(struct clipping_stage *cs,
 size_t clipping_stage_process_triangle(struct clipping_stage *cs) {
   size_t tri_stride = cs->num_varyings_ * 3;
   float *input_v = cs->input_varyings_;
-  float *output_v = cs->triangle_varyings_a_;
   float *v0, *v1, *v2;
   v0 = input_v;
   v1 = v0 + cs->num_varyings_;
@@ -389,9 +386,7 @@ size_t clipping_stage_process_triangle(struct clipping_stage *cs) {
 /* Processes line, this is analogous to the triangle and could be done inplace, however,
  * we'll go for consistency and go back and forth between two buffers just like the triangle case. */
 size_t clipping_stage_process_line(struct clipping_stage *cs) {
-  size_t tri_stride = cs->num_varyings_ * 3;
   float *input_v = cs->input_varyings_;
-  float *output_v = cs->triangle_varyings_a_;
   float *v0, *v1;
   cs->num_triangles_in_b_ = 0;
   v0 = input_v;

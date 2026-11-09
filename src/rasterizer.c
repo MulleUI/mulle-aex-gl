@@ -657,8 +657,6 @@ int rasterizer_triangle(struct rasterizer *rasterizer,
     // The scissor rectangle is still in pixel coordinates, convert it into sub-pixel coordinates
     int64_t left_sp = left << RASTERIZER_SUBPIXEL_BITS;
     int64_t top_sp = top << RASTERIZER_SUBPIXEL_BITS;
-    int64_t right_sp = right << RASTERIZER_SUBPIXEL_BITS;
-    int64_t bottom_sp = bottom << RASTERIZER_SUBPIXEL_BITS;
 
     // Location where we go "Pen down" - convenience short-hand.
     // (1 << (RASTERIZER_SUBPIXEL_BITS-1)) gets us to put the pen at the center of the pixel,
@@ -844,7 +842,6 @@ int rasterizer_triangle(struct rasterizer *rasterizer,
     int64_t Dzy_hi, Dzy_lo;
     muls128(Dzy_hi_sp, Dzy_lo_sp, 0, 1 << RASTERIZER_SUBPIXEL_BITS, &Dzy_hi, &Dzy_lo);
 
-    direction_xy_flips;
     divmods128by64(Dzy_hi, Dzy_lo, D012, NULL, &z_yq, &z_yp);
     if ((Dzy_hi > 0) || ((Dzy_hi == 0) && (Dzy_lo > 0))) {
       z_s_TL = D012 - z_mod - 1;

@@ -75,7 +75,7 @@ static void ref_range_cleanup(struct ref_range *rr) {
 }
 
 static struct ref_range *ref_range_alloc_range(struct ref_range_allocator *rra) {
-  rra;
+  (void) rra;
   struct ref_range *rr = (struct ref_range *)malloc(sizeof(struct ref_range));
   if (!rr) return NULL;
   ref_range_init(rr);
@@ -83,7 +83,7 @@ static struct ref_range *ref_range_alloc_range(struct ref_range_allocator *rra) 
 }
 
 static void ref_range_free(struct ref_range_allocator *rra, struct ref_range *rr) {
-  rra;
+  (void) rra;
   if (!rr) return;
   ref_range_cleanup(rr);
   free(rr);
@@ -1007,12 +1007,15 @@ static void ref_range_pos_process_insert(struct ref_range_allocator *rra, struct
   }
 }
 
+#if 0 /* ref_range_pos_cmp: unused dead code, kept for reference */
 static int ref_range_pos_cmp(const struct ref_range *left, const struct ref_range *right) {
   if (left->at_ < right->at_) return -1;
   else if (left->at_ > right->at_) return 1;
   else return 0;
 }
+#endif
 
+#if 0 /* ref_range_pos_find_at: unused dead code, kept for reference */
 static struct ref_range *ref_range_pos_find_at(struct ref_range_allocator *rra, uintptr_t pos) {
   struct ref_range *s;
   struct ref_range *best_fit = NULL;
@@ -1028,13 +1031,13 @@ static struct ref_range *ref_range_pos_find_at(struct ref_range_allocator *rra, 
   }
   return best_fit;
 }
+#endif
 
 static struct ref_range *ref_range_pos_find_start(struct ref_range_allocator *rra, uintptr_t pos) {
   struct ref_range *s;
   struct ref_range *best_fit = NULL;
   s = rra->pos_root_;
   while (s) {
-    uintptr_t range_end = s->at_;
     if (pos <= s->at_) {
       /* pos is either before, or adjacent to (pos == s->at_) the range, match it */
       best_fit = s;
@@ -1047,6 +1050,7 @@ static struct ref_range *ref_range_pos_find_start(struct ref_range_allocator *rr
   return best_fit;
 }
 
+#if 0 /* ref_range_pos_find_end: unused dead code, kept for reference */
 static struct ref_range *ref_range_pos_find_end(struct ref_range_allocator *rra, uintptr_t pos) {
   struct ref_range *s;
   struct ref_range *best_fit = NULL;
@@ -1065,6 +1069,7 @@ static struct ref_range *ref_range_pos_find_end(struct ref_range_allocator *rra,
   }
   return best_fit;
 }
+#endif
 
 
 static int ref_range_apply_ref(struct ref_range_allocator *rra, uintptr_t from, uintptr_t to, int delta) {

@@ -2527,7 +2527,6 @@ static int   parse_function( struct glsl_es1_stack *p,
    struct sl_function   *f;
    struct sl_function   *f_keep;
    struct sl_stmt       *body;
-   struct sl_stmt       *compound;
    int                   is_definition;
    int                   r;
 

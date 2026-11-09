@@ -17,6 +17,20 @@ int   main( int argc, char *argv[])
    }
 
    aex_gl_es2_Viewport( 0, 0, 64, 64);
+   aex_gl_es2_ClearDepthf( 0.5f);
+   aex_gl_es2_Clear( GL_ES2_DEPTH_BUFFER_BIT);
+
+   aex_gl_es2_ReadPixels( 0, 32, 64, 1, GL_ES2_DEPTH_COMPONENT,
+                           GL_ES2_UNSIGNED_INT, depth);
+   for( i = 0; i < 64; i++)
+   {
+      if( depth[ i] != 0x80000000)
+      {
+         fprintf( stderr, "depth[%u] is 0x%08x\n", i, depth[ i]);
+         return( 1);
+      }
+   }
+
    aex_gl_es2_ClearDepthf( 1.0f);
    aex_gl_es2_Clear( GL_ES2_DEPTH_BUFFER_BIT);
 
